@@ -1,0 +1,52 @@
+name: spot
+description: "Spot: Professional Price Action Analysis Tool for Cryptocurrency Trading."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_bloc: ^8.1.5
+
+  # HTTP y Networking
+  http: ^1.2.1
+  dio: ^5.4.3+1
+
+  # Inyección de dependencias
+  get_it: ^7.7.0
+
+  # Equals para comparación de objetos
+  equatable: ^2.0.5
+
+  # Formato
+  intl: ^0.19.0
+
+  # Logging
+  logger: ^2.4.0
+
+  # Almacenamiento local (caché)
+  shared_preferences: ^2.2.3
+
+  # UI
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+  # Testing
+  mockito: ^5.4.4
+  build_runner: ^2.4.11
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/

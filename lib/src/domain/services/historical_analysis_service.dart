@@ -1,0 +1,130 @@
+import '../entities/daily_candle.dart';
+import '../entities/daily_analysis.dart';
+import '../entities/weekly_summary.dart';
+import '../entities/monthly_report.dart';
+
+/// Servicio de dominio para generar análisis históricos
+/// Procesa velas diarias y genera reportes semanales/mensuales
+class HistoricalAnalysisService {
+  /// Genera reporte mensual completo a partir de velas diarias
+  MonthlyReport generateMonthlyReport({
+    required String symbol,
+    required String cryptoName,
+    required List<DailyCandle> candles,
+    int? month,
+    int? year,
+  }) {
+    if (candles.isEmpty) {
+      throw ArgumentError('No hay datos para generar reporte');
+    }
+
+    // Ordenar por fecha (más antigua primero)
+    final sortedCandles = List<DailyCandle>.from(candles)
+      ..sort((a, b) => a.date.compareTo(b.date));
+
+    // Usar mes/año del primer candle si no se especifica
+    final reportMonth = month ?? sortedCandles.first.date.month;
+    final reportYear = year ?? sortedCandles.first.date.year;
+
+    // Filtrar solo candles del mes y año especificado
+    final filteredCandles = sortedCandles.where((candle) {
+      return candle.date.month == reportMonth && candle.date.year == reportYear;
+    }).toList();
+
+    if (filteredCandles.isEmpty) {
+      throw ArgumentError('No hay datos para el mes $reportMonth/$reportYear');
+    }
+
+    // Generar análisis diarios
+    final dailyAnalyses = <DailyAnalysis>[];
+    for (var i = 0; i < filteredCandles.length; i++) {
+      final candle = filteredCandles[i];
+      final previousClose = i > 0 ? filteredCandles[i - 1].close : candle.open;
+
+      dailyAnalyses.add(
+        DailyAnalysis.fromCandle(candle: candle, previousClose: previousClose),
+      );
+    }
+
+    // Agrupar por semanas
+    final weeks = _groupByWeeks(dailyAnalyses);
+
+    return MonthlyReport(
+      symbol: symbol,
+      cryptoName: cryptoName,
+      month: reportMonth,
+      year: reportYear,
+      weeks: weeks,
+      allDays: dailyAnalyses,
+    );
+  }
+
+  /// Agrupa análisis diarios en semanas
+  List<WeeklySummary> _groupByWeeks(List<DailyAnalysis> days) {
+    if (days.isEmpty) return [];
+
+    final weeks = <WeeklySummary>[];
+    final firstDate = days.first.date;
+
+    // Determinar el inicio del mes
+    final monthStart = DateTime(firstDate.year, firstDate.month, 1);
+
+    var currentWeekNumber = 1;
+    var currentWeekDays = <DailyAnalysis>[];
+    DateTime? currentWeekStart;
+
+    for (final day in days) {
+      // Calcular qué semana del mes es este día
+      final daysSinceMonthStart = day.date.difference(monthStart).inDays;
+      final weekNumber = (daysSinceMonthStart / 7).floor() + 1;
+
+      if (weekNumber != currentWeekNumber && currentWeekDays.isNotEmpty) {
+        // Guardar semana anterior
+        weeks.add(
+          WeeklySummary(
+            weekNumber: currentWeekNumber,
+            startDate: currentWeekStart!,
+            endDate: currentWeekDays.last.date,
+            days: List.from(currentWeekDays),
+          ),
+        );
+
+        // Iniciar nueva semana
+        currentWeekNumber = weekNumber;
+        currentWeekDays = [];
+        currentWeekStart = null;
+      }
+
+      currentWeekStart ??= day.date;
+
+      currentWeekDays.add(day);
+    }
+
+    // Agregar última semana
+    if (currentWeekDays.isNotEmpty) {
+      weeks.add(
+        WeeklySummary(
+          weekNumber: currentWeekNumber,
+          startDate: currentWeekStart!,
+          endDate: currentWeekDays.last.date,
+          days: currentWeekDays,
+        ),
+      );
+    }
+
+    return weeks;
+  }
+
+  /// Genera análisis de un solo día
+  DailyAnalysis analyzeSingleDay({
+    required DailyCandle candle,
+    required double previousClose,
+    String? verdict,
+  }) {
+    return DailyAnalysis.fromCandle(
+      candle: candle,
+      previousClose: previousClose,
+      verdict: verdict,
+    );
+  }
+}

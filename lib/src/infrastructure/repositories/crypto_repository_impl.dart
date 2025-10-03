@@ -1,0 +1,178 @@
+import '../../domain/entities/crypto.dart';
+import '../../domain/entities/daily_metrics.dart';
+import '../../domain/ports/price_data_port.dart';
+import '../../domain/ports/llm_analysis_port.dart';
+import '../../domain/repositories/crypto_repository.dart';
+import '../../domain/services/trading_calculator.dart';
+import '../../core/utils/logger.dart';
+
+/// Implementación del repositorio de criptomonedas
+/// Usa Ports (interfaces) para comunicarse con servicios externos
+/// Sigue arquitectura hexagonal - independiente de implementaciones específicas
+class CryptoRepositoryImpl implements CryptoRepository {
+  final PriceDataPort _priceDataPort;
+  final LlmAnalysisPort? _llmPort;
+  final TradingCalculator _calculator;
+  final List<String> _monitoredSymbols;
+
+  CryptoRepositoryImpl({
+    required PriceDataPort priceDataPort,
+    LlmAnalysisPort? llmPort,
+    required TradingCalculator calculator,
+    required List<String> monitoredSymbols,
+  }) : _priceDataPort = priceDataPort,
+       _llmPort = llmPort,
+       _calculator = calculator,
+       _monitoredSymbols = monitoredSymbols;
+
+  @override
+  Future<List<Crypto>> getAllCryptos() async {
+    AppLogger.info('Getting all cryptos for symbols: $_monitoredSymbols');
+    return await _priceDataPort.getPricesForSymbols(_monitoredSymbols);
+  }
+
+  @override
+  Future<Crypto?> getCryptoBySymbol(String symbol) async {
+    AppLogger.info('Getting crypto for symbol: $symbol');
+    return await _priceDataPort.getPriceForSymbol(symbol);
+  }
+
+  @override
+  Future<List<Crypto>> getCryptosBySymbols(List<String> symbols) async {
+    AppLogger.info('Getting cryptos for symbols: $symbols');
+    return await _priceDataPort.getPricesForSymbols(symbols);
+  }
+
+  @override
+  Future<List<Crypto>> refreshAllCryptos() async {
+    AppLogger.info('Refreshing all cryptos');
+    return await _priceDataPort.getPricesForSymbols(_monitoredSymbols);
+  }
+
+  @override
+  Future<Crypto?> refreshCrypto(String symbol) async {
+    AppLogger.info('Refreshing crypto: $symbol');
+    return await _priceDataPort.getPriceForSymbol(symbol);
+  }
+
+  /// Calcula métricas diarias para una criptomoneda
+  @override
+  Future<DailyMetrics> calculateDailyMetrics(String cryptoSymbol) async {
+    AppLogger.info('Calculating daily metrics for: $cryptoSymbol');
+
+    final crypto = await getCryptoBySymbol(cryptoSymbol);
+    if (crypto == null) {
+      throw Exception('Criptomoneda no encontrada: $cryptoSymbol');
+    }
+
+    // Obtener precio de cierre anterior
+    final previousClose = await _priceDataPort.getPreviousClose(cryptoSymbol);
+
+    // Generar veredicto con LLM si está disponible
+    String? verdict;
+    final llmPort = _llmPort;
+    if (llmPort != null && await llmPort.isAvailable()) {
+      // Calcular métricas preliminares para enviar al LLM
+      final prelimDeepDrop = _calculator.calculateDeepDrop(
+        currentPrice: crypto.currentPrice,
+        lowPrice: crypto.low24h,
+        previousClose: previousClose,
+      );
+      final prelimRebound = _calculator.calculateRebound(
+        currentPrice: crypto.currentPrice,
+        lowPrice: crypto.low24h,
+      );
+
+      verdict = await llmPort.generateVerdict(
+        symbol: cryptoSymbol,
+        deepDrop: prelimDeepDrop,
+        rebound: prelimRebound,
+      );
+    }
+
+    return _calculator.calculateDailyMetrics(
+      crypto,
+      previousClose: previousClose,
+      verdict: verdict,
+    );
+  }
+
+  /// Calcula métricas diarias para todas las criptomonedas
+  @override
+  Future<Map<String, DailyMetrics>> calculateAllDailyMetrics() async {
+    AppLogger.info('Calculating all daily metrics');
+
+    final cryptos = await getAllCryptos();
+
+    // Obtener todos los precios de cierre anterior en paralelo
+    final futures = cryptos.map((crypto) async {
+      try {
+        final close = await _priceDataPort.getPreviousClose(crypto.symbol);
+        // Usamos MapEntry para mantener la asociación símbolo -> precio
+        return MapEntry(crypto.symbol, close);
+      } catch (e) {
+        AppLogger.warning(
+          'Could not get previous close for ${crypto.symbol}: $e',
+        );
+        // Retornamos null para indicar que esta llamada falló
+        return MapEntry(crypto.symbol, null);
+      }
+    }).toList();
+
+    // Esperamos a que todas las llamadas terminen, incluso si algunas fallaron
+    final results = await Future.wait(futures);
+
+    // Construimos el mapa de precios de cierre, ignorando los que fallaron
+    final previousCloses = <String, double>{};
+    for (final result in results) {
+      if (result.value != null) {
+        previousCloses[result.key] = result.value!;
+      }
+    }
+
+    // Generar veredictos con LLM si está disponible
+    Map<String, String>? verdicts;
+    // TODO: Implementar generación de veredictos en batch con LLM
+
+    return _calculator.calculateBatchMetrics(
+      cryptos,
+      previousCloses: previousCloses,
+      verdicts: verdicts,
+    );
+  }
+
+  /// Obtiene métricas con alertas activas
+  @override
+  Future<List<DailyMetrics>> getActiveAlerts() async {
+    try {
+      final metricsMap = await calculateAllDailyMetrics();
+      return _calculator.filterAlerts(metricsMap);
+    } catch (e) {
+      throw Exception('Error al obtener alertas: $e');
+    }
+  }
+
+  /// Obtiene las mejores oportunidades de compra
+  @override
+  Future<List<DailyMetrics>> getTopOpportunities({int limit = 5}) async {
+    try {
+      final metricsMap = await calculateAllDailyMetrics();
+      return _calculator.getTopOpportunities(metricsMap, limit: limit);
+    } catch (e) {
+      throw Exception('Error al obtener oportunidades: $e');
+    }
+  }
+
+  /// Guarda métricas en caché (implementación básica)
+  @override
+  Future<void> cacheMetrics(Map<String, DailyMetrics> metrics) async {
+    // TODO: Implementar caché con SharedPreferences
+  }
+
+  /// Obtiene métricas desde caché (implementación básica)
+  @override
+  Future<Map<String, DailyMetrics>?> getCachedMetrics() async {
+    // TODO: Implementar caché con SharedPreferences
+    return null;
+  }
+}
