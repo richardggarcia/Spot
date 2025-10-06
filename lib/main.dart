@@ -25,10 +25,8 @@ class SpotTradingApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => CryptoBloc(
-            getCryptoDataUseCase: ServiceLocator.get(),
-            getAlertsUseCase: ServiceLocator.get(),
-          )..add(const GetAllCryptosWithMetrics()),
+          create: (context) => ServiceLocator.get<CryptoBloc>()
+            ..add(const GetAllCryptosWithMetrics()),
         ),
         BlocProvider(
           create: (context) =>

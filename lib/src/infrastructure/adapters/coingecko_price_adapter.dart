@@ -125,53 +125,23 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
 
   @override
   Future<double> getPreviousClose(String symbol) async {
+    // NOTA: Esta función ahora calcula un cierre anterior APROXIMADO.
+    // La llamada a /ohlc de CoinGecko es inestable para algunas monedas.
+    // Usamos los datos de 24h que ya tenemos para evitar una llamada de red adicional y frágil.
     try {
-      AppLogger.info('Fetching previous close from CoinGecko for: $symbol');
-
-      final coinId = _symbolToCoinGeckoId(symbol);
-
-      // Obtener datos OHLC de los últimos 2 días
-      final response = await _dio.get(
-        '$_baseUrl/coins/$coinId/ohlc',
-        queryParameters: {
-          'vs_currency': 'usd',
-          'days': '2',
-          if (_apiKey != null) 'x_cg_demo_api_key': _apiKey,
-        },
-      );
-
-      if (response.statusCode != 200) {
-        throw ApiException(
-          'CoinGecko API error',
-          statusCode: response.statusCode,
-        );
+      final crypto = await getPriceForSymbol(symbol);
+      if (crypto == null) {
+        throw ApiException('No se pudo obtener el precio para $symbol para calcular el cierre anterior.');
       }
 
-      final List<dynamic> ohlc = response.data as List<dynamic>;
+      // Cierre Anterior ≈ Precio Actual - Cambio de las 24h
+      final previousClose = crypto.currentPrice - crypto.priceChange24h;
+      AppLogger.info('Approx. previous close for $symbol: $previousClose');
+      return previousClose;
 
-      if (ohlc.length < 2) {
-        throw ApiException('Insufficient OHLC data from CoinGecko');
-      }
-
-      // OHLC format: [timestamp, open, high, low, close]
-      // Penúltima vela = ayer
-      final yesterdayOhlc = ohlc[ohlc.length - 2] as List<dynamic>;
-      final yesterdayClose = (yesterdayOhlc[4] as num).toDouble();
-
-      AppLogger.info('Previous close for $symbol: $yesterdayClose');
-      return yesterdayClose;
-    } on DioException catch (e) {
-      AppLogger.error(
-        'Network error fetching previous close from CoinGecko',
-        e,
-      );
-      throw NetworkException(
-        'Error de Conexión: Datos de Precio no disponibles',
-        originalError: e,
-      );
     } catch (e) {
       AppLogger.error(
-        'Unexpected error fetching previous close from CoinGecko',
+        'Unexpected error calculating previous close for $symbol',
         e,
       );
       rethrow;
@@ -185,10 +155,11 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
     return Crypto(
       symbol: symbol,
       name: json['name'] as String,
+      imageUrl: json['image'] as String?,
       currentPrice: (json['current_price'] as num).toDouble(),
       priceChange24h: (json['price_change_24h'] as num).toDouble(),
       priceChangePercent24h:
-          (json['price_change_percentage_24h'] as num).toDouble() / 100,
+          (json['price_change_percentage_24h'] as num).toDouble(), // Ya viene en %, no dividir
       high24h: (json['high_24h'] as num).toDouble(),
       low24h: (json['low_24h'] as num).toDouble(),
       open24h:

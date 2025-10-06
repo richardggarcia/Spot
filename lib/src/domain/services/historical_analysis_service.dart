@@ -22,9 +22,9 @@ class HistoricalAnalysisService {
     final sortedCandles = List<DailyCandle>.from(candles)
       ..sort((a, b) => a.date.compareTo(b.date));
 
-    // Usar mes/año del primer candle si no se especifica
-    final reportMonth = month ?? sortedCandles.first.date.month;
-    final reportYear = year ?? sortedCandles.first.date.year;
+    // Usar mes/año del ÚLTIMO candle (más reciente) si no se especifica
+    final reportMonth = month ?? sortedCandles.last.date.month;
+    final reportYear = year ?? sortedCandles.last.date.year;
 
     // Filtrar solo candles del mes y año especificado
     final filteredCandles = sortedCandles.where((candle) {

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../domain/ports/streaming_data_port.dart';
 
 /// Eventos para el BLoC de criptomonedas
 abstract class CryptoEvent extends Equatable {
@@ -41,4 +42,31 @@ class RefreshCrypto extends CryptoEvent {
 /// Evento para obtener todas las criptomonedas con métricas
 class GetAllCryptosWithMetrics extends CryptoEvent {
   const GetAllCryptosWithMetrics();
+}
+
+// --- Eventos para WebSocket ---
+
+/// Inicia la conexión WebSocket para recibir actualizaciones en tiempo real.
+class StartRealtimeUpdates extends CryptoEvent {
+  final List<String> symbols;
+
+  const StartRealtimeUpdates(this.symbols);
+
+  @override
+  List<Object?> get props => [symbols];
+}
+
+/// Detiene la conexión WebSocket.
+class StopRealtimeUpdates extends CryptoEvent {
+  const StopRealtimeUpdates();
+}
+
+/// Evento interno para procesar un tick de precio recibido.
+class PriceTickReceived extends CryptoEvent {
+  final RealtimePriceTick tick;
+
+  const PriceTickReceived(this.tick);
+
+  @override
+  List<Object?> get props => [tick];
 }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/crypto.dart';
 import '../../domain/entities/daily_metrics.dart';
 
-/// Widget de tarjeta individual para mostrar información de criptomoneda
-/// Muestra precio, caída, rebote y veredicto con indicadores visuales
+/// Widget de tarjeta individual para mostrar información de criptomoneda.
+/// Diseño v3: Muestra datos de mercado claros y el análisis de oportunidad.
 class CryptoCardWidget extends StatelessWidget {
   final Crypto crypto;
   final DailyMetrics? metrics;
@@ -18,154 +18,29 @@ class CryptoCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasAlert = metrics?.hasAlert ?? false;
-    final isOpportunity = metrics?.isBuyOpportunity ?? false;
+    final textTheme = Theme.of(context).textTheme;
+    final isPositive = crypto.priceChange24h >= 0;
+    final changeColor = isPositive ? Colors.green[700] : Colors.red[700];
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 4,
-      color: hasAlert ? Colors.red[50] : null,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header con símbolo y precio
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    crypto.symbol,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[800],
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        '\$${crypto.formattedPrice}',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      if (hasAlert) ...[
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.notifications_active,
-                          color: Colors.red[600],
-                          size: 20,
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // Métricas de caída y rebote
+              // --- SECCIÓN 1: DATOS DE MERCADO ---
+              _buildMarketData(textTheme, changeColor),
+              
+              // --- SECCIÓN 2: ANÁLISIS INTERNO ---
               if (metrics != null) ...[
-                Row(
-                  children: [
-                    // Caída profunda
-                    Expanded(
-                      child: _MetricWidget(
-                        label: 'Caída',
-                        value: '${metrics!.deepDrop.toStringAsFixed(2)}%',
-                        color: _getDropColor(metrics!.deepDrop),
-                        icon: Icons.trending_down,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Rebote
-                    Expanded(
-                      child: _MetricWidget(
-                        label: 'Rebote',
-                        value: '${metrics!.rebound.toStringAsFixed(2)}%',
-                        color: _getReboundColor(metrics!.rebound),
-                        icon: Icons.trending_up,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                // Veredicto
-                Row(
-                  children: [
-                    Icon(
-                      isOpportunity ? Icons.star : Icons.info_outline,
-                      size: 16,
-                      color: isOpportunity
-                          ? Colors.amber[600]
-                          : Colors.grey[600],
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        metrics!.verdict ?? 'Analizando...',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontStyle: metrics!.verdict == null
-                              ? FontStyle.italic
-                              : FontStyle.normal,
-                          color: Colors.grey[700],
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ] else ...[
-                // Estado loading si no hay métricas
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.grey[400]!,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Calculando métricas...',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ],
-
-              // Indicador de alerta activa
-              if (hasAlert) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.red[100],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'ALERTA ACTIVA',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.red[800],
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                    ),
-                  ),
-                ),
+                const Divider(height: 24, thickness: 0.5),
+                _buildAnalysisData(textTheme),
               ],
             ],
           ),
@@ -174,74 +49,127 @@ class CryptoCardWidget extends StatelessWidget {
     );
   }
 
-  /// Obtiene el color para la caída según su magnitud
-  Color _getDropColor(double drop) {
-    if (drop <= -8.0) return Colors.red[900]!;
-    if (drop <= -5.0) return Colors.red[600]!;
-    if (drop <= -3.0) return Colors.orange[600]!;
-    if (drop <= -1.0) return Colors.yellow[700]!;
-    return Colors.grey[600]!;
-  }
-
-  /// Obtiene el color para el rebote según su magnitud
-  Color _getReboundColor(double rebound) {
-    if (rebound >= 5.0) return Colors.green[700]!;
-    if (rebound >= 3.0) return Colors.green[600]!;
-    if (rebound >= 1.0) return Colors.lightGreen[600]!;
-    return Colors.grey[600]!;
-  }
-}
-
-/// Widget para mostrar una métrica individual
-class _MetricWidget extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final IconData icon;
-
-  const _MetricWidget({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 16),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  /// Construye la sección de datos de mercado (logo, precio, cambio).
+  Widget _buildMarketData(TextTheme textTheme, Color? changeColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Fila 1: Logo, Símbolo y Precio
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Row(
               children: [
+                // Logo de la moneda
+                if (crypto.imageUrl != null)
+                  Image.network(
+                    crypto.imageUrl!,
+                    height: 28,
+                    width: 28,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.currency_bitcoin, size: 28),
+                  )
+                else
+                  const Icon(Icons.currency_bitcoin, size: 28),
+                
+                const SizedBox(width: 12),
+                
+                // Símbolo
                 Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                    fontSize: 10,
-                  ),
-                ),
-                Text(
-                  value,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  crypto.symbol,
+                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
+            // Precio
+            Text(
+              '\$${crypto.formattedPrice}',
+              style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 8),
+
+        // Fila 2: Cambio 24h (%, $)
+        Row(
+          children: [
+            Icon(
+              crypto.isPositive ? Icons.trending_up : Icons.trending_down,
+              color: changeColor,
+              size: 20,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '${crypto.priceChange24h.toStringAsFixed(2)} (${crypto.formattedChangePercent})',
+              style: textTheme.titleMedium?.copyWith(
+                color: changeColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Hoy',
+              style: textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ],
     );
+  }
+
+  /// Construye la sección de análisis (veredicto, oportunidad).
+  Widget _buildAnalysisData(TextTheme textTheme) {
+    final verdict = metrics!.verdict ?? _getDefaultVerdict(metrics!);
+    final icon = _getVerdictIcon(metrics!);
+
+    return Row(
+      children: [
+        Icon(icon.icon, color: icon.color, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            verdict,
+            style: textTheme.bodyMedium?.copyWith(
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Obtiene el icono y color según el veredicto.
+  ({IconData icon, Color color}) _getVerdictIcon(DailyMetrics metrics) {
+    if (metrics.isBuyOpportunity) {
+      return (icon: Icons.star, color: Colors.amber.shade700);
+    }
+    if (metrics.hasAlert) {
+      return (icon: Icons.warning, color: Colors.orange.shade700);
+    }
+    if (metrics.deepDrop <= -0.015) {
+      return (icon: Icons.visibility, color: Colors.blue.shade700);
+    }
+    return (icon: Icons.info_outline, color: Colors.grey.shade600);
+  }
+
+  /// Genera un veredicto por defecto si el LLM no provee uno.
+  String _getDefaultVerdict(DailyMetrics metrics) {
+    if (metrics.isBuyOpportunity) {
+      return 'Oportunidad: Caída fuerte del ${metrics.formattedDeepDrop}. Monitorear.';
+    }
+    if (metrics.hasAlert) {
+      return 'Alerta: Caída significativa del ${metrics.formattedDeepDrop}.';
+    }
+    if (metrics.deepDrop <= -0.015) {
+      return 'Monitorear: Caída leve del ${metrics.formattedDeepDrop}.';
+    }
+    if (metrics.rebound >= 0.03) {
+      return 'Recuperación del ${metrics.formattedRebound} en curso.';
+    }
+    return 'Sin movimientos significativos.';
   }
 }

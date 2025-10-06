@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 
 import '../../domain/ports/price_data_port.dart';
+import '../../domain/ports/streaming_data_port.dart';
 import '../../domain/repositories/crypto_repository.dart';
 import '../../domain/use_cases/get_crypto_data_usecase.dart';
 import '../../domain/use_cases/get_alerts_usecase.dart';
@@ -9,7 +10,10 @@ import '../../domain/services/trading_calculator.dart';
 import '../../infrastructure/adapters/binance_price_adapter.dart';
 import '../../infrastructure/adapters/coingecko_price_adapter.dart';
 import '../../infrastructure/adapters/hybrid_price_adapter.dart';
+import '../../infrastructure/adapters/logo_enrichment_adapter.dart';
+import '../../infrastructure/streaming/binance_streaming_service.dart';
 import '../../infrastructure/repositories/crypto_repository_impl.dart';
+import '../../presentation/bloc/crypto/crypto_bloc.dart';
 import '../constants/app_constants.dart';
 
 /// Configuración de inyección de dependencias
@@ -32,39 +36,60 @@ class ServiceLocator {
     // Domain Services
     _getIt.registerLazySingleton<TradingCalculator>(() => TradingCalculator());
 
-    // Adapters (Ports implementations)
-    // 1. Binance Adapter (Principal - gratis, sin límites)
+    // --- Adapters (Ports implementations) ---
+
+    // Adapter de CoinGecko (se usará para enriquecer logos)
+    _getIt.registerLazySingleton<CoinGeckoPriceAdapter>(
+      () => CoinGeckoPriceAdapter(apiKey: coinGeckoApiKey),
+    );
+
+    // Adapter para enriquecer con logos
+    _getIt.registerLazySingleton<LogoEnrichmentAdapter>(
+      () => LogoEnrichmentAdapter(_getIt<CoinGeckoPriceAdapter>()),
+    );
+
+    // 1. Price Data Port (Hybrid Adapter)
     _getIt.registerLazySingleton<PriceDataPort>(
       () => HybridPriceAdapter(
         primaryAdapter: BinancePriceAdapter(),
-        backupAdapter: CoinGeckoPriceAdapter(
-          apiKey: coinGeckoApiKey, // Opcional: API key para más calls
-        ),
+        backupAdapter: _getIt<CoinGeckoPriceAdapter>(),
       ),
-      instanceName: 'hybrid',
     );
+
+    // 2. Streaming Data Port (WebSocket)
+    _getIt.registerLazySingleton<StreamingDataPort>(() => BinanceStreamingService());
 
     // LLM Port (opcional, para veredictos)
     // TODO: Implementar adapter para LLM cuando esté disponible
     // _getIt.registerLazySingleton<LlmAnalysisPort>(() => ...);
 
-    // Repositories
+    // --- Repositories ---
     _getIt.registerLazySingleton<CryptoRepository>(
       () => CryptoRepositoryImpl(
-        priceDataPort: _getIt<PriceDataPort>(instanceName: 'hybrid'),
+        priceDataPort: _getIt<PriceDataPort>(),
+        logoEnrichmentAdapter: _getIt<LogoEnrichmentAdapter>(), // <-- Inyectado
         llmPort: null, // Sin LLM por ahora
         calculator: _getIt<TradingCalculator>(),
         monitoredSymbols: _getIt<List<String>>(),
       ),
     );
 
-    // Use Cases
+    // --- Use Cases ---
     _getIt.registerLazySingleton<GetCryptoDataUseCase>(
       () => GetCryptoDataUseCase(_getIt<CryptoRepository>()),
     );
 
     _getIt.registerLazySingleton<GetAlertsUseCase>(
       () => GetAlertsUseCase(_getIt<CryptoRepository>()),
+    );
+
+    // --- BLoCs ---
+    _getIt.registerFactory<CryptoBloc>(
+      () => CryptoBloc(
+        getCryptoDataUseCase: _getIt<GetCryptoDataUseCase>(),
+        getAlertsUseCase: _getIt<GetAlertsUseCase>(),
+        streamingDataPort: _getIt<StreamingDataPort>(),
+      ),
     );
   }
 

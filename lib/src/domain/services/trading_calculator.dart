@@ -30,9 +30,11 @@ class TradingCalculator {
   }
 
   /// Determina si hay una alerta de compra
-  /// Criterios: caída <= -5% Y rebote >= +3%
+  /// Criterio principal: caída <= -3% (rebote no es requisito)
   bool hasAlert({required double deepDrop, required double rebound}) {
-    return deepDrop <= -0.05 && rebound >= 0.03;
+    // Alerta cuando hay caída significativa (≥3%)
+    // El rebote es secundario, solo verificamos que no sea negativo
+    return deepDrop <= -0.03;
   }
 
   /// Calcula métricas diarias completas para una criptomoneda

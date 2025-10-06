@@ -1,3 +1,4 @@
+import '../adapters/logo_enrichment_adapter.dart';
 import '../../domain/entities/crypto.dart';
 import '../../domain/entities/daily_metrics.dart';
 import '../../domain/ports/price_data_port.dart';
@@ -11,16 +12,19 @@ import '../../core/utils/logger.dart';
 /// Sigue arquitectura hexagonal - independiente de implementaciones específicas
 class CryptoRepositoryImpl implements CryptoRepository {
   final PriceDataPort _priceDataPort;
+  final LogoEnrichmentAdapter _logoEnrichmentAdapter;
   final LlmAnalysisPort? _llmPort;
   final TradingCalculator _calculator;
   final List<String> _monitoredSymbols;
 
   CryptoRepositoryImpl({
     required PriceDataPort priceDataPort,
+    required LogoEnrichmentAdapter logoEnrichmentAdapter,
     LlmAnalysisPort? llmPort,
     required TradingCalculator calculator,
     required List<String> monitoredSymbols,
   }) : _priceDataPort = priceDataPort,
+       _logoEnrichmentAdapter = logoEnrichmentAdapter,
        _llmPort = llmPort,
        _calculator = calculator,
        _monitoredSymbols = monitoredSymbols;
@@ -28,19 +32,22 @@ class CryptoRepositoryImpl implements CryptoRepository {
   @override
   Future<List<Crypto>> getAllCryptos() async {
     AppLogger.info('Getting all cryptos for symbols: $_monitoredSymbols');
-    return await _priceDataPort.getPricesForSymbols(_monitoredSymbols);
+    final cryptos = await _priceDataPort.getPricesForSymbols(_monitoredSymbols);
+    return await _logoEnrichmentAdapter.enrichLogos(cryptos);
   }
 
   @override
   Future<Crypto?> getCryptoBySymbol(String symbol) async {
     AppLogger.info('Getting crypto for symbol: $symbol');
+    // El enriquecimiento de logo se hace principalmente en listas
     return await _priceDataPort.getPriceForSymbol(symbol);
   }
 
   @override
   Future<List<Crypto>> getCryptosBySymbols(List<String> symbols) async {
     AppLogger.info('Getting cryptos for symbols: $symbols');
-    return await _priceDataPort.getPricesForSymbols(symbols);
+    final cryptos = await _priceDataPort.getPricesForSymbols(symbols);
+    return await _logoEnrichmentAdapter.enrichLogos(cryptos);
   }
 
   @override

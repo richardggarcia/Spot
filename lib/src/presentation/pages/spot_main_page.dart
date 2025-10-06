@@ -47,94 +47,126 @@ class SpotMainPage extends StatelessWidget {
   }
 
   void _refreshAll(BuildContext context) {
-    context.read<CryptoBloc>().add(const RefreshCryptos());
+    context.read<CryptoBloc>().add(const GetAllCryptosWithMetrics());
     context.read<AlertsBloc>().add(const RefreshAlerts());
   }
 }
 
-/// Tab de mercado
-class _MarketTab extends StatelessWidget {
+/// Tab de mercado, ahora con estado para manejar el ciclo de vida del WebSocket.
+class _MarketTab extends StatefulWidget {
   const _MarketTab();
 
   @override
+  State<_MarketTab> createState() => _MarketTabState();
+}
+
+class _MarketTabState extends State<_MarketTab> {
+  @override
+  void initState() {
+    super.initState();
+    // El BLoC ya se carga inicialmente desde main.dart.
+    // Aquí iniciamos el stream en cuanto la UI esté lista.
+    // Usamos un BlocListener para asegurarnos de tener los símbolos antes de conectar.
+  }
+
+  @override
+  void dispose() {
+    // Detenemos las actualizaciones en tiempo real al salir de la pantalla.
+    context.read<CryptoBloc>().add(const StopRealtimeUpdates());
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CryptoBloc, CryptoState>(
-      builder: (context, state) {
-        if (state is CryptoLoading || state is CryptoInitial) {
-          return const LoadingWidget(message: 'Cargando datos del mercado...');
-        } else if (state is CryptoError) {
-          return AppErrorWidget(
-            message: state.message,
-            onRetry: () => context.read<CryptoBloc>().add(
-              const GetAllCryptosWithMetrics(),
-            ),
-          );
-        } else if (state is CryptoWithMetricsLoaded) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<CryptoBloc>().add(const GetAllCryptosWithMetrics());
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: state.cryptos.length,
-              itemBuilder: (context, index) {
-                final crypto = state.cryptos[index];
-                final metrics = state.metrics[crypto.symbol];
-
-                return CryptoCardWidget(
-                  crypto: crypto,
-                  metrics: metrics,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HistoricalViewPage(
-                          symbol: crypto.symbol,
-                          cryptoName: crypto.name,
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          );
-        } else if (state is CryptoLoaded || state is CryptoRefreshing) {
-          // Mantener compatibilidad con estado anterior
-          final cryptos = state is CryptoLoaded
-              ? state.cryptos
-              : (state as CryptoRefreshing).cryptos;
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<CryptoBloc>().add(const GetAllCryptosWithMetrics());
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: cryptos.length,
-              itemBuilder: (context, index) {
-                final crypto = cryptos[index];
-
-                return CryptoCardWidget(
-                  crypto: crypto,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HistoricalViewPage(
-                          symbol: crypto.symbol,
-                          cryptoName: crypto.name,
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          );
+    return BlocListener<CryptoBloc, CryptoState>(
+      listener: (context, state) {
+        // Una vez que tenemos la lista de criptos, iniciamos el WebSocket.
+        if (state is CryptoWithMetricsLoaded) {
+          final symbols = state.cryptos.map((c) => c.symbol).toList();
+          context.read<CryptoBloc>().add(StartRealtimeUpdates(symbols));
         }
-        return const SizedBox.shrink();
       },
+      // Escuchamos solo la primera vez que se carga.
+      listenWhen: (previous, current) =>
+          previous is! CryptoWithMetricsLoaded && current is CryptoWithMetricsLoaded,
+      child: BlocBuilder<CryptoBloc, CryptoState>(
+        builder: (context, state) {
+          if (state is CryptoLoading || state is CryptoInitial) {
+            return const LoadingWidget(message: 'Cargando datos del mercado...');
+          } else if (state is CryptoError) {
+            return AppErrorWidget(
+              message: state.message,
+              onRetry: () => context.read<CryptoBloc>().add(
+                const GetAllCryptosWithMetrics(),
+              ),
+            );
+          } else if (state is CryptoWithMetricsLoaded) {
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<CryptoBloc>().add(const GetAllCryptosWithMetrics());
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: state.cryptos.length,
+                itemBuilder: (context, index) {
+                  final crypto = state.cryptos[index];
+                  final metrics = state.metrics[crypto.symbol];
+
+                  return CryptoCardWidget(
+                    crypto: crypto,
+                    metrics: metrics,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HistoricalViewPage(
+                            symbol: crypto.symbol,
+                            cryptoName: crypto.name,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            );
+          } else if (state is CryptoLoaded || state is CryptoRefreshing) {
+            // Fallback para estados más antiguos, aunque el flujo principal usa CryptoWithMetricsLoaded
+            final cryptos = state is CryptoLoaded
+                ? state.cryptos
+                : (state as CryptoRefreshing).cryptos;
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<CryptoBloc>().add(const GetAllCryptosWithMetrics());
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: cryptos.length,
+                itemBuilder: (context, index) {
+                  final crypto = cryptos[index];
+
+                  return CryptoCardWidget(
+                    crypto: crypto,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HistoricalViewPage(
+                            symbol: crypto.symbol,
+                            cryptoName: crypto.name,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 }
@@ -241,7 +273,7 @@ class _NoAlertsWidget extends StatelessWidget {
           ),
           SizedBox(height: 8),
           Text(
-            'No hay oportunidades que cumplan con los criterios actuales:\n• Caída ≤ -5%\n• Rebote ≥ +3%',
+            'No hay caídas significativas en el mercado:\n• Esperando caída ≥ -3%',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Colors.grey),
           ),

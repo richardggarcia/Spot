@@ -18,6 +18,16 @@ class GetAlertsUseCase {
     }
   }
 
+  /// Ejecuta el caso de uso: obtiene TODAS las métricas sin filtrar
+  Future<List<DailyMetrics>> executeAllMetrics() async {
+    try {
+      final metricsMap = await _cryptoRepository.calculateAllDailyMetrics();
+      return metricsMap.values.toList();
+    } catch (e) {
+      throw Exception('Error al obtener métricas: $e');
+    }
+  }
+
   /// Ejecuta el caso de uso: obtiene las mejores oportunidades
   Future<List<DailyMetrics>> executeTopOpportunities({int limit = 5}) async {
     try {

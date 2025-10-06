@@ -165,13 +165,28 @@ class BinancePriceAdapter implements PriceDataPort {
   Crypto _mapToCrypto(Map<String, dynamic> json) {
     final symbol = (json['symbol'] as String).replaceAll('USDT', '');
 
+    // Mapa local para logos de monedas principales
+    final logoMap = {
+      'BTC': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1.png',
+      'ETH': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png',
+      'BNB': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png',
+      'BCH': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1831.png',
+      'LTC': 'https://s2.coinmarketcap.com/static/img/coins/64x64/2.png',
+      'SOL': 'https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png',
+      'SUI': 'https://s2.coinmarketcap.com/static/img/coins/64x64/20947.png',
+      'XRP': 'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png',
+      'LINK': 'https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png',
+      'TON': 'https://s2.coinmarketcap.com/static/img/coins/64x64/11419.png',
+    };
+
     return Crypto(
       symbol: symbol,
       name: _getDefaultName(symbol),
+      imageUrl: logoMap[symbol], // Asignar logo desde el mapa
       currentPrice: double.parse(json['lastPrice'] as String),
       priceChange24h: double.parse(json['priceChange'] as String),
       priceChangePercent24h:
-          double.parse(json['priceChangePercent'] as String) / 100,
+          double.parse(json['priceChangePercent'] as String),
       high24h: double.parse(json['highPrice'] as String),
       low24h: double.parse(json['lowPrice'] as String),
       open24h: double.parse(json['openPrice'] as String),

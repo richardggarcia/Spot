@@ -45,12 +45,14 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> {
     }
 
     try {
+      // Obtener 60 días para tener mes anterior + mes actual
       final candles = await _priceAdapter.getHistoricalData(
         widget.symbol,
-        days: 30,
+        days: 60,
       );
       if (!mounted) return;
 
+      // Generar reporte solo del mes más reciente con datos
       final report = _analysisService.generateMonthlyReport(
         symbol: widget.symbol,
         cryptoName: widget.cryptoName,
@@ -271,25 +273,35 @@ class _DayCard extends StatelessWidget {
     final dateStr =
         '${analysis.date.day.toString().padLeft(2, '0')}/${analysis.date.month.toString().padLeft(2, '0')}';
 
+    // Detectar si es hoy
+    final now = DateTime.now();
+    final isToday = analysis.date.year == now.year &&
+        analysis.date.month == now.month &&
+        analysis.date.day == now.day;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: analysis.hasAlert
-            ? Colors.orange.withAlpha(20)
-            : Colors.grey.shade50,
+        color: isToday
+            ? Colors.blue.withAlpha(30)
+            : (analysis.hasAlert
+                ? Colors.orange.withAlpha(20)
+                : Colors.grey.shade50),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: analysis.hasAlert
-              ? Colors.orange.shade200
-              : Colors.grey.shade200,
-          width: 1,
+          color: isToday
+              ? Colors.blue.shade400
+              : (analysis.hasAlert
+                  ? Colors.orange.shade200
+                  : Colors.grey.shade200),
+          width: isToday ? 2 : 1,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Línea 1: Fecha + Día + Caída
+          // Línea 1: Fecha + Día + Badge "EN VIVO" + Caída
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -310,6 +322,24 @@ class _DayCard extends StatelessWidget {
                       fontSize: 13,
                     ),
                   ),
+                  if (isToday) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade700,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'EN VIVO',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
               Row(

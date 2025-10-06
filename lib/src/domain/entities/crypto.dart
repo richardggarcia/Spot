@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 class Crypto extends Equatable {
   final String symbol;
   final String name;
+  final String? imageUrl; // <-- AÑADIDO
   final double currentPrice;
   final double priceChange24h;
   final double priceChangePercent24h;
@@ -17,6 +18,7 @@ class Crypto extends Equatable {
   const Crypto({
     required this.symbol,
     required this.name,
+    this.imageUrl, // <-- AÑADIDO
     required this.currentPrice,
     required this.priceChange24h,
     required this.priceChangePercent24h,
@@ -71,12 +73,12 @@ class Crypto extends Equatable {
 
   /// Formateo privado de precios
   String _formatPrice(double price) {
-    if (price >= 1000) {
+    if (price >= 100) {
       return price.toStringAsFixed(2);
     } else if (price >= 1) {
-      return price.toStringAsFixed(4);
+      return price.toStringAsFixed(3);
     } else {
-      return price.toStringAsFixed(6);
+      return price.toStringAsFixed(5);
     }
   }
 
@@ -84,6 +86,7 @@ class Crypto extends Equatable {
   Crypto copyWith({
     String? symbol,
     String? name,
+    String? imageUrl,
     double? currentPrice,
     double? priceChange24h,
     double? priceChangePercent24h,
@@ -96,6 +99,7 @@ class Crypto extends Equatable {
     return Crypto(
       symbol: symbol ?? this.symbol,
       name: name ?? this.name,
+      imageUrl: imageUrl ?? this.imageUrl,
       currentPrice: currentPrice ?? this.currentPrice,
       priceChange24h: priceChange24h ?? this.priceChange24h,
       priceChangePercent24h:
