@@ -30,6 +30,24 @@ class DailyAnalysis extends Equatable {
   /// Precio de oportunidad (mínimo del día)
   double get opportunityPrice => candle.low;
 
+  // --- Getters para formateo ---
+
+  String get formattedDeepDrop {
+    final percentage = (deepDrop * 100);
+    return '${percentage.toStringAsFixed(1)}%';
+  }
+
+  String get formattedRebound {
+    final percentage = (rebound * 100);
+    return '${percentage.toStringAsFixed(1)}%';
+  }
+
+  String get formattedNetChange {
+    final percentage = (netChange * 100);
+    final sign = percentage >= 0 ? '+' : '';
+    return '$sign${percentage.toStringAsFixed(1)}%';
+  }
+
   /// Factory para crear desde un candle
   factory DailyAnalysis.fromCandle({
     required DailyCandle candle,
@@ -39,7 +57,7 @@ class DailyAnalysis extends Equatable {
     final deepDrop = candle.calculateDeepDrop(previousClose);
     final rebound = candle.calculateRebound();
     final netChange = (candle.close / previousClose) - 1;
-    final hasAlert = deepDrop <= -0.05 && rebound >= 0.03;
+    final hasAlert = deepDrop <= -0.03; // <-- LÓGICA DE ALERTA CAMBIADA AL 3% DE CAÍDA
 
     // Veredicto automático si no se provee
     final autoVerdict =

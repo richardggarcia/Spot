@@ -1,4 +1,4 @@
-package com.example.pulso_spot_diario_cripto
+package com.spottrading.app
 
 import io.flutter.embedding.android.FlutterActivity
 

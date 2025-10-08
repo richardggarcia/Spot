@@ -1,3 +1,6 @@
+import '../../core/utils/logger.dart';
+import 'dart:collection';
+
 import '../entities/daily_candle.dart';
 import '../entities/daily_analysis.dart';
 import '../entities/weekly_summary.dart';
@@ -6,6 +9,57 @@ import '../entities/monthly_report.dart';
 /// Servicio de dominio para generar análisis históricos
 /// Procesa velas diarias y genera reportes semanales/mensuales
 class HistoricalAnalysisService {
+
+  /// Genera una lista de reportes para los últimos meses a partir de una lista de velas.
+  List<MonthlyReport> generateReportsForLastMonths({
+    required String symbol,
+    required String cryptoName,
+    required List<DailyCandle> candles,
+    int monthsToGenerate = 3,
+  }) {
+    if (candles.isEmpty) {
+      return [];
+    }
+
+    // Agrupar velas por mes y año
+    final groupedByMonth = SplayTreeMap<String, List<DailyCandle>>();
+    for (final candle in candles) {
+      final key = '${candle.date.year}-${candle.date.month.toString().padLeft(2, '0')}';
+      if (!groupedByMonth.containsKey(key)) {
+        groupedByMonth[key] = [];
+      }
+      groupedByMonth[key]!.add(candle);
+    }
+
+    // Generar un reporte para cada mes, empezando por el más reciente
+    final reports = <MonthlyReport>[];
+    final sortedKeys = groupedByMonth.keys.toList()..sort((a, b) => b.compareTo(a));
+
+    for (var i = 0; i < sortedKeys.length && i < monthsToGenerate; i++) {
+      final key = sortedKeys[i];
+      final monthCandles = groupedByMonth[key]!;
+      final year = int.parse(key.split('-')[0]);
+      final month = int.parse(key.split('-')[1]);
+
+      try {
+        final report = generateMonthlyReport(
+          symbol: symbol,
+          cryptoName: cryptoName,
+          candles: monthCandles, // Pasamos solo las velas del mes
+          month: month,
+          year: year,
+        );
+        reports.add(report);
+      } catch (e) {
+        // Ignorar meses si fallan (ej. datos incompletos)
+        AppLogger.error('Error generating report for $key: $e');
+      }
+    }
+
+    return reports;
+  }
+
+
   /// Genera reporte mensual completo a partir de velas diarias
   MonthlyReport generateMonthlyReport({
     required String symbol,

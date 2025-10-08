@@ -22,11 +22,13 @@ class WeeklySummaryWidget extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              '📈 Resumen Semanal de Volatilidad',
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue.shade900,
+            child: Center(
+              child: Text(
+                '📈 Resumen Semanal de Volatilidad',
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade900,
+                ),
               ),
             ),
           ),

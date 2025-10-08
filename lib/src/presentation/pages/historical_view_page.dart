@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
+
 import '../../domain/entities/monthly_report.dart';
-import '../../domain/entities/weekly_summary.dart';
 import '../../domain/entities/daily_analysis.dart';
 import '../../infrastructure/adapters/binance_price_adapter.dart';
 import '../../domain/services/historical_analysis_service.dart';
-import '../widgets/weekly_summary_widget.dart';
 import '../widgets/monthly_panorama_widget.dart';
+import '../widgets/weekly_summary_widget.dart';
 
-/// Página de vista histórica con un diseño mejorado y optimizado.
 class HistoricalViewPage extends StatefulWidget {
   final String symbol;
   final String cryptoName;
@@ -22,13 +23,16 @@ class HistoricalViewPage extends StatefulWidget {
   State<HistoricalViewPage> createState() => _HistoricalViewPageState();
 }
 
-class _HistoricalViewPageState extends State<HistoricalViewPage> {
+class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProviderStateMixin {
   final _priceAdapter = BinancePriceAdapter();
   final _analysisService = HistoricalAnalysisService();
 
-  MonthlyReport? _report;
+  List<MonthlyReport> _reports = [];
   bool _isLoading = true;
   String? _error;
+  TabController? _tabController;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
 
   @override
   void initState() {
@@ -37,7 +41,7 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> {
   }
 
   Future<void> _loadHistoricalData() async {
-    if (!_isLoading) {
+    if (mounted) {
       setState(() {
         _isLoading = true;
         _error = null;
@@ -45,22 +49,30 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> {
     }
 
     try {
-      // Obtener 60 días para tener mes anterior + mes actual
-      final candles = await _priceAdapter.getHistoricalData(
-        widget.symbol,
-        days: 60,
-      );
+      final candles = await _priceAdapter.getHistoricalData(widget.symbol, days: 95);
       if (!mounted) return;
 
-      // Generar reporte solo del mes más reciente con datos
-      final report = _analysisService.generateMonthlyReport(
+      final reports = _analysisService.generateReportsForLastMonths(
         symbol: widget.symbol,
         cryptoName: widget.cryptoName,
         candles: candles,
       );
 
+      if (reports.isEmpty) {
+        throw Exception('No se pudieron generar reportes históricos.');
+      }
+
+      _tabController = TabController(length: reports.length, vsync: this);
+      _tabController!.addListener(() {
+        if (_tabController!.indexIsChanging) {
+          _updateFocusedDay();
+        }
+      });
+
       setState(() {
-        _report = report;
+        _reports = reports;
+        _focusedDay = _reports.first.allDays.last.date;
+        _selectedDay = _focusedDay;
         _isLoading = false;
       });
     } catch (e) {
@@ -72,196 +84,157 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> {
     }
   }
 
+  void _updateFocusedDay() {
+    final report = _reports[_tabController!.index];
+    final lastDayOfMonth = DateTime(report.year, report.month + 1, 0);
+    final now = DateTime.now();
+
+    setState(() {
+      if (report.month == now.month && report.year == now.year) {
+        _focusedDay = now;
+      } else {
+        _focusedDay = lastDayOfMonth;
+      }
+      _selectedDay = _focusedDay;
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _loadHistoricalData,
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              title: Text('${widget.cryptoName} - Histórico'),
-              backgroundColor: Colors.blue.shade800,
-              floating: true,
-              pinned: true,
-              snap: false,
-            ),
-            _buildBody(),
-          ],
-        ),
+        child: _buildBody(),
       ),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const SliverFillRemaining(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Cargando datos históricos...'),
-            ],
-          ),
-        ),
-      );
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(child: Text('Error: $_error'));
+    }
+    if (_reports.isEmpty) {
+      return const Center(child: Text('No hay datos disponibles.'));
     }
 
-    if (_error != null) {
-      return SliverFillRemaining(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                Text(
-                  'Error al cargar los datos',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _error!,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: _loadHistoricalData,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Reintentar'),
-                ),
-              ],
+    return NestedScrollView(
+      headerSliverBuilder: (context, innerBoxIsScrolled) {
+        return [
+          SliverAppBar(
+            title: Text('${widget.cryptoName} - Histórico'),
+            pinned: true,
+            floating: true,
+            forceElevated: innerBoxIsScrolled,
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: _reports.map((r) => Tab(text: r.monthName.toUpperCase())).toList(),
             ),
           ),
-        ),
-      );
-    }
-
-    if (_report == null) {
-      return const SliverFillRemaining(
-        child: Center(child: Text('No hay datos disponibles')),
-      );
-    }
-
-    return SliverList(
-      delegate: SliverChildListDelegate([
-        _buildHeader(context),
-        MonthlyPanoramaWidget(report: _report!),
-        WeeklySummaryWidget(weeks: _report!.weeks),
-        _buildWeeklyDetailsTitle(context),
-        ..._report!.weeks.map((week) => _buildWeekSection(context, week)),
-        const SizedBox(height: 40), // Espacio al final
-      ]),
+        ];
+      },
+      body: TabBarView(
+        controller: _tabController,
+        children: _reports.map((report) => _buildMonthView(report)).toList(),
+      ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade800, Colors.blue.shade900],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
+  Widget _buildMonthView(MonthlyReport report) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _report!.title,
-            style: textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Análisis de la acción del precio para ${widget.cryptoName} (${widget.symbol}) en ${_report!.monthName} ${_report!.year}.',
-            style: textTheme.bodyMedium?.copyWith(color: Colors.white70),
-          ),
+          _buildCalendar(report),
+          const SizedBox(height: 24),
+          MonthlyPanoramaWidget(report: report),
+          const SizedBox(height: 16),
+          WeeklySummaryWidget(weeks: report.weeks),
         ],
       ),
     );
   }
 
-  Widget _buildWeeklyDetailsTitle(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Text(
-        '📅 Detalle Diario por Semana',
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: Colors.blue.shade900,
+  Widget _buildCalendar(MonthlyReport report) {
+    return TableCalendar(
+      locale: 'es_ES',
+      firstDay: DateTime.utc(report.year, report.month, 1),
+      lastDay: DateTime.utc(report.year, report.month + 1, 0),
+      focusedDay: _focusedDay,
+      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+      calendarFormat: CalendarFormat.month,
+      startingDayOfWeek: StartingDayOfWeek.monday,
+      eventLoader: (day) {
+        final analysis = report.getAnalysisForDay(day);
+        // Mostrar punto si hay alerta (ahora definida por caída >= 3%)
+        if (analysis != null && analysis.hasAlert) {
+          return ['event'];
+        }
+        return [];
+      },
+      onDaySelected: (selectedDay, focusedDay) {
+        final analysis = report.getAnalysisForDay(selectedDay);
+        if (analysis != null) {
+          _showDayDetails(context, analysis);
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+        }
+      },
+      calendarBuilders: CalendarBuilders(
+        dowBuilder: (context, day) {
+          final text = DateFormat.E('es_ES').format(day);
+          final isWeekend = day.weekday == DateTime.sunday || day.weekday == DateTime.saturday;
+          return Center(
+            child: Text(
+              text.substring(0, 2), // Mostrar solo las dos primeras letras
+              style: TextStyle(
+                color: isWeekend ? Colors.red : Colors.black87,
+                fontSize: 12, // Tamaño de fuente más pequeño
+              ),
+            ),
+          );
+        },
+      ),
+      calendarStyle: CalendarStyle(
+        todayDecoration: BoxDecoration(
+          color: Colors.blue.shade200,
+          shape: BoxShape.circle,
         ),
+        selectedDecoration: BoxDecoration(
+          color: Colors.blue.shade500,
+          shape: BoxShape.circle,
+        ),
+        markerDecoration: const BoxDecoration(
+          color: Colors.red,
+          shape: BoxShape.circle,
+        ),
+      ),
+      headerStyle: const HeaderStyle(
+        titleCentered: true,
+        formatButtonVisible: false,
       ),
     );
   }
 
-  Widget _buildWeekSection(BuildContext context, WeeklySummary week) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        backgroundColor: Colors.grey.shade50,
-        collapsedBackgroundColor: Colors.white,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade700,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                'S${week.weekNumber}',
-                style: textTheme.labelLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    week.description,
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '${week.days.length} días',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        children: week.days.map((day) => _DayCard(analysis: day)).toList(),
-      ),
+  void _showDayDetails(BuildContext context, DailyAnalysis analysis) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => _DayCard(analysis: analysis),
     );
   }
 }
 
-/// Widget compacto para mostrar análisis diario (3 líneas)
+
 class _DayCard extends StatelessWidget {
   final DailyAnalysis analysis;
 
@@ -270,155 +243,59 @@ class _DayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final dateStr =
-        '${analysis.date.day.toString().padLeft(2, '0')}/${analysis.date.month.toString().padLeft(2, '0')}';
-
-    // Detectar si es hoy
-    final now = DateTime.now();
-    final isToday = analysis.date.year == now.year &&
-        analysis.date.month == now.month &&
-        analysis.date.day == now.day;
+    final dateStr = DateFormat.yMMMMEEEEd('es_ES').format(analysis.date);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isToday
-            ? Colors.blue.withAlpha(30)
-            : (analysis.hasAlert
-                ? Colors.orange.withAlpha(20)
-                : Colors.grey.shade50),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isToday
-              ? Colors.blue.shade400
-              : (analysis.hasAlert
-                  ? Colors.orange.shade200
-                  : Colors.grey.shade200),
-          width: isToday ? 2 : 1,
-        ),
-      ),
+      padding: const EdgeInsets.all(24),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Línea 1: Fecha + Día + Badge "EN VIVO" + Caída
+          Text(dateStr, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          if (analysis.verdict.isNotEmpty)
+            Text(
+              '"${analysis.verdict}"',
+              style: textTheme.titleMedium?.copyWith(fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center,
+            ),
+          const Divider(height: 32),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Row(
-                children: [
-                  Text(
-                    dateStr,
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    analysis.weekday.substring(0, 3),
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
-                      fontSize: 13,
-                    ),
-                  ),
-                  if (isToday) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade700,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'EN VIVO',
-                        style: textTheme.labelSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              Row(
-                children: [
-                  const Icon(Icons.arrow_downward, size: 14, color: Colors.red),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${(analysis.deepDrop * 100).toStringAsFixed(1)}%',
-                    style: textTheme.titleSmall?.copyWith(
-                      color: _getDeepDropColor(analysis.deepDrop),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-              ),
+              _MetricTile(label: 'Caída Profunda', value: analysis.formattedDeepDrop, color: Colors.red),
+              _MetricTile(label: 'Rebote', value: analysis.formattedRebound, color: Colors.green),
             ],
           ),
-          const SizedBox(height: 8),
-
-          // Línea 2: Precio Oportunidad
-          Text(
-            'Precio Oportunidad: \$${analysis.opportunityPrice.toStringAsFixed(2)}',
-            style: textTheme.bodyMedium?.copyWith(
-              fontSize: 13,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Línea 3: Rebote + Veredicto
-          Row(
+          const SizedBox(height: 16),
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.arrow_upward, size: 14, color: Colors.green),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${(analysis.rebound * 100).toStringAsFixed(1)}%',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: _getReboundColor(analysis.rebound),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              const Text('•', style: TextStyle(color: Colors.grey)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  analysis.verdict,
-                  style: textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: Colors.grey.shade700,
-                    fontSize: 12,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+              _MetricTile(label: 'Precio Oportunidad', value: '\$${analysis.opportunityPrice.toStringAsFixed(2)}', color: Colors.blueGrey),
+              _MetricTile(label: 'Cierre Neto', value: analysis.formattedNetChange, color: analysis.netChange >= 0 ? Colors.green : Colors.red),
             ],
           ),
         ],
       ),
     );
   }
+}
 
-  Color _getDeepDropColor(double drop) {
-    if (drop <= -0.06) return Colors.red.shade900;
-    if (drop <= -0.05) return Colors.red.shade700;
-    if (drop <= -0.03) return Colors.orange.shade800;
-    return Colors.grey.shade700;
-  }
+class _MetricTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
 
-  Color _getReboundColor(double rebound) {
-    if (rebound >= 0.05) return Colors.green.shade800;
-    if (rebound >= 0.03) return Colors.green.shade700;
-    return Colors.green.shade600;
+  const _MetricTile({required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey[600])),
+        const SizedBox(height: 4),
+        Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: color, fontWeight: FontWeight.bold)),
+      ],
+    );
   }
 }

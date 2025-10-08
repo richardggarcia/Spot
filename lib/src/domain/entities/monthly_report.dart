@@ -91,6 +91,20 @@ La Máxima Oportunidad de Compra para el spot trader se presentó el $oppDate, c
 $weeklyAnalysis''';
   }
 
+  /// Busca el análisis para un día específico.
+  DailyAnalysis? getAnalysisForDay(DateTime day) {
+    try {
+      return allDays.firstWhere(
+        (analysis) =>
+            analysis.date.year == day.year &&
+            analysis.date.month == day.month &&
+            analysis.date.day == day.day,
+      );
+    } catch (e) {
+      return null; // No se encontró el día
+    }
+  }
+
   @override
   List<Object?> get props => [symbol, cryptoName, month, year, weeks, allDays];
 }
