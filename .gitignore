@@ -46,3 +46,14 @@ app.*.map.json
 
 # Claude AI artifacts (should not be in repo)
 .claude/
+
+# Firebase configuration files
+google-services.json
+GoogleService-Info.plist
+ios/Runner/GoogleService-Info.plist
+android/app/google-services.json
+
+# iOS Build files
+ios/build/
+ios/ios/
+ios/DerivedData/

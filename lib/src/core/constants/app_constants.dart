@@ -21,7 +21,7 @@ class AppConstants {
   ];
 
   /// URL base para la API Aspiradora
-  static const String aspiradoraBaseUrl = 'http://localhost:3000';
+  static const String aspiradoraBaseUrl = 'https://spot.bitsdeve.com';
 
   /// Tiempo de timeout para peticiones HTTP (segundos)
   static const int apiTimeoutSeconds = 30;
