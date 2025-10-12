@@ -205,36 +205,55 @@ class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
     Emitter<CryptoState> emit,
   ) async {
     emit(CryptoLoading());
-    try {
-      AppLogger.info('Obteniendo criptomonedas con métricas');
 
-      // 1. Obtener cryptos primero (rápido)
-      final cryptos = await _getCryptoDataUseCase.execute();
+    // Intentar hasta 2 veces con un delay entre intentos
+    int attempt = 0;
+    const maxAttempts = 2;
 
-      // 2. Emitir estado con cryptos pero métricas vacías
-      // Esto permite que la UI se muestre inmediatamente
-      emit(CryptoWithMetricsLoaded(cryptos: cryptos, metrics: {}));
+    while (attempt < maxAttempts) {
+      try {
+        attempt++;
+        AppLogger.info('Obteniendo criptomonedas con métricas (intento $attempt/$maxAttempts)');
 
-      AppLogger.info('Se cargaron ${cryptos.length} criptomonedas, calculando métricas...');
+        // 1. Obtener cryptos primero (rápido)
+        final cryptos = await _getCryptoDataUseCase.execute();
 
-      // 3. Obtener métricas en background (las llamadas ya son paralelas en el repositorio)
-      final metrics = await _getAlertsUseCase.executeAllMetrics();
+        // 2. Emitir estado con cryptos pero métricas vacías
+        // Esto permite que la UI se muestre inmediatamente
+        emit(CryptoWithMetricsLoaded(cryptos: cryptos, metrics: {}));
 
-      // 4. Convertir lista de métricas a mapa por símbolo
-      final metricsMap = <String, DailyMetrics>{};
-      for (final metric in metrics) {
-        metricsMap[metric.crypto.symbol] = metric;
+        AppLogger.info('Se cargaron ${cryptos.length} criptomonedas, calculando métricas...');
+
+        // 3. Obtener métricas en background (las llamadas ya son paralelas en el repositorio)
+        final metrics = await _getAlertsUseCase.executeAllMetrics();
+
+        // 4. Convertir lista de métricas a mapa por símbolo
+        final metricsMap = <String, DailyMetrics>{};
+        for (final metric in metrics) {
+          metricsMap[metric.crypto.symbol] = metric;
+        }
+
+        // 5. Emitir estado final con métricas
+        emit(CryptoWithMetricsLoaded(cryptos: cryptos, metrics: metricsMap));
+
+        AppLogger.info(
+          'Se cargaron ${cryptos.length} criptomonedas con ${metricsMap.length} métricas',
+        );
+
+        // Éxito, salir del loop
+        return;
+      } catch (e) {
+        AppLogger.error('Error al obtener criptomonedas con métricas (intento $attempt)', e);
+
+        // Si es el último intento, emitir error
+        if (attempt >= maxAttempts) {
+          emit(CryptoError('Error al cargar datos con métricas: $e'));
+        } else {
+          // Esperar un poco antes de reintentar
+          AppLogger.info('Reintentando en 2 segundos...');
+          await Future.delayed(const Duration(seconds: 2));
+        }
       }
-
-      // 5. Emitir estado final con métricas
-      emit(CryptoWithMetricsLoaded(cryptos: cryptos, metrics: metricsMap));
-
-      AppLogger.info(
-        'Se cargaron ${cryptos.length} criptomonedas con ${metricsMap.length} métricas',
-      );
-    } catch (e) {
-      AppLogger.error('Error al obtener criptomonedas con métricas', e);
-      emit(CryptoError('Error al cargar datos con métricas: $e'));
     }
   }
 }

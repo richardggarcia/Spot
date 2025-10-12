@@ -48,10 +48,12 @@ El trading de Price Action analiza movimientos puros de precio sin indicadores, 
 ### 🏗️ **Arquitectura Empresarial**
 - **Arquitectura Hexagonal** (patrón Ports & Adapters)
 - **Diseño Dirigido por Dominio** con lógica de negocio pura
+- **Firebase Integration** para backend escalable y analytics
 - **Streaming Data Ports** para datos en tiempo real
 - **Gestión de Estado BLoC** para UI reactiva
 - **Inyección de Dependencias** con localizador de servicios GetIt
 - **Adaptadores especializados** (Binance, CoinGecko, Logo Enrichment)
+- **Seguridad avanzada** con manejo seguro de API keys
 
 ### 🎨 **UI/UX Moderna**
 - **Interfaz basada en Tarjetas** optimizada para escaneo rápido
@@ -139,9 +141,17 @@ El trading de Price Action analiza movimientos puros de precio sin indicadores, 
 
 ### **🏠 Servidor Backend Personalizado**
 - **API Backend**: https://spot.bitsdeve.com
+- **Firebase Integration**: Analytics, crashlytics y servicios cloud
 - **API REST personalizada**: Datos consolidados de múltiples fuentes
 - **Alta disponibilidad**: Infraestructura dedicada para el proyecto
 - **Arquitectura escalable**: Preparado para crecimiento futuro
+
+### **🔥 Firebase Services**
+- **Firebase Analytics**: Tracking de uso y comportamiento de usuarios
+- **Crashlytics**: Monitoreo automático de errores en producción
+- **Cloud Services**: Infraestructura backend escalable y confiable
+- **Configuración segura**: API keys protegidas del repositorio público
+- **Setup automatizado**: Documentación completa en `FIREBASE_SETUP.md`
 
 ### **🖼️ Enriquecimiento Dinámico de Logos**
 - **LogoEnrichmentAdapter**: Obtención automática de logos de CoinGecko
@@ -187,6 +197,7 @@ La aplicación analiza las siguientes 14 criptomonedas principales:
 - Dart 3.0+
 - Android Studio / VS Code
 - Git
+- Cuenta de Firebase (opcional, para analytics y crashlytics)
 
 ### **Instalación**
 

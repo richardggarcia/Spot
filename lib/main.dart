@@ -55,7 +55,7 @@ class SpotTradingApp extends StatelessWidget {
       child: Consumer<ThemeManager>(
         builder: (context, themeManager, child) {
           return MaterialApp(
-            title: 'Spot',
+            title: 'Buy The Dip',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeManager.themeMode,

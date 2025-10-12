@@ -80,40 +80,54 @@ class CryptoRepositoryImpl implements CryptoRepository {
   /// Calcula métricas diarias para todas las criptomonedas
   @override
   Future<Map<String, DailyMetrics>> calculateAllDailyMetrics() async {
-    AppLogger.info('Calculating all daily metrics');
+    try {
+      AppLogger.info('Calculating all daily metrics');
 
-    final cryptos = await getAllCryptos();
+      final cryptos = await getAllCryptos();
+      AppLogger.info('Got ${cryptos.length} cryptos, fetching previous closes...');
 
-    // Obtener todos los precios de cierre anterior en paralelo
-    final futures = cryptos.map((crypto) async {
-      try {
-        final close = await _priceDataPort.getPreviousClose(crypto.symbol);
-        // Usamos MapEntry para mantener la asociación símbolo -> precio
-        return MapEntry(crypto.symbol, close);
-      } catch (e) {
-        AppLogger.warning(
-          'Could not get previous close for ${crypto.symbol}: $e',
-        );
-        // Retornamos null para indicar que esta llamada falló
-        return MapEntry(crypto.symbol, null);
+      // Obtener todos los precios de cierre anterior en paralelo
+      final futures = cryptos.map((crypto) async {
+        try {
+          final close = await _priceDataPort.getPreviousClose(crypto.symbol);
+          AppLogger.info('Got previous close for ${crypto.symbol}: $close');
+          // Usamos MapEntry para mantener la asociación símbolo -> precio
+          return MapEntry(crypto.symbol, close);
+        } catch (e) {
+          AppLogger.warning(
+            'Could not get previous close for ${crypto.symbol}: $e',
+          );
+          // Retornamos null para indicar que esta llamada falló
+          return MapEntry(crypto.symbol, null);
+        }
+      }).toList();
+
+      // Esperamos a que todas las llamadas terminen, incluso si algunas fallaron
+      final results = await Future.wait(futures);
+
+      // Construimos el mapa de precios de cierre, ignorando los que fallaron
+      final previousCloses = <String, double>{};
+      for (final result in results) {
+        if (result.value != null) {
+          previousCloses[result.key] = result.value!;
+        }
       }
-    }).toList();
 
-    // Esperamos a que todas las llamadas terminen, incluso si algunas fallaron
-    final results = await Future.wait(futures);
+      AppLogger.info('Got previous closes for ${previousCloses.length}/${cryptos.length} cryptos');
 
-    // Construimos el mapa de precios de cierre, ignorando los que fallaron
-    final previousCloses = <String, double>{};
-    for (final result in results) {
-      if (result.value != null) {
-        previousCloses[result.key] = result.value!;
-      }
+      final metricsMap = _calculator.calculateBatchMetrics(
+        cryptos,
+        previousCloses: previousCloses,
+      );
+
+      AppLogger.info('Calculated metrics for ${metricsMap.length} cryptos');
+
+      return metricsMap;
+    } catch (e, stackTrace) {
+      AppLogger.error('Error calculating all daily metrics', e);
+      AppLogger.error('Stack trace', stackTrace);
+      rethrow;
     }
-
-    return _calculator.calculateBatchMetrics(
-      cryptos,
-      previousCloses: previousCloses,
-    );
   }
 
   /// Obtiene métricas con alertas activas

@@ -25,7 +25,7 @@ class SpotMainPage extends StatelessWidget {
       length: 3,
       child: Scaffold(
         appBar: const PremiumAppBar(
-          title: 'Spot Trading',
+          title: 'Buy The Dip',
           bottom: PremiumTabBar(
             tabs: [
               Tab(text: 'Mercado', icon: Icon(Icons.trending_up)),
@@ -62,7 +62,13 @@ class _MarketTabState extends State<_MarketTab> {
   @override
   void dispose() {
     // Detenemos las actualizaciones en tiempo real al salir de la pantalla.
-    context.read<CryptoBloc>().add(const StopRealtimeUpdates());
+    if (mounted) {
+      try {
+        context.read<CryptoBloc>().add(const StopRealtimeUpdates());
+      } catch (e) {
+        // Ignorar errores si el context ya no está disponible
+      }
+    }
     super.dispose();
   }
 

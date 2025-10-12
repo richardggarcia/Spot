@@ -25,18 +25,32 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
       AppLogger.info('Obteniendo todas las alertas');
       final alerts = await _getAlertsUseCase.execute();
 
+      AppLogger.info('Alertas obtenidas: ${alerts.length}');
+
       if (alerts.isEmpty) {
         emit(NoAlerts());
         AppLogger.info('No se encontraron alertas activas');
       } else {
-        final topOpportunities = await _getAlertsUseCase
-            .executeTopOpportunities();
-        emit(AlertsLoaded(alerts: alerts, topOpportunities: topOpportunities));
-        AppLogger.info('Se cargaron ${alerts.length} alertas');
+        try {
+          final topOpportunities = await _getAlertsUseCase
+              .executeTopOpportunities();
+          emit(AlertsLoaded(alerts: alerts, topOpportunities: topOpportunities));
+          AppLogger.info('Se cargaron ${alerts.length} alertas y ${topOpportunities.length} oportunidades');
+        } catch (opportunitiesError) {
+          // Si falla al obtener oportunidades, al menos mostrar las alertas
+          AppLogger.warning('No se pudieron cargar oportunidades: $opportunitiesError');
+          emit(AlertsLoaded(alerts: alerts, topOpportunities: []));
+          AppLogger.info('Se cargaron ${alerts.length} alertas (sin oportunidades)');
+        }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       AppLogger.error('Error al obtener alertas', e);
-      emit(AlertsError('Error al cargar alertas: $e'));
+      AppLogger.error('Stack trace', stackTrace);
+      // Mostrar mensaje de error más descriptivo
+      final errorMessage = e.toString().contains('Exception:')
+          ? e.toString().replaceAll('Exception: ', '')
+          : 'Error al cargar alertas: $e';
+      emit(AlertsError(errorMessage));
     }
   }
 
@@ -53,17 +67,31 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
         limit: event.limit,
       );
 
+      AppLogger.info('Oportunidades obtenidas: ${opportunities.length}');
+
       if (opportunities.isEmpty) {
         emit(NoAlerts());
         AppLogger.info('No se encontraron oportunidades');
       } else {
-        final allAlerts = await _getAlertsUseCase.execute();
-        emit(AlertsLoaded(alerts: allAlerts, topOpportunities: opportunities));
-        AppLogger.info('Se cargaron ${opportunities.length} oportunidades');
+        try {
+          final allAlerts = await _getAlertsUseCase.execute();
+          emit(AlertsLoaded(alerts: allAlerts, topOpportunities: opportunities));
+          AppLogger.info('Se cargaron ${allAlerts.length} alertas y ${opportunities.length} oportunidades');
+        } catch (alertsError) {
+          // Si falla al obtener todas las alertas, al menos mostrar las oportunidades
+          AppLogger.warning('No se pudieron cargar todas las alertas: $alertsError');
+          emit(AlertsLoaded(alerts: [], topOpportunities: opportunities));
+          AppLogger.info('Se cargaron ${opportunities.length} oportunidades (sin alertas)');
+        }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       AppLogger.error('Error al obtener oportunidades', e);
-      emit(AlertsError('Error al cargar oportunidades: $e'));
+      AppLogger.error('Stack trace', stackTrace);
+      // Mostrar mensaje de error más descriptivo
+      final errorMessage = e.toString().contains('Exception:')
+          ? e.toString().replaceAll('Exception: ', '')
+          : 'Error al cargar oportunidades: $e';
+      emit(AlertsError(errorMessage));
     }
   }
 

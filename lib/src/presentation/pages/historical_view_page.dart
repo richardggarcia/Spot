@@ -4,8 +4,9 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../../domain/entities/monthly_report.dart';
 import '../../domain/entities/daily_analysis.dart';
-import '../../infrastructure/adapters/binance_price_adapter.dart';
+import '../../domain/ports/price_data_port.dart';
 import '../../domain/services/historical_analysis_service.dart';
+import '../../core/di/service_locator.dart';
 import '../widgets/monthly_panorama_widget.dart';
 import '../widgets/weekly_summary_widget.dart';
 
@@ -24,7 +25,7 @@ class HistoricalViewPage extends StatefulWidget {
 }
 
 class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProviderStateMixin {
-  final _priceAdapter = BinancePriceAdapter();
+  late final PriceDataPort _priceAdapter;
   final _analysisService = HistoricalAnalysisService();
 
   List<MonthlyReport> _reports = [];
@@ -37,6 +38,7 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
   @override
   void initState() {
     super.initState();
+    _priceAdapter = ServiceLocator.get<PriceDataPort>();
     _loadHistoricalData();
   }
 
@@ -78,7 +80,21 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        // Lista de monedas sin soporte histórico
+        final unsupportedCoins = ['MNT', 'KCS', 'BGB', 'RON'];
+
+        // Mensaje de error más amigable
+        if (unsupportedCoins.contains(widget.symbol)) {
+          _error = '⚠️ Datos históricos no disponibles\n\n'
+              '${widget.cryptoName} (${widget.symbol}) no tiene datos históricos en nuestras fuentes:\n\n'
+              '• No disponible en Binance\n'
+              '• CoinGecko requiere API key premium\n\n'
+              'Puedes ver el precio actual y las métricas diarias en la pantalla principal.';
+        } else if (e.toString().contains('404') || e.toString().contains('Invalid symbol') || e.toString().contains('No data')) {
+          _error = 'No hay datos históricos disponibles para ${widget.cryptoName} (${widget.symbol}).\n\nAlgunas criptomonedas no tienen suficiente historial en las fuentes de datos.';
+        } else {
+          _error = 'Error al cargar datos históricos:\n${e.toString()}';
+        }
         _isLoading = false;
       });
     }
@@ -120,7 +136,33 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
-      return Center(child: Text('Error: $_error'));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.orange,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _error!,
+                style: const TextStyle(fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _loadHistoricalData,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     if (_reports.isEmpty) {
       return const Center(child: Text('No hay datos disponibles.'));
