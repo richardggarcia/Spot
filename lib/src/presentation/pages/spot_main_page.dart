@@ -9,12 +9,13 @@ import '../bloc/alerts/alerts_event.dart';
 import '../bloc/alerts/alerts_state.dart';
 import '../widgets/crypto_card_widget.dart';
 import '../widgets/alerts_widget.dart';
+import '../widgets/premium_app_bar.dart';
 import '../managers/card_position_manager.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart';
 import 'historical_view_page.dart';
 
-/// Página principal de trading spot
+/// Main spot trading page with premium UI
 class SpotMainPage extends StatelessWidget {
   const SpotMainPage({super.key});
 
@@ -23,33 +24,21 @@ class SpotMainPage extends StatelessWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Spot Trading'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          bottom: const TabBar(
+        appBar: const PremiumAppBar(
+          title: 'Spot Trading',
+          bottom: PremiumTabBar(
             tabs: [
               Tab(text: 'Mercado', icon: Icon(Icons.trending_up)),
               Tab(text: 'Alertas', icon: Icon(Icons.notifications_active)),
               Tab(text: 'Oportunidades', icon: Icon(Icons.star)),
             ],
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () => _refreshAll(context),
-            ),
-          ],
         ),
         body: const TabBarView(
           children: [_MarketTab(), _AlertsTab(), _OpportunitiesTab()],
         ),
       ),
     );
-  }
-
-  void _refreshAll(BuildContext context) {
-    context.read<CryptoBloc>().add(const GetAllCryptosWithMetrics());
-    context.read<AlertsBloc>().add(const RefreshAlerts());
   }
 }
 

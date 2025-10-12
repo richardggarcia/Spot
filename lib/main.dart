@@ -1,6 +1,7 @@
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import 'src/core/di/service_locator.dart';
 import 'src/presentation/bloc/crypto/crypto_bloc.dart';
@@ -9,23 +10,37 @@ import 'src/presentation/bloc/alerts/alerts_bloc.dart';
 import 'src/presentation/bloc/alerts/alerts_event.dart';
 import 'src/presentation/pages/spot_main_page.dart';
 import 'src/presentation/theme/app_theme.dart';
+import 'src/presentation/managers/theme_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configurar inyección de dependencias
+  // Configure dependency injection
   await ServiceLocator.setup();
 
-  runApp(const SpotTradingApp());
+  // Initialize theme manager
+  final themeManager = ThemeManager();
+  await themeManager.loadThemePreference();
+
+  runApp(SpotTradingApp(themeManager: themeManager));
 }
 
 class SpotTradingApp extends StatelessWidget {
-  const SpotTradingApp({super.key});
+  final ThemeManager themeManager;
+
+  const SpotTradingApp({
+    super.key,
+    required this.themeManager,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
+    return MultiProvider(
       providers: [
+        // Theme management
+        ChangeNotifierProvider.value(value: themeManager),
+
+        // BLoC providers
         BlocProvider(
           create: (context) =>
               ServiceLocator.get<CryptoBloc>()
@@ -37,20 +52,26 @@ class SpotTradingApp extends StatelessWidget {
                 ..add(const GetAllAlerts()),
         ),
       ],
-      child: MaterialApp(
-        title: 'spot',
-        theme: AppTheme.darkTheme,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('en', ''), // English, no country code
-          Locale('es', ''), // Spanish, no country code
-        ],
-        home: const SpotMainPage(),
-        debugShowCheckedModeBanner: false,
+      child: Consumer<ThemeManager>(
+        builder: (context, themeManager, child) {
+          return MaterialApp(
+            title: 'Spot',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeManager.themeMode,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', ''), // English
+              Locale('es', ''), // Spanish
+            ],
+            home: const SpotMainPage(),
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }

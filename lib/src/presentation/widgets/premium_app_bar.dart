@@ -1,0 +1,195 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../theme/app_colors.dart';
+import '../managers/theme_manager.dart';
+import 'package:provider/provider.dart';
+
+/// Premium AppBar with gradient background and theme toggle
+/// Provides an elegant, professional look with smooth animations
+class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final String title;
+  final List<Widget>? additionalActions;
+  final PreferredSizeWidget? bottom;
+  final bool centerTitle;
+
+  const PremiumAppBar({
+    super.key,
+    required this.title,
+    this.additionalActions,
+    this.bottom,
+    this.centerTitle = true,
+  });
+
+  @override
+  Size get preferredSize => Size.fromHeight(
+        kToolbarHeight + (bottom?.preferredSize.height ?? 0.0),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeManager = Provider.of<ThemeManager>(context, listen: false);
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  AppColors.darkSurface,
+                  AppColors.darkBackground,
+                ]
+              : [
+                  AppColors.lightSurface,
+                  AppColors.lightBackground.withValues(alpha: 0.95),
+                ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: AppBar(
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: isDark
+                ? AppColors.darkTextPrimary
+                : AppColors.lightTextPrimary,
+            letterSpacing: 0.5,
+          ),
+        ),
+        centerTitle: centerTitle,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        systemOverlayStyle: isDark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
+        iconTheme: IconThemeData(
+          color: isDark
+              ? AppColors.darkTextPrimary
+              : AppColors.lightTextPrimary,
+        ),
+        actions: [
+          // Additional actions if provided
+          if (additionalActions != null) ...additionalActions!,
+
+          // Theme toggle button
+          _ThemeToggleButton(
+            isDark: isDark,
+            onToggle: () => themeManager.toggleTheme(),
+          ),
+          const SizedBox(width: 8),
+        ],
+        bottom: bottom,
+      ),
+    );
+  }
+}
+
+/// Theme toggle button with animated icon transition
+class _ThemeToggleButton extends StatefulWidget {
+  final bool isDark;
+  final VoidCallback onToggle;
+
+  const _ThemeToggleButton({
+    required this.isDark,
+    required this.onToggle,
+  });
+
+  @override
+  State<_ThemeToggleButton> createState() => _ThemeToggleButtonState();
+}
+
+class _ThemeToggleButtonState extends State<_ThemeToggleButton> {
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        transitionBuilder: (child, animation) {
+          return RotationTransition(
+            turns: animation,
+            child: FadeTransition(
+              opacity: animation,
+              child: child,
+            ),
+          );
+        },
+        child: Icon(
+          widget.isDark ? Icons.light_mode : Icons.dark_mode,
+          key: ValueKey(widget.isDark),
+          color: widget.isDark
+              ? AppColors.darkTextPrimary
+              : AppColors.lightTextPrimary,
+          size: 24,
+        ),
+      ),
+      onPressed: widget.onToggle,
+      tooltip: widget.isDark ? 'Modo claro' : 'Modo oscuro',
+      splashRadius: 24,
+    );
+  }
+}
+
+/// Premium TabBar with matching style
+class PremiumTabBar extends StatelessWidget implements PreferredSizeWidget {
+  final List<Tab> tabs;
+  final TabController? controller;
+
+  const PremiumTabBar({
+    super.key,
+    required this.tabs,
+    this.controller,
+  });
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            width: 1,
+          ),
+        ),
+      ),
+      child: TabBar(
+        controller: controller,
+        tabs: tabs,
+        labelColor: isDark
+            ? AppColors.darkAccentPrimary
+            : AppColors.lightAccentPrimary,
+        unselectedLabelColor: isDark
+            ? AppColors.darkTextSecondary
+            : AppColors.lightTextSecondary,
+        indicatorColor: isDark
+            ? AppColors.darkAccentPrimary
+            : AppColors.lightAccentPrimary,
+        indicatorWeight: 3,
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.3,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}

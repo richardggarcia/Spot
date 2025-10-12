@@ -20,14 +20,12 @@ class CryptoCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Usamos el tema definido en AppTheme, pero con overrides locales si es necesario.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
-      // El estilo del Card se toma del CardTheme en AppTheme,
-      // por lo que no es necesario definirlo aquí de nuevo.
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        hoverColor: AppColors.hoverColor,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -39,7 +37,10 @@ class CryptoCardWidget extends StatelessWidget {
               
               // --- SECCIÓN 2: ANÁLISIS INTERNO ---
               if (metrics != null) ...[
-                const Divider(height: 24, color: AppColors.borderColor),
+                Divider(
+                  height: 24,
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                ),
                 _buildAnalysisData(context),
               ],
             ],
@@ -51,7 +52,10 @@ class CryptoCardWidget extends StatelessWidget {
 
   /// Construye la sección de datos de mercado (logo, precio, cambio).
   Widget _buildMarketData(BuildContext context) {
-    final changeColor = crypto.isPositive ? AppColors.bullish : AppColors.bearish;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final changeColor = crypto.isPositive
+        ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+        : (isDark ? AppColors.darkBearish : AppColors.lightBearish);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,10 +73,18 @@ class CryptoCardWidget extends StatelessWidget {
                     crypto.imageUrl!,
                     height: 32,
                     width: 32,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.currency_bitcoin, size: 32, color: AppColors.iconSecondary),
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.currency_bitcoin,
+                      size: 32,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    ),
                   )
                 else
-                  const Icon(Icons.currency_bitcoin, size: 32, color: AppColors.iconSecondary),
+                  Icon(
+                    Icons.currency_bitcoin,
+                    size: 32,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  ),
                 
                 const SizedBox(width: 12),
                 
@@ -80,8 +92,18 @@ class CryptoCardWidget extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(crypto.symbol, style: AppTextStyles.h4),
-                    Text(crypto.name, style: AppTextStyles.bodySmall),
+                    Text(
+                      crypto.symbol,
+                      style: AppTextStyles.h4.copyWith(
+                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                      ),
+                    ),
+                    Text(
+                      crypto.name,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -89,7 +111,10 @@ class CryptoCardWidget extends StatelessWidget {
             // Precio
             Text(
               '\$${crypto.formattedPrice}',
-              style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.bold),
+              style: AppTextStyles.h4.copyWith(
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+              ),
             ),
           ],
         ),
@@ -115,7 +140,9 @@ class CryptoCardWidget extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               '24h',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.secondaryText),
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              ),
             ),
           ],
         ),
@@ -125,8 +152,9 @@ class CryptoCardWidget extends StatelessWidget {
 
   /// Construye la sección de análisis (veredicto, oportunidad).
   Widget _buildAnalysisData(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final verdict = metrics!.verdict ?? _getDefaultVerdict(metrics!);
-    final iconInfo = _getVerdictIcon(metrics!);
+    final iconInfo = _getVerdictIcon(metrics!, isDark);
 
     return Row(
       children: [
@@ -136,7 +164,7 @@ class CryptoCardWidget extends StatelessWidget {
           child: Text(
             verdict,
             style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.primaryText,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
               fontWeight: FontWeight.w500,
             ),
             maxLines: 2,
@@ -148,17 +176,29 @@ class CryptoCardWidget extends StatelessWidget {
   }
 
   /// Obtiene el icono y color según el veredicto.
-  ({IconData icon, Color color}) _getVerdictIcon(DailyMetrics metrics) {
+  ({IconData icon, Color color}) _getVerdictIcon(DailyMetrics metrics, bool isDark) {
     if (metrics.isBuyOpportunity) {
-      return (icon: Icons.star, color: AppColors.opportunity);
+      return (
+        icon: Icons.star,
+        color: isDark ? AppColors.darkOpportunity : AppColors.lightOpportunity,
+      );
     }
     if (metrics.hasAlert) {
-      return (icon: Icons.warning, color: AppColors.alert);
+      return (
+        icon: Icons.warning,
+        color: isDark ? AppColors.darkAlert : AppColors.lightAlert,
+      );
     }
     if (metrics.deepDrop <= -0.015) {
-      return (icon: Icons.visibility, color: AppColors.neutral);
+      return (
+        icon: Icons.visibility,
+        color: isDark ? AppColors.darkNeutral : AppColors.lightNeutral,
+      );
     }
-    return (icon: Icons.info_outline, color: AppColors.secondaryText);
+    return (
+      icon: Icons.info_outline,
+      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+    );
   }
 
   /// Genera un veredicto por defecto si el LLM no provee uno.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/daily_metrics.dart';
+import '../theme/app_colors.dart';
 
 /// Widget para mostrar lista de alertas
 class AlertsWidget extends StatelessWidget {
@@ -46,15 +47,17 @@ class AlertTileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: _getAlertColor(context).withValues(alpha: 0.1),
+      color: _getAlertColor(context, isDark).withValues(alpha: 0.1),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: Stack(
           children: [
             CircleAvatar(
-              backgroundColor: _getAlertColor(context),
+              backgroundColor: _getAlertColor(context, isDark),
               child: const Icon(
                 Icons.notifications_active,
                 color: Colors.white,
@@ -108,7 +111,9 @@ class AlertTileWidget extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               alert.crypto.symbol.replaceAll('USDT', ''),
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              ),
             ),
             const SizedBox(height: 4),
             Row(
@@ -131,19 +136,24 @@ class AlertTileWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: (isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary)
+                      .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.lightbulb, size: 16, color: Colors.blue[600]),
+                    Icon(
+                      Icons.lightbulb,
+                      size: 16,
+                      color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         'Análisis: ${alert.verdict}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.blue[800],
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -166,7 +176,9 @@ class AlertTileWidget extends StatelessWidget {
             Text(
               alert.crypto.formattedChangePercent,
               style: TextStyle(
-                color: alert.crypto.isPositive ? Colors.green : Colors.red,
+                color: alert.crypto.isPositive
+                    ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+                    : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -177,18 +189,18 @@ class AlertTileWidget extends StatelessWidget {
     );
   }
 
-  Color _getAlertColor(BuildContext context) {
+  Color _getAlertColor(BuildContext context, bool isDark) {
     switch (alert.dropSeverity) {
       case DropSeverity.severe:
-        return Colors.red;
+        return isDark ? AppColors.darkBearish : AppColors.lightBearish;
       case DropSeverity.high:
-        return Colors.orange;
+        return isDark ? AppColors.darkAlert : AppColors.lightAlert;
       case DropSeverity.moderate:
-        return Colors.amber;
+        return isDark ? AppColors.darkWarning : AppColors.lightWarning;
       case DropSeverity.low:
-        return Colors.blue;
+        return isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary;
       case DropSeverity.minimal:
-        return Colors.grey;
+        return isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
     }
   }
 }
@@ -207,17 +219,23 @@ class _MetricChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: isNegative ? Colors.red[100] : Colors.green[100],
+        color: isNegative
+            ? (isDark ? AppColors.darkBearish : AppColors.lightBearish).withValues(alpha: 0.2)
+            : (isDark ? AppColors.darkBullish : AppColors.lightBullish).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         '$label: $value',
         style: TextStyle(
           fontSize: 11,
-          color: isNegative ? Colors.red[800] : Colors.green[800],
+          color: isNegative
+              ? (isDark ? AppColors.darkBearish : AppColors.lightBearish)
+              : (isDark ? AppColors.darkBullish : AppColors.lightBullish),
           fontWeight: FontWeight.w600,
         ),
       ),
