@@ -8,6 +8,7 @@ import 'src/presentation/bloc/crypto/crypto_event.dart';
 import 'src/presentation/bloc/alerts/alerts_bloc.dart';
 import 'src/presentation/bloc/alerts/alerts_event.dart';
 import 'src/presentation/pages/spot_main_page.dart';
+import 'src/presentation/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,8 +27,9 @@ class SpotTradingApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => ServiceLocator.get<CryptoBloc>()
-            ..add(const GetAllCryptosWithMetrics()),
+          create: (context) =>
+              ServiceLocator.get<CryptoBloc>()
+                ..add(const GetAllCryptosWithMetrics()),
         ),
         BlocProvider(
           create: (context) =>
@@ -37,10 +39,7 @@ class SpotTradingApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'spot',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
-        ),
+        theme: AppTheme.darkTheme,
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,

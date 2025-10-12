@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/crypto.dart';
 import '../../domain/entities/daily_metrics.dart';
+import '../theme/app_colors.dart';
+import '../theme/text_styles.dart';
 
 /// Widget de tarjeta individual para mostrar información de criptomoneda.
-/// Diseño v3: Muestra datos de mercado claros y el análisis de oportunidad.
+/// Diseño v4: Adaptado al nuevo tema profesional de trading.
 class CryptoCardWidget extends StatelessWidget {
   final Crypto crypto;
   final DailyMetrics? metrics;
@@ -18,29 +20,27 @@ class CryptoCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final isPositive = crypto.priceChange24h >= 0;
-    final changeColor = isPositive ? Colors.green[700] : Colors.red[700];
-
+    // Usamos el tema definido en AppTheme, pero con overrides locales si es necesario.
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      // El estilo del Card se toma del CardTheme en AppTheme,
+      // por lo que no es necesario definirlo aquí de nuevo.
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
+        hoverColor: AppColors.hoverColor,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // --- SECCIÓN 1: DATOS DE MERCADO ---
-              _buildMarketData(textTheme, changeColor),
+              _buildMarketData(context),
               
               // --- SECCIÓN 2: ANÁLISIS INTERNO ---
               if (metrics != null) ...[
-                const Divider(height: 24, thickness: 0.5),
-                _buildAnalysisData(textTheme),
+                const Divider(height: 24, color: AppColors.borderColor),
+                _buildAnalysisData(context),
               ],
             ],
           ),
@@ -50,14 +50,16 @@ class CryptoCardWidget extends StatelessWidget {
   }
 
   /// Construye la sección de datos de mercado (logo, precio, cambio).
-  Widget _buildMarketData(TextTheme textTheme, Color? changeColor) {
+  Widget _buildMarketData(BuildContext context) {
+    final changeColor = crypto.isPositive ? AppColors.bullish : AppColors.bearish;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Fila 1: Logo, Símbolo y Precio
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -65,31 +67,34 @@ class CryptoCardWidget extends StatelessWidget {
                 if (crypto.imageUrl != null)
                   Image.network(
                     crypto.imageUrl!,
-                    height: 28,
-                    width: 28,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.currency_bitcoin, size: 28),
+                    height: 32,
+                    width: 32,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.currency_bitcoin, size: 32, color: AppColors.iconSecondary),
                   )
                 else
-                  const Icon(Icons.currency_bitcoin, size: 28),
+                  const Icon(Icons.currency_bitcoin, size: 32, color: AppColors.iconSecondary),
                 
                 const SizedBox(width: 12),
                 
-                // Símbolo
-                Text(
-                  crypto.symbol,
-                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                // Símbolo y Nombre
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(crypto.symbol, style: AppTextStyles.h4),
+                    Text(crypto.name, style: AppTextStyles.bodySmall),
+                  ],
                 ),
               ],
             ),
             // Precio
             Text(
               '\$${crypto.formattedPrice}',
-              style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+              style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
         
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
 
         // Fila 2: Cambio 24h (%, $)
         Row(
@@ -102,15 +107,15 @@ class CryptoCardWidget extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               '${crypto.priceChange24h.toStringAsFixed(2)} (${crypto.formattedChangePercent})',
-              style: textTheme.titleMedium?.copyWith(
+              style: AppTextStyles.bodyLarge.copyWith(
                 color: changeColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(width: 8),
             Text(
-              'Hoy',
-              style: textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+              '24h',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.secondaryText),
             ),
           ],
         ),
@@ -119,19 +124,19 @@ class CryptoCardWidget extends StatelessWidget {
   }
 
   /// Construye la sección de análisis (veredicto, oportunidad).
-  Widget _buildAnalysisData(TextTheme textTheme) {
+  Widget _buildAnalysisData(BuildContext context) {
     final verdict = metrics!.verdict ?? _getDefaultVerdict(metrics!);
-    final icon = _getVerdictIcon(metrics!);
+    final iconInfo = _getVerdictIcon(metrics!);
 
     return Row(
       children: [
-        Icon(icon.icon, color: icon.color, size: 18),
+        Icon(iconInfo.icon, color: iconInfo.color, size: 18),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             verdict,
-            style: textTheme.bodyMedium?.copyWith(
-              color: Colors.black87,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.primaryText,
               fontWeight: FontWeight.w500,
             ),
             maxLines: 2,
@@ -145,15 +150,15 @@ class CryptoCardWidget extends StatelessWidget {
   /// Obtiene el icono y color según el veredicto.
   ({IconData icon, Color color}) _getVerdictIcon(DailyMetrics metrics) {
     if (metrics.isBuyOpportunity) {
-      return (icon: Icons.star, color: Colors.amber.shade700);
+      return (icon: Icons.star, color: AppColors.opportunity);
     }
     if (metrics.hasAlert) {
-      return (icon: Icons.warning, color: Colors.orange.shade700);
+      return (icon: Icons.warning, color: AppColors.alert);
     }
     if (metrics.deepDrop <= -0.015) {
-      return (icon: Icons.visibility, color: Colors.blue.shade700);
+      return (icon: Icons.visibility, color: AppColors.neutral);
     }
-    return (icon: Icons.info_outline, color: Colors.grey.shade600);
+    return (icon: Icons.info_outline, color: AppColors.secondaryText);
   }
 
   /// Genera un veredicto por defecto si el LLM no provee uno.

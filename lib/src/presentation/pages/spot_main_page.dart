@@ -9,6 +9,7 @@ import '../bloc/alerts/alerts_event.dart';
 import '../bloc/alerts/alerts_state.dart';
 import '../widgets/crypto_card_widget.dart';
 import '../widgets/alerts_widget.dart';
+import '../managers/card_position_manager.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart';
 import 'historical_view_page.dart';
@@ -61,12 +62,12 @@ class _MarketTab extends StatefulWidget {
 }
 
 class _MarketTabState extends State<_MarketTab> {
+  List<String> _orderedSymbols = [];
+
   @override
   void initState() {
     super.initState();
-    // El BLoC ya se carga inicialmente desde main.dart.
-    // Aquí iniciamos el stream en cuanto la UI esté lista.
-    // Usamos un BlocListener para asegurarnos de tener los símbolos antes de conectar.
+    _loadOrder();
   }
 
   @override
@@ -74,6 +75,41 @@ class _MarketTabState extends State<_MarketTab> {
     // Detenemos las actualizaciones en tiempo real al salir de la pantalla.
     context.read<CryptoBloc>().add(const StopRealtimeUpdates());
     super.dispose();
+  }
+
+  Future<void> _loadOrder() async {
+    final manager = CardPositionManager();
+    final order = await manager.getCardOrder();
+    if (order.isNotEmpty) {
+      setState(() {
+        _orderedSymbols = order;
+      });
+    }
+  }
+
+  Future<void> _saveOrder(List<String> symbols) async {
+    final manager = CardPositionManager();
+    await manager.saveCardOrder(symbols);
+  }
+
+  List<dynamic> _getOrderedList(List<dynamic> cryptos) {
+    if (_orderedSymbols.isEmpty) return cryptos;
+
+    final cryptoMap = {for (var c in cryptos) c.symbol: c};
+    final ordered = <dynamic>[];
+
+    // Agregar en el orden guardado
+    for (final symbol in _orderedSymbols) {
+      if (cryptoMap.containsKey(symbol)) {
+        ordered.add(cryptoMap[symbol]!);
+        cryptoMap.remove(symbol);
+      }
+    }
+
+    // Agregar nuevos que no están en el orden guardado
+    ordered.addAll(cryptoMap.values);
+
+    return ordered;
   }
 
   @override
@@ -101,18 +137,30 @@ class _MarketTabState extends State<_MarketTab> {
               ),
             );
           } else if (state is CryptoWithMetricsLoaded) {
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<CryptoBloc>().add(const GetAllCryptosWithMetrics());
-              },
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: state.cryptos.length,
-                itemBuilder: (context, index) {
-                  final crypto = state.cryptos[index];
-                  final metrics = state.metrics[crypto.symbol];
+            final orderedCryptos = _getOrderedList(state.cryptos);
 
-                  return CryptoCardWidget(
+            return ReorderableListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              itemCount: orderedCryptos.length,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) {
+                    newIndex -= 1;
+                  }
+                  final item = orderedCryptos.removeAt(oldIndex);
+                  orderedCryptos.insert(newIndex, item);
+                  _orderedSymbols = orderedCryptos.map((c) => c.symbol as String).toList();
+                  _saveOrder(_orderedSymbols);
+                });
+              },
+              itemBuilder: (context, index) {
+                final crypto = orderedCryptos[index];
+                final metrics = state.metrics[crypto.symbol];
+
+                return Padding(
+                  key: ValueKey('crypto_${crypto.symbol}'),
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: CryptoCardWidget(
                     crypto: crypto,
                     metrics: metrics,
                     onTap: () {
@@ -126,27 +174,39 @@ class _MarketTabState extends State<_MarketTab> {
                         ),
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             );
           } else if (state is CryptoLoaded || state is CryptoRefreshing) {
-            // Fallback para estados más antiguos, aunque el flujo principal usa CryptoWithMetricsLoaded
+            // Fallback para estados más antiguos
             final cryptos = state is CryptoLoaded
                 ? state.cryptos
                 : (state as CryptoRefreshing).cryptos;
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<CryptoBloc>().add(const GetAllCryptosWithMetrics());
-              },
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: cryptos.length,
-                itemBuilder: (context, index) {
-                  final crypto = cryptos[index];
+            final orderedCryptos = _getOrderedList(cryptos);
 
-                  return CryptoCardWidget(
+            return ReorderableListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              itemCount: orderedCryptos.length,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) {
+                    newIndex -= 1;
+                  }
+                  final item = orderedCryptos.removeAt(oldIndex);
+                  orderedCryptos.insert(newIndex, item);
+                  _orderedSymbols = orderedCryptos.map((c) => c.symbol as String).toList();
+                  _saveOrder(_orderedSymbols);
+                });
+              },
+              itemBuilder: (context, index) {
+                final crypto = orderedCryptos[index];
+
+                return Padding(
+                  key: ValueKey('crypto_${crypto.symbol}'),
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: CryptoCardWidget(
                     crypto: crypto,
                     onTap: () {
                       Navigator.push(
@@ -159,9 +219,9 @@ class _MarketTabState extends State<_MarketTab> {
                         ),
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             );
           }
           return const SizedBox.shrink();

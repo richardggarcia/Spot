@@ -11,10 +11,12 @@ import '../../infrastructure/adapters/binance_price_adapter.dart';
 import '../../infrastructure/adapters/coingecko_price_adapter.dart';
 import '../../infrastructure/adapters/hybrid_price_adapter.dart';
 import '../../infrastructure/adapters/logo_enrichment_adapter.dart';
-import '../../infrastructure/streaming/binance_streaming_service.dart';
+
 import '../../infrastructure/repositories/crypto_repository_impl.dart';
 import '../../presentation/bloc/crypto/crypto_bloc.dart';
 import '../constants/app_constants.dart';
+
+import '../../infrastructure/streaming/binance_streaming_service.dart';
 
 /// Configuración de inyección de dependencias
 /// Implementa arquitectura hexagonal con Ports y Adapters
@@ -59,16 +61,11 @@ class ServiceLocator {
     // 2. Streaming Data Port (WebSocket)
     _getIt.registerLazySingleton<StreamingDataPort>(() => BinanceStreamingService());
 
-    // LLM Port (opcional, para veredictos)
-    // TODO: Implementar adapter para LLM cuando esté disponible
-    // _getIt.registerLazySingleton<LlmAnalysisPort>(() => ...);
-
     // --- Repositories ---
     _getIt.registerLazySingleton<CryptoRepository>(
       () => CryptoRepositoryImpl(
         priceDataPort: _getIt<PriceDataPort>(),
-        logoEnrichmentAdapter: _getIt<LogoEnrichmentAdapter>(), // <-- Inyectado
-        llmPort: null, // Sin LLM por ahora
+        logoEnrichmentAdapter: _getIt<LogoEnrichmentAdapter>(),
         calculator: _getIt<TradingCalculator>(),
         monitoredSymbols: _getIt<List<String>>(),
       ),

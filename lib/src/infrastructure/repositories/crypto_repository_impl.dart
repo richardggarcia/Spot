@@ -2,7 +2,6 @@ import '../adapters/logo_enrichment_adapter.dart';
 import '../../domain/entities/crypto.dart';
 import '../../domain/entities/daily_metrics.dart';
 import '../../domain/ports/price_data_port.dart';
-import '../../domain/ports/llm_analysis_port.dart';
 import '../../domain/repositories/crypto_repository.dart';
 import '../../domain/services/trading_calculator.dart';
 import '../../core/utils/logger.dart';
@@ -13,21 +12,18 @@ import '../../core/utils/logger.dart';
 class CryptoRepositoryImpl implements CryptoRepository {
   final PriceDataPort _priceDataPort;
   final LogoEnrichmentAdapter _logoEnrichmentAdapter;
-  final LlmAnalysisPort? _llmPort;
   final TradingCalculator _calculator;
   final List<String> _monitoredSymbols;
 
   CryptoRepositoryImpl({
     required PriceDataPort priceDataPort,
     required LogoEnrichmentAdapter logoEnrichmentAdapter,
-    LlmAnalysisPort? llmPort,
     required TradingCalculator calculator,
     required List<String> monitoredSymbols,
-  }) : _priceDataPort = priceDataPort,
-       _logoEnrichmentAdapter = logoEnrichmentAdapter,
-       _llmPort = llmPort,
-       _calculator = calculator,
-       _monitoredSymbols = monitoredSymbols;
+  })  : _priceDataPort = priceDataPort,
+        _logoEnrichmentAdapter = logoEnrichmentAdapter,
+        _calculator = calculator,
+        _monitoredSymbols = monitoredSymbols;
 
   @override
   Future<List<Crypto>> getAllCryptos() async {
@@ -75,32 +71,9 @@ class CryptoRepositoryImpl implements CryptoRepository {
     // Obtener precio de cierre anterior
     final previousClose = await _priceDataPort.getPreviousClose(cryptoSymbol);
 
-    // Generar veredicto con LLM si está disponible
-    String? verdict;
-    final llmPort = _llmPort;
-    if (llmPort != null && await llmPort.isAvailable()) {
-      // Calcular métricas preliminares para enviar al LLM
-      final prelimDeepDrop = _calculator.calculateDeepDrop(
-        currentPrice: crypto.currentPrice,
-        lowPrice: crypto.low24h,
-        previousClose: previousClose,
-      );
-      final prelimRebound = _calculator.calculateRebound(
-        currentPrice: crypto.currentPrice,
-        lowPrice: crypto.low24h,
-      );
-
-      verdict = await llmPort.generateVerdict(
-        symbol: cryptoSymbol,
-        deepDrop: prelimDeepDrop,
-        rebound: prelimRebound,
-      );
-    }
-
     return _calculator.calculateDailyMetrics(
       crypto,
       previousClose: previousClose,
-      verdict: verdict,
     );
   }
 
@@ -137,14 +110,9 @@ class CryptoRepositoryImpl implements CryptoRepository {
       }
     }
 
-    // Generar veredictos con LLM si está disponible
-    Map<String, String>? verdicts;
-    // TODO: Implementar generación de veredictos en batch con LLM
-
     return _calculator.calculateBatchMetrics(
       cryptos,
       previousCloses: previousCloses,
-      verdicts: verdicts,
     );
   }
 
@@ -168,18 +136,5 @@ class CryptoRepositoryImpl implements CryptoRepository {
     } catch (e) {
       throw Exception('Error al obtener oportunidades: $e');
     }
-  }
-
-  /// Guarda métricas en caché (implementación básica)
-  @override
-  Future<void> cacheMetrics(Map<String, DailyMetrics> metrics) async {
-    // TODO: Implementar caché con SharedPreferences
-  }
-
-  /// Obtiene métricas desde caché (implementación básica)
-  @override
-  Future<Map<String, DailyMetrics>?> getCachedMetrics() async {
-    // TODO: Implementar caché con SharedPreferences
-    return null;
   }
 }

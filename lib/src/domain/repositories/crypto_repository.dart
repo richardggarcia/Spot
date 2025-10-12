@@ -31,9 +31,5 @@ abstract class CryptoRepository {
   /// Obtiene las mejores oportunidades de compra
   Future<List<DailyMetrics>> getTopOpportunities({int limit = 5});
 
-  /// Guarda métricas en caché
-  Future<void> cacheMetrics(Map<String, DailyMetrics> metrics);
 
-  /// Obtiene métricas desde caché
-  Future<Map<String, DailyMetrics>?> getCachedMetrics();
 }

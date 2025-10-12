@@ -4,6 +4,7 @@ import '../../core/errors/app_exceptions.dart';
 import '../../core/utils/logger.dart';
 import '../../domain/entities/crypto.dart';
 import '../../domain/entities/daily_candle.dart';
+
 import '../../domain/ports/price_data_port.dart';
 
 /// Adapter para CoinGecko API
@@ -192,14 +193,70 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
   }
 
   @override
-  Future<List<DailyCandle>> getHistoricalData(String symbol, {int days = 30}) {
-    // TODO: Implementar la obtención de datos históricos para CoinGecko
-    // La API de CoinGecko para OHLC es: /coins/{id}/ohlc
-    AppLogger.warning(
-      'getHistoricalData no está implementado para CoinGeckoPriceAdapter',
-    );
-    throw UnimplementedError(
-      'getHistoricalData no está implementado para CoinGecko.',
-    );
+  Future<List<DailyCandle>> getHistoricalData(
+    String symbol, {
+    int days = 30,
+  }) async {
+    try {
+      AppLogger.info(
+        'Fetching $days days of historical data for $symbol from CoinGecko',
+      );
+
+      final coinId = _symbolToCoinGeckoId(symbol);
+
+      // CoinGecko OHLC endpoint: /coins/{id}/ohlc
+      // Retorna datos OHLC en formato: [[timestamp, open, high, low, close], ...]
+      final response = await _dio.get(
+        '$_baseUrl/coins/$coinId/ohlc',
+        queryParameters: {
+          'vs_currency': 'usd',
+          'days': days.toString(),
+          if (_apiKey != null) 'x_cg_demo_api_key': _apiKey,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw ApiException(
+          'CoinGecko API error',
+          statusCode: response.statusCode,
+        );
+      }
+
+      final List<dynamic> ohlcData = response.data as List<dynamic>;
+
+      if (ohlcData.isEmpty) {
+        throw ApiException('No historical data returned from CoinGecko');
+      }
+
+      // Mapear datos OHLC a DailyCandle
+      // Formato CoinGecko: [timestamp_ms, open, high, low, close]
+      // Nota: CoinGecko OHLC no incluye volumen, usamos 0 como placeholder
+      final candles = ohlcData.map((ohlc) {
+        final data = ohlc as List<dynamic>;
+        return DailyCandle(
+          date: DateTime.fromMillisecondsSinceEpoch(data[0] as int),
+          open: (data[1] as num).toDouble(),
+          high: (data[2] as num).toDouble(),
+          low: (data[3] as num).toDouble(),
+          close: (data[4] as num).toDouble(),
+          volume: 0.0, // CoinGecko OHLC no incluye volumen
+        );
+      }).toList();
+
+      AppLogger.info('Fetched ${candles.length} candles for $symbol from CoinGecko');
+      return candles;
+    } on DioException catch (e) {
+      AppLogger.error('Network error fetching historical data from CoinGecko', e);
+      throw NetworkException(
+        'Error de Conexión: Datos históricos no disponibles',
+        originalError: e,
+      );
+    } catch (e) {
+      AppLogger.error(
+        'Unexpected error fetching historical data from CoinGecko',
+        e,
+      );
+      rethrow;
+    }
   }
 }

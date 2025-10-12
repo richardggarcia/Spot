@@ -24,10 +24,10 @@ abstract class PriceDataPort {
   /// Lanza excepción si hay error de conexión o API
   Future<double> getPreviousClose(String symbol);
 
-  /// Obtiene datos históricos diarios (velas OHLCV)
+  /// Obtiene datos históricos de velas diarias para análisis
   /// [symbol] Símbolo sin sufijo (ej: 'BTC')
-  /// [days] Número de días hacia atrás (default: 30)
-  /// Retorna lista de velas diarias ordenadas por fecha (más antigua primero)
+  /// [days] Número de días de historial a obtener (default: 30)
+  /// Retorna lista de velas diarias (DailyCandle) ordenadas por fecha
   /// Lanza excepción si hay error de conexión o API
   Future<List<DailyCandle>> getHistoricalData(String symbol, {int days = 30});
 }

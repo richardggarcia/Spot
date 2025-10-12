@@ -33,8 +33,10 @@ El trading de Price Action analiza movimientos puros de precio sin indicadores, 
 
 ### 🔬 **Análisis Avanzado de Precios**
 - **Análisis de Price Action** en tiempo real para 14 criptomonedas principales
+- **Streaming de datos** en vivo via WebSockets de Binance
 - **Fórmulas matemáticas** para cálculos de Caída Profunda y Rebote
 - **Alertas Inteligentes de Compra** cuando caída ≤ -5% Y rebote ≥ +3%
+- **Logos dinámicos** de criptomonedas con enriquecimiento automático
 - **Veredictos impulsados por IA** usando integración LLM para contexto del mercado
 
 ### 📊 **Métricas Profesionales de Trading**
@@ -46,14 +48,18 @@ El trading de Price Action analiza movimientos puros de precio sin indicadores, 
 ### 🏗️ **Arquitectura Empresarial**
 - **Arquitectura Hexagonal** (patrón Ports & Adapters)
 - **Diseño Dirigido por Dominio** con lógica de negocio pura
+- **Streaming Data Ports** para datos en tiempo real
 - **Gestión de Estado BLoC** para UI reactiva
 - **Inyección de Dependencias** con localizador de servicios GetIt
+- **Adaptadores especializados** (Binance, CoinGecko, Logo Enrichment)
 
 ### 🎨 **UI/UX Moderna**
 - **Interfaz basada en Tarjetas** optimizada para escaneo rápido
+- **Logos dinámicos** de criptomonedas con carga automática
 - **Alertas con Código de Colores** para reconocimiento visual inmediato
 - **Diseño Responsivo** que soporta múltiples tamaños de pantalla
-- **Actualizaciones en Tiempo Real** con funcionalidad pull-to-refresh
+- **Actualizaciones en Tiempo Real** via streaming y pull-to-refresh
+- **Análisis histórico** con reportes mensuales y tendencias
 
 ---
 
@@ -85,17 +91,19 @@ El trading de Price Action analiza movimientos puros de precio sin indicadores, 
 
 ```
 🎨 Presentation Layer
-   Flutter UI + BLoC
+   Flutter UI + BLoC + Streaming Events
          ↓
 🏛️ Domain Core
-   ├── Use Cases
-   ├── Entities (Crypto • DailyMetrics)
-   ├── Domain Services (TradingCalculator)
-   └── 🔌 Ports (Repository Interfaces)
+   ├── Use Cases (GetCrypto, GetAlerts, StreamPrices)
+   ├── Entities (Crypto • DailyMetrics • RealtimePriceTick)
+   ├── Domain Services (TradingCalculator, HistoricalAnalysis)
+   └── 🔌 Ports (Repository • StreamingData • LogoEnrichment)
          ↓
 🔧 Infrastructure
    ├── Repository Implementation
-   ├── 🌐 API Adapter (Aspiradora Integration)
+   ├── 🌐 API Adapters (Binance, CoinGecko, Aspiradora)
+   ├── 📡 Streaming Service (Binance WebSockets)
+   ├── 🖼️ Logo Enrichment Adapter
    └── 🤖 LLM Adapter (News Analysis)
 ```
 
@@ -108,14 +116,44 @@ El trading de Price Action analiza movimientos puros de precio sin indicadores, 
 - **Ports**: Abstract interfaces for external dependencies
 
 #### **🔧 Infrastructure Layer (External Concerns)**
-- **API Adapters**: Integration with Aspiradora backend
+- **API Adapters**: Backend personalizado, Binance, CoinGecko
+- **Streaming Service**: Real-time WebSocket connections (Binance)
+- **Logo Enrichment**: Dynamic cryptocurrency logo fetching
 - **Repository**: Data access abstraction with caching
-- **LLM Integration**: News analysis for market context
+- **Custom Backend**: https://spot.bitsdeve.com para datos consolidados
 
 #### **🎨 Presentation Layer (UI)**
 - **BLoC Pattern**: Reactive state management
 - **Widgets**: Reusable UI components
 - **Pages**: Screen-level compositions
+
+---
+
+## 📡 **Tecnología de Streaming en Tiempo Real**
+
+### **🔄 WebSocket Integration**
+- **Binance WebSockets**: Conexión directa a feeds de trading en vivo
+- **RealtimePriceTick**: Entidad de dominio para datos streaming
+- **StreamingDataPort**: Interface hexagonal para datos en tiempo real
+- **Reconexión automática**: Manejo robusto de desconexiones
+
+### **🏠 Servidor Backend Personalizado**
+- **API Backend**: https://spot.bitsdeve.com
+- **API REST personalizada**: Datos consolidados de múltiples fuentes
+- **Alta disponibilidad**: Infraestructura dedicada para el proyecto
+- **Arquitectura escalable**: Preparado para crecimiento futuro
+
+### **🖼️ Enriquecimiento Dinámico de Logos**
+- **LogoEnrichmentAdapter**: Obtención automática de logos de CoinGecko
+- **Caching inteligente**: Logos se cargan una vez y se reutilizan
+- **Fallback graceful**: UI funciona perfectamente sin logos
+- **Actualización async**: No bloquea la carga de precios
+
+### **📊 Análisis Histórico Avanzado**
+- **HistoricalAnalysisService**: Servicios de dominio para tendencias
+- **MonthlyReport**: Entidades para reportes mensuales
+- **Métricas de riesgo**: Análisis de volatilidad y drawdown
+- **Patrones temporales**: Identificación de oportunidades por períodos
 
 ---
 
@@ -253,19 +291,27 @@ lib/
 ## 🔧 **Configuration**
 
 ### **API Integration**
-The app integrates with Aspiradora backend for real-time price data:
+The app integrates with multiple data sources for comprehensive market coverage:
 
 ```dart
-// Configure API endpoints
-static const String aspiradoraBaseUrl = 'http://localhost:3000';
-static const String pricesEndpoint = '/api/prices/multiple';
+// Backend personalizado para el proyecto
+static const String spotApiBaseUrl = 'https://spot.bitsdeve.com';
+static const String pricesEndpoint = '/api/prices';
+
+// Binance WebSocket para streaming
+static const String binanceWsUrl = 'wss://stream.binance.com:9443/ws';
+
+// CoinGecko para logos y datos adicionales
+static const String coinGeckoBaseUrl = 'https://api.coingecko.com/api/v3';
 ```
 
 ### **Error Handling**
-Robust error handling without mock data fallbacks:
-- **Connection Errors**: Clear user-facing messages
-- **API Failures**: "Error de Conexión: Datos de Precio no disponibles"
-- **Rate Limiting**: Intelligent retry with exponential backoff
+Robust error handling with multiple fallback sources:
+- **Primary Source**: Servidor propio (https://spot.bitsdeve.com)
+- **Secondary Sources**: Binance API y CoinGecko como respaldo
+- **Connection Errors**: Mensajes claros al usuario
+- **Rate Limiting**: Retry inteligente con backoff exponencial
+- **Failover automático**: Cambio automático entre fuentes de datos
 
 ---
 
