@@ -36,6 +36,7 @@ El trading de Price Action analiza movimientos puros de precio sin indicadores, 
 - **Streaming de datos** en vivo via WebSockets de Binance
 - **Fórmulas matemáticas** para cálculos de Caída Profunda y Rebote
 - **Alertas Inteligentes de Compra** cuando caída ≤ -5% Y rebote ≥ +3%
+- **Notificaciones push** personalizables para oportunidades de trading
 - **Logos dinámicos** de criptomonedas con enriquecimiento automático
 - **Veredictos impulsados por IA** usando integración LLM para contexto del mercado
 
@@ -61,6 +62,7 @@ El trading de Price Action analiza movimientos puros de precio sin indicadores, 
 - **Alertas con Código de Colores** para reconocimiento visual inmediato
 - **Diseño Responsivo** que soporta múltiples tamaños de pantalla
 - **Actualizaciones en Tiempo Real** via streaming y pull-to-refresh
+- **Configuración de notificaciones** personalizable por usuario
 - **Análisis histórico** con reportes mensuales y tendencias
 
 ---

@@ -234,7 +234,7 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
       final candles = ohlcData.map((ohlc) {
         final data = ohlc as List<dynamic>;
         return DailyCandle(
-          date: DateTime.fromMillisecondsSinceEpoch(data[0] as int),
+          date: DateTime.fromMillisecondsSinceEpoch(data[0] as int, isUtc: true),
           open: (data[1] as num).toDouble(),
           high: (data[2] as num).toDouble(),
           low: (data[3] as num).toDouble(),

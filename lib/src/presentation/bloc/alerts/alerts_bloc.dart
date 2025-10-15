@@ -44,8 +44,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
         }
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error al obtener alertas', e);
-      AppLogger.error('Stack trace', stackTrace);
+      AppLogger.error('Error al obtener alertas', e, stackTrace);
       // Mostrar mensaje de error más descriptivo
       final errorMessage = e.toString().contains('Exception:')
           ? e.toString().replaceAll('Exception: ', '')
@@ -85,8 +84,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
         }
       }
     } catch (e, stackTrace) {
-      AppLogger.error('Error al obtener oportunidades', e);
-      AppLogger.error('Stack trace', stackTrace);
+      AppLogger.error('Error al obtener oportunidades', e, stackTrace);
       // Mostrar mensaje de error más descriptivo
       final errorMessage = e.toString().contains('Exception:')
           ? e.toString().replaceAll('Exception: ', '')

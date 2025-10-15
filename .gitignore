@@ -55,6 +55,12 @@ android/app/google-services.json
 **/GoogleService-Info.plist
 **/google-services.json
 
+# Firebase Web Configuration (SENSITIVE - API Keys)
+lib/firebase_options.dart
+web/firebase-messaging-sw.js
+firebase-config.js
+firebase_options_prod.dart
+
 # Environment variables and secrets
 .env
 .env.local

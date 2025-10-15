@@ -14,6 +14,7 @@ import '../managers/card_position_manager.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart';
 import 'historical_view_page.dart';
+import 'notification_settings_page.dart';
 
 /// Main spot trading page with premium UI
 class SpotMainPage extends StatelessWidget {
@@ -24,9 +25,23 @@ class SpotMainPage extends StatelessWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: const PremiumAppBar(
+        appBar: PremiumAppBar(
           title: 'Buy The Dip',
-          bottom: PremiumTabBar(
+          additionalActions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              tooltip: 'Configuración de Notificaciones',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationSettingsPage(),
+                  ),
+                );
+              },
+            ),
+          ],
+          bottom: const PremiumTabBar(
             tabs: [
               Tab(text: 'Mercado', icon: Icon(Icons.trending_up)),
               Tab(text: 'Alertas', icon: Icon(Icons.notifications_active)),

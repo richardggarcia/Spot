@@ -41,6 +41,11 @@ dependencies:
   web_socket_channel: ^3.0.3
   table_calendar: ^3.1.2
 
+  # Push Notifications
+  firebase_messaging: ^15.1.5
+  firebase_core: ^3.8.1
+  flutter_local_notifications: ^18.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

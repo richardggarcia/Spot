@@ -50,7 +50,7 @@ class BinanceStreamingService implements StreamingDataPort {
             final tick = RealtimePriceTick(
               symbol: symbol,
               price: price,
-              timestamp: DateTime.fromMillisecondsSinceEpoch(tradeData['T']),
+              timestamp: DateTime.fromMillisecondsSinceEpoch(tradeData['T'], isUtc: true),
             );
 
             // Añadimos el tick a nuestro stream para que el BLoC lo reciba.

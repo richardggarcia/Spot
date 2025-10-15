@@ -193,6 +193,7 @@ class BinancePriceAdapter implements PriceDataPort {
       volume24h: double.parse(json['volume'] as String),
       lastUpdated: DateTime.fromMillisecondsSinceEpoch(
         json['closeTime'] as int,
+        isUtc: true,
       ),
     );
   }
@@ -259,7 +260,7 @@ class BinancePriceAdapter implements PriceDataPort {
       final candles = klines.map((kline) {
         final k = kline as List<dynamic>;
         return DailyCandle(
-          date: DateTime.fromMillisecondsSinceEpoch(k[0] as int),
+          date: DateTime.fromMillisecondsSinceEpoch(k[0] as int, isUtc: true),
           open: double.parse(k[1].toString()),
           high: double.parse(k[2].toString()),
           low: double.parse(k[3].toString()),
