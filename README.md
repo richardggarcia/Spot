@@ -1,4 +1,4 @@
-# 📊 Spot - Análisis de Price Action
+# 📊 Spot - Análisis de Price Action.
 
 <div align="center">
 
