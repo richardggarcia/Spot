@@ -3,10 +3,6 @@ import 'daily_analysis.dart';
 
 /// Resumen semanal de volatilidad y oportunidades
 class WeeklySummary extends Equatable {
-  final int weekNumber; // Semana 1, 2, 3, 4
-  final DateTime startDate;
-  final DateTime endDate;
-  final List<DailyAnalysis> days;
 
   const WeeklySummary({
     required this.weekNumber,
@@ -14,6 +10,10 @@ class WeeklySummary extends Equatable {
     required this.endDate,
     required this.days,
   });
+  final int weekNumber; // Semana 1, 2, 3, 4
+  final DateTime startDate;
+  final DateTime endDate;
+  final List<DailyAnalysis> days;
 
   /// Mayor caída profunda de la semana
   double get maxDeepDrop {

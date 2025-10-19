@@ -3,9 +3,9 @@ import '../../domain/entities/weekly_summary.dart';
 
 /// Widget para mostrar el resumen semanal de volatilidad con un diseño mejorado.
 class WeeklySummaryWidget extends StatelessWidget {
-  final List<WeeklySummary> weeks;
 
   const WeeklySummaryWidget({super.key, required this.weeks});
+  final List<WeeklySummary> weeks;
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +39,7 @@ class WeeklySummaryWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTable(BuildContext context) {
-    return Column(
+  Widget _buildTable(BuildContext context) => Column(
       children: [
         _buildHeader(context),
         ...weeks.map((week) {
@@ -49,7 +48,6 @@ class WeeklySummaryWidget extends StatelessWidget {
         }),
       ],
     );
-  }
 
   Widget _buildHeader(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -74,15 +72,14 @@ class WeeklySummaryWidget extends StatelessWidget {
 }
 
 class _HeaderCell extends StatelessWidget {
+
+  const _HeaderCell({required this.title, this.style, this.flex = 1});
   final String title;
   final TextStyle? style;
   final int flex;
 
-  const _HeaderCell({required this.title, this.style, this.flex = 1});
-
   @override
-  Widget build(BuildContext context) {
-    return Expanded(
+  Widget build(BuildContext context) => Expanded(
       flex: flex,
       child: Text(
         title,
@@ -92,15 +89,14 @@ class _HeaderCell extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
     );
-  }
 }
 
 /// Widget de fila para una semana con diseño mejorado
 class _WeekRow extends StatelessWidget {
-  final WeeklySummary week;
-  final bool isLastRow;
 
   const _WeekRow({required this.week, this.isLastRow = false});
+  final WeeklySummary week;
+  final bool isLastRow;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +115,6 @@ class _WeekRow extends StatelessWidget {
             : Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Número de semana
           Expanded(
@@ -164,7 +159,6 @@ class _WeekRow extends StatelessWidget {
             flex: 4,
             child: keyPoint != null
                 ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         '\$${week.keyBuyingPrice!.toStringAsFixed(0)}',

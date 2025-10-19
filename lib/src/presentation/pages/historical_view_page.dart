@@ -2,23 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-import '../../domain/entities/monthly_report.dart';
+import '../../core/di/service_locator.dart';
 import '../../domain/entities/daily_analysis.dart';
+import '../../domain/entities/monthly_report.dart';
 import '../../domain/ports/price_data_port.dart';
 import '../../domain/services/historical_analysis_service.dart';
-import '../../core/di/service_locator.dart';
 import '../widgets/monthly_panorama_widget.dart';
 import '../widgets/weekly_summary_widget.dart';
 
 class HistoricalViewPage extends StatefulWidget {
-  final String symbol;
-  final String cryptoName;
 
   const HistoricalViewPage({
     super.key,
     required this.symbol,
     required this.cryptoName,
   });
+  final String symbol;
+  final String cryptoName;
 
   @override
   State<HistoricalViewPage> createState() => _HistoricalViewPageState();
@@ -122,14 +122,12 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       body: RefreshIndicator(
         onRefresh: _loadHistoricalData,
         child: _buildBody(),
       ),
     );
-  }
 
   Widget _buildBody() {
     if (_isLoading) {
@@ -138,7 +136,7 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
     if (_error != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -169,8 +167,7 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
     }
 
     return NestedScrollView(
-      headerSliverBuilder: (context, innerBoxIsScrolled) {
-        return [
+      headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
             title: Text('${widget.cryptoName} - Histórico'),
             pinned: true,
@@ -181,18 +178,16 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
               tabs: _reports.map((r) => Tab(text: r.monthName.toUpperCase())).toList(),
             ),
           ),
-        ];
-      },
+        ],
       body: TabBarView(
         controller: _tabController,
-        children: _reports.map((report) => _buildMonthView(report)).toList(),
+        children: _reports.map(_buildMonthView).toList(),
       ),
     );
   }
 
-  Widget _buildMonthView(MonthlyReport report) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+  Widget _buildMonthView(MonthlyReport report) => SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           _buildCalendar(report),
@@ -203,16 +198,13 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
         ],
       ),
     );
-  }
 
-  Widget _buildCalendar(MonthlyReport report) {
-    return TableCalendar(
+  Widget _buildCalendar(MonthlyReport report) => TableCalendar(
       locale: 'es_ES',
-      firstDay: DateTime.utc(report.year, report.month, 1),
+      firstDay: DateTime.utc(report.year, report.month),
       lastDay: DateTime.utc(report.year, report.month + 1, 0),
       focusedDay: _focusedDay,
       selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-      calendarFormat: CalendarFormat.month,
       startingDayOfWeek: StartingDayOfWeek.monday,
       eventLoader: (day) {
         final analysis = report.getAnalysisForDay(day);
@@ -232,7 +224,7 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
           });
         }
       },
-      calendarBuilders: CalendarBuilders(
+      calendarBuilders: CalendarBuilders<String>(
         dowBuilder: (context, day) {
           final text = DateFormat.E('es_ES').format(day);
           final isWeekend = day.weekday == DateTime.sunday || day.weekday == DateTime.saturday;
@@ -266,10 +258,9 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
         formatButtonVisible: false,
       ),
     );
-  }
 
   void _showDayDetails(BuildContext context, DailyAnalysis analysis) {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       builder: (ctx) => _DayCard(analysis: analysis),
     );
@@ -278,9 +269,9 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
 
 
 class _DayCard extends StatelessWidget {
-  final DailyAnalysis analysis;
 
   const _DayCard({required this.analysis});
+  final DailyAnalysis analysis;
 
   @override
   Widget build(BuildContext context) {
@@ -291,7 +282,6 @@ class _DayCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(dateStr, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
@@ -324,20 +314,18 @@ class _DayCard extends StatelessWidget {
 }
 
 class _MetricTile extends StatelessWidget {
+
+  const _MetricTile({required this.label, required this.value, required this.color});
   final String label;
   final String value;
   final Color color;
 
-  const _MetricTile({required this.label, required this.value, required this.color});
-
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget build(BuildContext context) => Column(
       children: [
         Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey[600])),
         const SizedBox(height: 4),
         Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: color, fontWeight: FontWeight.bold)),
       ],
     );
-  }
 }

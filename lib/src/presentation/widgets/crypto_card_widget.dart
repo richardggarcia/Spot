@@ -7,9 +7,6 @@ import '../theme/text_styles.dart';
 /// Widget de tarjeta individual para mostrar información de criptomoneda.
 /// Diseño v4: Adaptado al nuevo tema profesional de trading.
 class CryptoCardWidget extends StatelessWidget {
-  final Crypto crypto;
-  final DailyMetrics? metrics;
-  final VoidCallback? onTap;
 
   const CryptoCardWidget({
     super.key,
@@ -17,6 +14,9 @@ class CryptoCardWidget extends StatelessWidget {
     this.metrics,
     this.onTap,
   });
+  final Crypto crypto;
+  final DailyMetrics? metrics;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
-import 'draggable_card.dart';
+
 import '../../theme/app_colors.dart';
+import 'draggable_card.dart';
 
 /// Widget contenedor para tarjetas arrastrables
 class CardCanvas extends StatefulWidget {
-  final List<Widget> children;
-  final Color? backgroundColor;
-  final EdgeInsets? padding;
-  final bool allowOverflow;
-  final Function(String cardId)? onCardTap;
-  final Function(String cardId)? onCardDoubleTap;
-  final Function(String cardId, Offset position)? onCardPositionChanged;
-  final Function(String cardId)? onCardDragStart;
-  final Function(String cardId)? onCardDragEnd;
 
   const CardCanvas({
     super.key,
@@ -26,6 +18,15 @@ class CardCanvas extends StatefulWidget {
     this.onCardDragStart,
     this.onCardDragEnd,
   });
+  final List<Widget> children;
+  final Color? backgroundColor;
+  final EdgeInsets? padding;
+  final bool allowOverflow;
+  final void Function(String cardId)? onCardTap;
+  final void Function(String cardId)? onCardDoubleTap;
+  final void Function(String cardId, Offset position)? onCardPositionChanged;
+  final void Function(String cardId)? onCardDragStart;
+  final void Function(String cardId)? onCardDragEnd;
 
   @override
   State<CardCanvas> createState() => _CardCanvasState();
@@ -42,7 +43,7 @@ class _CardCanvasState extends State<CardCanvas> {
   }
 
   void _initializeCards() {
-    for (int i = 0; i < widget.children.length; i++) {
+    for (var i = 0; i < widget.children.length; i++) {
       final cardId = 'card_$i';
       _cardKeys[cardId] = GlobalKey();
       _cardPositions[cardId] = _getInitialPosition(i);
@@ -90,8 +91,7 @@ class _CardCanvasState extends State<CardCanvas> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       width: double.infinity,
       height: double.infinity,
       color: widget.backgroundColor ?? AppColors.darkBackground,
@@ -111,20 +111,17 @@ class _CardCanvasState extends State<CardCanvas> {
             initialPosition: initialPosition,
             onTap: () => _handleCardTap(cardId),
             onDoubleTap: () => _handleCardDoubleTap(cardId),
-            onPositionChanged: (id, pos) => _handleCardPositionChanged(id, pos),
-            onDragStart: (id) => _handleCardDragStart(id),
-            onDragEnd: (id) => _handleCardDragEnd(id),
+            onPositionChanged: _handleCardPositionChanged,
+            onDragStart: _handleCardDragStart,
+            onDragEnd: _handleCardDragEnd,
             child: child,
           );
         }).toList(),
       ),
     );
-  }
 
   /// Obtiene la posición actual de una tarjeta específica
-  Offset? getCardPosition(String cardId) {
-    return _cardPositions[cardId];
-  }
+  Offset? getCardPosition(String cardId) => _cardPositions[cardId];
 
   /// Establece la posición de una tarjeta específica
   void setCardPosition(String cardId, Offset position) {
@@ -143,7 +140,7 @@ class _CardCanvasState extends State<CardCanvas> {
         (MediaQuery.of(context).size.width - 100) ~/ (cardWidth + spacing);
 
     setState(() {
-      for (int i = 0; i < widget.children.length; i++) {
+      for (var i = 0; i < widget.children.length; i++) {
         final cardId = 'card_$i';
         final row = i ~/ columns;
         final col = i % columns;
@@ -162,7 +159,7 @@ class _CardCanvasState extends State<CardCanvas> {
     final centerY = MediaQuery.of(context).size.height / 2 - 100;
 
     setState(() {
-      for (int i = 0; i < widget.children.length; i++) {
+      for (var i = 0; i < widget.children.length; i++) {
         final cardId = 'card_$i';
         _cardPositions[cardId] = Offset(
           centerX + (i * 10), // Ligero desplazamiento para ver todas
@@ -180,7 +177,7 @@ class _CardCanvasState extends State<CardCanvas> {
     final centerY = MediaQuery.of(context).size.height / 2 - 100;
 
     setState(() {
-      for (int i = 0; i < widget.children.length; i++) {
+      for (var i = 0; i < widget.children.length; i++) {
         final cardId = 'card_$i';
         _cardPositions[cardId] = Offset(startX + (i * 320.0), centerY);
       }
@@ -195,7 +192,7 @@ class _CardCanvasState extends State<CardCanvas> {
     final centerX = MediaQuery.of(context).size.width / 2 - 150;
 
     setState(() {
-      for (int i = 0; i < widget.children.length; i++) {
+      for (var i = 0; i < widget.children.length; i++) {
         final cardId = 'card_$i';
         _cardPositions[cardId] = Offset(centerX, startY + (i * 220.0));
       }
@@ -205,10 +202,6 @@ class _CardCanvasState extends State<CardCanvas> {
 
 /// Widget de conveniencia para crear un canvas de tarjetas fácilmente
 class DraggableCardCanvas extends StatelessWidget {
-  final List<Widget> cards;
-  final Function(String cardId)? onCardTap;
-  final Function(String cardId)? onCardDoubleTap;
-  final Color? backgroundColor;
 
   const DraggableCardCanvas({
     super.key,
@@ -217,14 +210,16 @@ class DraggableCardCanvas extends StatelessWidget {
     this.onCardDoubleTap,
     this.backgroundColor,
   });
+  final List<Widget> cards;
+  final void Function(String cardId)? onCardTap;
+  final void Function(String cardId)? onCardDoubleTap;
+  final Color? backgroundColor;
 
   @override
-  Widget build(BuildContext context) {
-    return CardCanvas(
+  Widget build(BuildContext context) => CardCanvas(
       backgroundColor: backgroundColor,
       onCardTap: onCardTap,
       onCardDoubleTap: onCardDoubleTap,
       children: cards,
     );
-  }
 }

@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 /// Widget para mostrar estado de carga
 class LoadingWidget extends StatelessWidget {
-  final String message;
-  final double size;
-  final Color? color;
 
   const LoadingWidget({
     super.key,
@@ -12,10 +9,12 @@ class LoadingWidget extends StatelessWidget {
     this.size = 24.0,
     this.color,
   });
+  final String message;
+  final double size;
+  final Color? color;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
+  Widget build(BuildContext context) => Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -23,7 +22,7 @@ class LoadingWidget extends StatelessWidget {
             width: size,
             height: size,
             child: CircularProgressIndicator(
-              strokeWidth: 2.0,
+              strokeWidth: 2,
               valueColor: AlwaysStoppedAnimation<Color>(
                 color ?? Theme.of(context).primaryColor,
               ),
@@ -42,5 +41,4 @@ class LoadingWidget extends StatelessWidget {
         ],
       ),
     );
-  }
 }

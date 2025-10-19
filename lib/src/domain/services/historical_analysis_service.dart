@@ -1,10 +1,10 @@
-import '../../core/utils/logger.dart';
 import 'dart:collection';
 
-import '../entities/daily_candle.dart';
+import '../../core/utils/logger.dart';
 import '../entities/daily_analysis.dart';
-import '../entities/weekly_summary.dart';
+import '../entities/daily_candle.dart';
 import '../entities/monthly_report.dart';
+import '../entities/weekly_summary.dart';
 
 /// Servicio de dominio para generar análisis históricos
 /// Procesa velas diarias y genera reportes semanales/mensuales
@@ -81,9 +81,7 @@ class HistoricalAnalysisService {
     final reportYear = year ?? sortedCandles.last.date.year;
 
     // Filtrar solo candles del mes y año especificado
-    final filteredCandles = sortedCandles.where((candle) {
-      return candle.date.month == reportMonth && candle.date.year == reportYear;
-    }).toList();
+    final filteredCandles = sortedCandles.where((candle) => candle.date.month == reportMonth && candle.date.year == reportYear).toList();
 
     if (filteredCandles.isEmpty) {
       throw ArgumentError('No hay datos para el mes $reportMonth/$reportYear');
@@ -121,7 +119,7 @@ class HistoricalAnalysisService {
     final firstDate = days.first.date;
 
     // Determinar el inicio del mes
-    final monthStart = DateTime(firstDate.year, firstDate.month, 1);
+    final monthStart = DateTime(firstDate.year, firstDate.month);
 
     var currentWeekNumber = 1;
     var currentWeekDays = <DailyAnalysis>[];
@@ -174,11 +172,9 @@ class HistoricalAnalysisService {
     required DailyCandle candle,
     required double previousClose,
     String? verdict,
-  }) {
-    return DailyAnalysis.fromCandle(
+  }) => DailyAnalysis.fromCandle(
       candle: candle,
       previousClose: previousClose,
       verdict: verdict,
     );
-  }
 }

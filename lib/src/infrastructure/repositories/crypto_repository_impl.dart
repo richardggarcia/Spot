@@ -1,19 +1,15 @@
-import '../adapters/logo_enrichment_adapter.dart';
+import '../../core/utils/logger.dart';
 import '../../domain/entities/crypto.dart';
 import '../../domain/entities/daily_metrics.dart';
 import '../../domain/ports/price_data_port.dart';
 import '../../domain/repositories/crypto_repository.dart';
 import '../../domain/services/trading_calculator.dart';
-import '../../core/utils/logger.dart';
+import '../adapters/logo_enrichment_adapter.dart';
 
 /// Implementación del repositorio de criptomonedas
 /// Usa Ports (interfaces) para comunicarse con servicios externos
 /// Sigue arquitectura hexagonal - independiente de implementaciones específicas
 class CryptoRepositoryImpl implements CryptoRepository {
-  final PriceDataPort _priceDataPort;
-  final LogoEnrichmentAdapter _logoEnrichmentAdapter;
-  final TradingCalculator _calculator;
-  final List<String> _monitoredSymbols;
 
   CryptoRepositoryImpl({
     required PriceDataPort priceDataPort,
@@ -24,38 +20,42 @@ class CryptoRepositoryImpl implements CryptoRepository {
         _logoEnrichmentAdapter = logoEnrichmentAdapter,
         _calculator = calculator,
         _monitoredSymbols = monitoredSymbols;
+  final PriceDataPort _priceDataPort;
+  final LogoEnrichmentAdapter _logoEnrichmentAdapter;
+  final TradingCalculator _calculator;
+  final List<String> _monitoredSymbols;
 
   @override
   Future<List<Crypto>> getAllCryptos() async {
     AppLogger.info('Getting all cryptos for symbols: $_monitoredSymbols');
     final cryptos = await _priceDataPort.getPricesForSymbols(_monitoredSymbols);
-    return await _logoEnrichmentAdapter.enrichLogos(cryptos);
+    return _logoEnrichmentAdapter.enrichLogos(cryptos);
   }
 
   @override
   Future<Crypto?> getCryptoBySymbol(String symbol) async {
     AppLogger.info('Getting crypto for symbol: $symbol');
     // El enriquecimiento de logo se hace principalmente en listas
-    return await _priceDataPort.getPriceForSymbol(symbol);
+    return _priceDataPort.getPriceForSymbol(symbol);
   }
 
   @override
   Future<List<Crypto>> getCryptosBySymbols(List<String> symbols) async {
     AppLogger.info('Getting cryptos for symbols: $symbols');
     final cryptos = await _priceDataPort.getPricesForSymbols(symbols);
-    return await _logoEnrichmentAdapter.enrichLogos(cryptos);
+    return _logoEnrichmentAdapter.enrichLogos(cryptos);
   }
 
   @override
   Future<List<Crypto>> refreshAllCryptos() async {
     AppLogger.info('Refreshing all cryptos');
-    return await _priceDataPort.getPricesForSymbols(_monitoredSymbols);
+    return _priceDataPort.getPricesForSymbols(_monitoredSymbols);
   }
 
   @override
   Future<Crypto?> refreshCrypto(String symbol) async {
     AppLogger.info('Refreshing crypto: $symbol');
-    return await _priceDataPort.getPriceForSymbol(symbol);
+    return _priceDataPort.getPriceForSymbol(symbol);
   }
 
   /// Calcula métricas diarias para una criptomoneda

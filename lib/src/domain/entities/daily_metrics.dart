@@ -4,12 +4,6 @@ import 'crypto.dart';
 /// Entidad de dominio para métricas diarias de trading
 /// Contiene toda la lógica de cálculo y alertas
 class DailyMetrics extends Equatable {
-  final Crypto crypto;
-  final double deepDrop; // Caída profunda: (min/previousClose) - 1
-  final double rebound; // Rebote: (current/min) - 1
-  final bool hasAlert; // Alerta si caída <= -5% y rebote >= +3%
-  final String? verdict; // Veredicto del LLM/mock
-  final DateTime calculatedAt;
 
   const DailyMetrics({
     required this.crypto,
@@ -19,17 +13,23 @@ class DailyMetrics extends Equatable {
     this.verdict,
     required this.calculatedAt,
   });
+  final Crypto crypto;
+  final double deepDrop; // Caída profunda: (min/previousClose) - 1
+  final double rebound; // Rebote: (current/min) - 1
+  final bool hasAlert; // Alerta si caída <= -5% y rebote >= +3%
+  final String? verdict; // Veredicto del LLM/mock
+  final DateTime calculatedAt;
 
   /// Formatea la caída profunda para display
   String get formattedDeepDrop {
-    final percentage = (deepDrop * 100);
+    final percentage = deepDrop * 100;
     final sign = percentage >= 0 ? '+' : '';
     return '$sign${percentage.toStringAsFixed(2)}%';
   }
 
   /// Formatea el rebote para display
   String get formattedRebound {
-    final percentage = (rebound * 100);
+    final percentage = rebound * 100;
     final sign = percentage >= 0 ? '+' : '';
     return '$sign${percentage.toStringAsFixed(2)}%';
   }
@@ -85,8 +85,7 @@ class DailyMetrics extends Equatable {
     bool? hasAlert,
     String? verdict,
     DateTime? calculatedAt,
-  }) {
-    return DailyMetrics(
+  }) => DailyMetrics(
       crypto: crypto ?? this.crypto,
       deepDrop: deepDrop ?? this.deepDrop,
       rebound: rebound ?? this.rebound,
@@ -94,7 +93,6 @@ class DailyMetrics extends Equatable {
       verdict: verdict ?? this.verdict,
       calculatedAt: calculatedAt ?? this.calculatedAt,
     );
-  }
 }
 
 /// Enum para niveles de caída

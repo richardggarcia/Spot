@@ -16,9 +16,9 @@ class GetAllCryptos extends CryptoEvent {
 
 /// Evento para obtener una criptomoneda específica
 class GetCryptoBySymbol extends CryptoEvent {
-  final String symbol;
 
   const GetCryptoBySymbol(this.symbol);
+  final String symbol;
 
   @override
   List<Object?> get props => [symbol];
@@ -31,9 +31,9 @@ class RefreshCryptos extends CryptoEvent {
 
 /// Evento para refrescar una criptomoneda específica
 class RefreshCrypto extends CryptoEvent {
-  final String symbol;
 
   const RefreshCrypto(this.symbol);
+  final String symbol;
 
   @override
   List<Object?> get props => [symbol];
@@ -48,9 +48,9 @@ class GetAllCryptosWithMetrics extends CryptoEvent {
 
 /// Inicia la conexión WebSocket para recibir actualizaciones en tiempo real.
 class StartRealtimeUpdates extends CryptoEvent {
-  final List<String> symbols;
 
   const StartRealtimeUpdates(this.symbols);
+  final List<String> symbols;
 
   @override
   List<Object?> get props => [symbols];
@@ -63,9 +63,9 @@ class StopRealtimeUpdates extends CryptoEvent {
 
 /// Evento interno para procesar un tick de precio recibido.
 class PriceTickReceived extends CryptoEvent {
-  final RealtimePriceTick tick;
 
   const PriceTickReceived(this.tick);
+  final RealtimePriceTick tick;
 
   @override
   List<Object?> get props => [tick];

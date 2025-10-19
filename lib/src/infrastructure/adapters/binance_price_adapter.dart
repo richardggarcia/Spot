@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../core/errors/app_exceptions.dart';
 import '../../core/utils/logger.dart';
@@ -10,19 +11,31 @@ import '../../domain/ports/price_data_port.dart';
 /// Implementa PriceDataPort usando Binance API pública (gratis, sin límites)
 /// Usa Klines para obtener previous close de manera precisa
 class BinancePriceAdapter implements PriceDataPort {
-  final Dio _dio;
-  final String _baseUrl;
 
-  BinancePriceAdapter({String baseUrl = 'https://api.binance.com', Dio? dio})
-    : _baseUrl = baseUrl,
+  BinancePriceAdapter({String? baseUrl, Dio? dio})
+    : _baseUrl = baseUrl ?? _getBaseUrl(),
       _dio =
           dio ??
           Dio(
             BaseOptions(
               connectTimeout: const Duration(seconds: 30),
               receiveTimeout: const Duration(seconds: 30),
+              headers: kIsWeb ? {'Origin': 'http://localhost:3003'} : null,
             ),
           );
+  final Dio _dio;
+  final String _baseUrl;
+
+  /// Obtiene el URL base según el entorno
+  static String _getBaseUrl() {
+    if (kIsWeb) {
+      // Usar proxy local para evitar CORS en web
+      return 'http://localhost:8081/api/binance';
+    } else {
+      // URL directo para móvil
+      return 'https://api.binance.com';
+    }
+  }
 
   @override
   Future<List<Crypto>> getPricesForSymbols(List<String> symbols) async {
@@ -35,7 +48,7 @@ class BinancePriceAdapter implements PriceDataPort {
       // Construir query para múltiples símbolos
       final symbolsParam = binanceSymbols.map((s) => '"$s"').join(',');
 
-      final response = await _dio.get(
+      final response = await _dio.get<List<dynamic>>(
         '$_baseUrl/api/v3/ticker/24hr',
         queryParameters: {'symbols': '[$symbolsParam]'},
       );
@@ -47,10 +60,10 @@ class BinancePriceAdapter implements PriceDataPort {
         );
       }
 
-      final List<dynamic> data = response.data as List<dynamic>;
+      final data = response.data!;
 
       if (data.isEmpty) {
-        throw ApiException('No data returned from Binance');
+        throw const ApiException('No data returned from Binance');
       }
 
       return data
@@ -75,7 +88,7 @@ class BinancePriceAdapter implements PriceDataPort {
 
       final binanceSymbol = '${symbol}USDT';
 
-      final response = await _dio.get(
+      final response = await _dio.get<Map<String, dynamic>>(
         '$_baseUrl/api/v3/ticker/24hr',
         queryParameters: {'symbol': binanceSymbol},
       );
@@ -91,7 +104,7 @@ class BinancePriceAdapter implements PriceDataPort {
         );
       }
 
-      return _mapToCrypto(response.data as Map<String, dynamic>);
+      return _mapToCrypto(response.data!);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         return null;
@@ -116,7 +129,7 @@ class BinancePriceAdapter implements PriceDataPort {
 
       // Obtener 2 klines (velas) de 1 día: ayer y hoy
       // Limit=2 nos da las últimas 2 velas diarias
-      final response = await _dio.get(
+      final response = await _dio.get<List<dynamic>>(
         '$_baseUrl/api/v3/klines',
         queryParameters: {
           'symbol': binanceSymbol,
@@ -132,10 +145,10 @@ class BinancePriceAdapter implements PriceDataPort {
         );
       }
 
-      final List<dynamic> klines = response.data as List<dynamic>;
+      final klines = response.data!;
 
       if (klines.length < 2) {
-        throw ApiException('Insufficient kline data from Binance');
+        throw const ApiException('Insufficient kline data from Binance');
       }
 
       // Kline format: [openTime, open, high, low, close, volume, closeTime, ...]
@@ -233,7 +246,7 @@ class BinancePriceAdapter implements PriceDataPort {
 
       // Obtener klines (velas) de 1 día
       // limit debe ser days + 1 para incluir el día de hoy
-      final response = await _dio.get(
+      final response = await _dio.get<List<dynamic>>(
         '$_baseUrl/api/v3/klines',
         queryParameters: {
           'symbol': binanceSymbol,
@@ -249,10 +262,10 @@ class BinancePriceAdapter implements PriceDataPort {
         );
       }
 
-      final List<dynamic> klines = response.data as List<dynamic>;
+      final klines = response.data!;
 
       if (klines.isEmpty) {
-        throw ApiException('No historical data returned from Binance');
+        throw const ApiException('No historical data returned from Binance');
       }
 
       // Mapear klines a DailyCandle

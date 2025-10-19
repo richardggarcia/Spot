@@ -1,7 +1,9 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import '../../infrastructure/services/notification_service.dart';
+
 import '../../core/utils/logger.dart';
+import '../../infrastructure/services/notification_service.dart';
 import '../widgets/premium_app_bar.dart';
 
 /// Página de configuración de notificaciones push
@@ -13,13 +15,11 @@ class NotificationSettingsPage extends StatefulWidget {
 }
 
 class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
-  final _notificationService = NotificationService();
-
   bool _notificationsEnabled = true;
   bool _isLoading = true;
   String? _fcmToken;
   Map<String, dynamic>? _deviceInfo;
-  double _minDropPercent = 3.0;
+  double _minDropPercent = 3;
 
   // Lista de todas las cryptos disponibles
   final List<String> _availableCryptos = [
@@ -158,8 +158,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       appBar: const PremiumAppBar(title: 'Configuración de Notificaciones'),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -172,7 +171,6 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             )
           : null,
     );
-  }
 
   Widget _buildContent() {
     // Mostrar advertencia si es iOS
@@ -197,8 +195,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     );
   }
 
-  Widget _buildIOSWarning() {
-    return Center(
+  Widget _buildIOSWarning() => Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -237,10 +234,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         ),
       ),
     );
-  }
 
-  Widget _buildStatusCard() {
-    return Card(
+  Widget _buildStatusCard() => Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -283,10 +278,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         ),
       ),
     );
-  }
 
-  Widget _buildInfoRow(String label, String value, Color color) {
-    return Row(
+  Widget _buildInfoRow(String label, String value, Color color) => Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
@@ -316,10 +309,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         ),
       ],
     );
-  }
 
-  Widget _buildToggleCard() {
-    return Card(
+  Widget _buildToggleCard() => Card(
       child: SwitchListTile(
         secondary: const Icon(Icons.notifications_active),
         title: const Text('Notificaciones Activadas'),
@@ -334,10 +325,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         },
       ),
     );
-  }
 
-  Widget _buildThresholdCard() {
-    return Card(
+  Widget _buildThresholdCard() => Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -363,8 +352,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             ),
             Slider(
               value: _minDropPercent,
-              min: 1.0,
-              max: 10.0,
+              min: 1,
+              max: 10,
               divisions: 18,
               label: '${_minDropPercent.toStringAsFixed(1)}%',
               onChanged: (value) {
@@ -388,10 +377,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         ),
       ),
     );
-  }
 
-  Widget _buildCryptoSelector() {
-    return Card(
+  Widget _buildCryptoSelector() => Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -464,7 +451,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       }
                     });
                   },
-                  selectedColor: Colors.blue.withOpacity(0.3),
+                  selectedColor: Colors.blue.withAlpha(77),
                   checkmarkColor: Colors.blue,
                 );
               }).toList(),
@@ -473,10 +460,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         ),
       ),
     );
-  }
 
-  Widget _buildTestButton() {
-    return Card(
+  Widget _buildTestButton() => Card(
       color: Colors.blue.shade50,
       child: ListTile(
         leading: const Icon(Icons.send, color: Colors.blue),
@@ -489,5 +474,4 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         onTap: _sendTestNotification,
       ),
     );
-  }
 }

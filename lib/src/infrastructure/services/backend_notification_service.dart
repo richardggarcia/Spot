@@ -7,10 +7,10 @@ import '../../domain/entities/device_registration.dart';
 /// Servicio para comunicarse con el backend de notificaciones
 /// Backend: http://192.168.1.33:3000
 class BackendNotificationService {
-  static final BackendNotificationService _instance =
-      BackendNotificationService._internal();
   factory BackendNotificationService() => _instance;
   BackendNotificationService._internal();
+  static final BackendNotificationService _instance =
+      BackendNotificationService._internal();
 
   final Dio _dio = Dio(
     BaseOptions(
@@ -45,14 +45,14 @@ class BackendNotificationService {
         preferences: preferences,
       );
 
-      final response = await _dio.post(
+      final response = await _dio.post<Map<String, dynamic>>(
         '/api/register-device',
         data: registration.toJson(),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final result = DeviceRegistrationResponse.fromJson(
-          response.data as Map<String, dynamic>,
+          response.data!,
         );
         AppLogger.info('Dispositivo registrado exitosamente: ${result.message}');
         return result;
@@ -92,7 +92,7 @@ class BackendNotificationService {
       if (preferences != null) data['preferences'] = preferences.toJson();
       if (enabled != null) data['enabled'] = enabled;
 
-      final response = await _dio.put(
+      final response = await _dio.put<Map<String, dynamic>>(
         '/api/device/$fcmToken/preferences',
         data: data,
       );
@@ -123,11 +123,11 @@ class BackendNotificationService {
     try {
       AppLogger.info('Obteniendo información del dispositivo...');
 
-      final response = await _dio.get('/api/device/$fcmToken');
+      final response = await _dio.get<Map<String, dynamic>>('/api/device/$fcmToken');
 
       if (response.statusCode == 200) {
         AppLogger.info('Información del dispositivo obtenida');
-        return response.data as Map<String, dynamic>?;
+        return response.data;
       } else if (response.statusCode == 404) {
         AppLogger.warning('Dispositivo no encontrado en el backend');
         return null;
@@ -158,7 +158,7 @@ class BackendNotificationService {
     try {
       AppLogger.info('Desregistrando dispositivo del backend...');
 
-      final response = await _dio.delete('/api/device/$fcmToken');
+      final response = await _dio.delete<Map<String, dynamic>>('/api/device/$fcmToken');
 
       if (response.statusCode == 200) {
         AppLogger.info('Dispositivo desregistrado exitosamente');
@@ -190,7 +190,7 @@ class BackendNotificationService {
     try {
       AppLogger.info('Enviando notificación de prueba...');
 
-      final response = await _dio.post(
+      final response = await _dio.post<Map<String, dynamic>>(
         '/api/test-notification',
         data: {
           'fcmToken': fcmToken,
@@ -220,8 +220,7 @@ class BackendNotificationService {
   }
 
   /// Obtiene la lista por defecto de cryptos a monitorear
-  List<String> _getDefaultCryptos() {
-    return [
+  List<String> _getDefaultCryptos() => [
       'BTC',
       'ETH',
       'BNB',
@@ -237,7 +236,6 @@ class BackendNotificationService {
       'KCS',
       'BGB',
     ];
-  }
 
   /// Obtiene el nombre de la plataforma
   static String getPlatform() {

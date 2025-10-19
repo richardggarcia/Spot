@@ -6,8 +6,9 @@ enum NotificationType {
   general('general'),
   unknown('unknown');
 
-  final String value;
   const NotificationType(this.value);
+
+  final String value;
 
   static NotificationType fromString(String? value) {
     if (value == null) return NotificationType.unknown;
@@ -19,17 +20,7 @@ enum NotificationType {
   }
 }
 
-/// Datos de una notificación
-/// Representa la información estructurada que viene en el payload
 class NotificationData {
-  final NotificationType type;
-  final String? symbol;
-  final String? cryptoName;
-  final double? dropPercent;
-  final double? currentPrice;
-  final String? message;
-  final Map<String, dynamic> rawData;
-
   const NotificationData({
     required this.type,
     this.symbol,
@@ -40,9 +31,7 @@ class NotificationData {
     this.rawData = const {},
   });
 
-  /// Crea NotificationData desde un Map
-  factory NotificationData.fromMap(Map<String, dynamic> map) {
-    return NotificationData(
+  factory NotificationData.fromMap(Map<String, dynamic> map) => NotificationData(
       type: NotificationType.fromString(map['type'] as String?),
       symbol: map['symbol'] as String?,
       cryptoName: map['cryptoName'] as String? ?? map['name'] as String?,
@@ -51,32 +40,23 @@ class NotificationData {
       message: map['message'] as String?,
       rawData: map,
     );
-  }
 
-  /// Crea NotificationData desde un JSON string
   factory NotificationData.fromJson(String json) {
     try {
       final map = jsonDecode(json) as Map<String, dynamic>;
       return NotificationData.fromMap(map);
     } catch (e) {
-      // Si falla el parsing JSON, intentar parsear como toString() de Map
       return NotificationData.fromPayloadString(json);
     }
   }
 
-  /// Parsea un payload en formato string (resultado de Map.toString())
-  /// Ejemplo: "{symbol: BTC, type: price_alert, cryptoName: Bitcoin}"
   factory NotificationData.fromPayloadString(String payload) {
     if (payload.isEmpty) {
       return const NotificationData(type: NotificationType.unknown);
     }
 
     try {
-      // Remover llaves y espacios
-      final cleaned = payload
-          .replaceAll('{', '')
-          .replaceAll('}', '')
-          .trim();
+      final cleaned = payload.replaceAll('{', '').replaceAll('}', '').trim();
 
       if (cleaned.isEmpty) {
         return const NotificationData(type: NotificationType.unknown);
@@ -84,7 +64,6 @@ class NotificationData {
 
       final map = <String, dynamic>{};
 
-      // Dividir por comas
       final pairs = cleaned.split(',');
 
       for (final pair in pairs) {
@@ -102,9 +81,15 @@ class NotificationData {
     }
   }
 
-  /// Convierte a Map para serialización
-  Map<String, dynamic> toMap() {
-    return {
+  final NotificationType type;
+  final String? symbol;
+  final String? cryptoName;
+  final double? dropPercent;
+  final double? currentPrice;
+  final String? message;
+  final Map<String, dynamic> rawData;
+
+  Map<String, dynamic> toMap() => {
       'type': type.value,
       if (symbol != null) 'symbol': symbol,
       if (cryptoName != null) 'cryptoName': cryptoName,
@@ -112,18 +97,14 @@ class NotificationData {
       if (currentPrice != null) 'currentPrice': currentPrice,
       if (message != null) 'message': message,
     };
-  }
 
-  /// Convierte a JSON string
   String toJson() => jsonEncode(toMap());
 
-  /// Convierte a formato de payload string para notificaciones locales
   String toPayloadString() {
     final entries = toMap().entries.map((e) => '${e.key}: ${e.value}').join(', ');
     return '{$entries}';
   }
 
-  /// Helper para parsear doubles de manera segura
   static double? _parseDouble(dynamic value) {
     if (value == null) return null;
     if (value is double) return value;
@@ -134,7 +115,6 @@ class NotificationData {
     return null;
   }
 
-  /// Valida si los datos son suficientes para la navegación
   bool get isValidForNavigation {
     switch (type) {
       case NotificationType.priceAlert:
@@ -147,8 +127,6 @@ class NotificationData {
   }
 
   @override
-  String toString() {
-    return 'NotificationData(type: $type, symbol: $symbol, cryptoName: $cryptoName, '
+  String toString() => 'NotificationData(type: $type, symbol: $symbol, cryptoName: $cryptoName, '
         'dropPercent: $dropPercent, currentPrice: $currentPrice)';
-  }
 }

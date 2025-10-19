@@ -57,6 +57,7 @@ android/app/google-services.json
 
 # Firebase Web Configuration (SENSITIVE - API Keys)
 lib/firebase_options.dart
+lib/src/core/config/firebase_config.dart
 web/firebase-messaging-sw.js
 firebase-config.js
 firebase_options_prod.dart

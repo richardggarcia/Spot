@@ -4,9 +4,9 @@ import '../repositories/crypto_repository.dart';
 /// Caso de uso para obtener alertas de trading
 /// Centraliza la lógica para obtener y filtrar oportunidades
 class GetAlertsUseCase {
-  final CryptoRepository _cryptoRepository;
 
   GetAlertsUseCase(this._cryptoRepository);
+  final CryptoRepository _cryptoRepository;
 
   /// Ejecuta el caso de uso: obtiene todas las alertas activas
   Future<List<DailyMetrics>> execute() async {
@@ -39,10 +39,8 @@ class GetAlertsUseCase {
   }
 
   /// Filtra métricas que tienen alertas
-  List<DailyMetrics> _filterAlerts(Map<String, DailyMetrics> metricsMap) {
-    return metricsMap.values.where((metrics) => metrics.hasAlert).toList()
+  List<DailyMetrics> _filterAlerts(Map<String, DailyMetrics> metricsMap) => metricsMap.values.where((metrics) => metrics.hasAlert).toList()
       ..sort((a, b) => a.deepDrop.compareTo(b.deepDrop));
-  }
 
   /// Obtiene las mejores oportunidades basadas en criterios de calidad
   List<DailyMetrics> _getTopOpportunities(
@@ -54,14 +52,12 @@ class GetAlertsUseCase {
     // Filtrar solo oportunidades de alta calidad
     final opportunities = alerts
         .where((metrics) => metrics.isBuyOpportunity)
-        .toList();
-
-    // Ordenar por severidad de caída y fuerza de rebote
-    opportunities.sort((a, b) {
-      final scoreA = _calculateOpportunityScore(a);
-      final scoreB = _calculateOpportunityScore(b);
-      return scoreB.compareTo(scoreA);
-    });
+        .toList()
+      ..sort((a, b) {
+        final scoreA = _calculateOpportunityScore(a);
+        final scoreB = _calculateOpportunityScore(b);
+        return scoreB.compareTo(scoreA);
+      });
 
     return opportunities.take(limit).toList();
   }

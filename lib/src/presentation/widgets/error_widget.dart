@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 
 /// Widget para mostrar estado de error
 class AppErrorWidget extends StatelessWidget {
+
+  const AppErrorWidget({super.key, required this.message, this.onRetry});
   final String message;
   final VoidCallback? onRetry;
 
-  const AppErrorWidget({super.key, required this.message, this.onRetry});
-
   @override
-  Widget build(BuildContext context) {
-    return Center(
+  Widget build(BuildContext context) => Center(
       child: Padding(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -49,5 +48,4 @@ class AppErrorWidget extends StatelessWidget {
         ),
       ),
     );
-  }
 }

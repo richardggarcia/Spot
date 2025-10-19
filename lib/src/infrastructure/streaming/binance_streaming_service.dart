@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import '../../domain/ports/streaming_data_port.dart';
 import '../../core/utils/logger.dart';
+import '../../domain/ports/streaming_data_port.dart';
 
 /// Implementación del [StreamingDataPort] para el servicio de WebSockets de Binance.
 class BinanceStreamingService implements StreamingDataPort {
@@ -36,28 +36,28 @@ class BinanceStreamingService implements StreamingDataPort {
       // Escuchamos los mensajes que llegan del servidor.
       _channel!.stream.listen(
         (message) {
-          final Map<String, dynamic> data = json.decode(message);
+          final data = json.decode(message as String) as Map<String, dynamic>;
 
           // Verificamos que el mensaje tenga el formato esperado.
           if (data.containsKey('stream') && data.containsKey('data')) {
-            final Map<String, dynamic> tradeData = data['data'];
+            final tradeData = data['data'] as Map<String, dynamic>;
             
             // Extraemos el símbolo y el precio.
-            final String symbol = tradeData['s'].toString().replaceAll('USDT', '');
-            final double price = double.parse(tradeData['p']);
+            final symbol = (tradeData['s'] as String).replaceAll('USDT', '');
+            final price = double.parse(tradeData['p'] as String);
 
             // Creamos el objeto RealtimePriceTick.
             final tick = RealtimePriceTick(
               symbol: symbol,
               price: price,
-              timestamp: DateTime.fromMillisecondsSinceEpoch(tradeData['T'], isUtc: true),
+              timestamp: DateTime.fromMillisecondsSinceEpoch(tradeData['T'] as int, isUtc: true),
             );
 
             // Añadimos el tick a nuestro stream para que el BLoC lo reciba.
             _streamController?.add(tick);
           }
         },
-        onError: (error) {
+        onError: (Object error) {
           AppLogger.error('WebSocket Error', error);
           _streamController?.addError(error);
         },

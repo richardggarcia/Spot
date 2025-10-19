@@ -4,9 +4,6 @@ import '../theme/app_colors.dart';
 
 /// Widget para mostrar lista de alertas
 class AlertsWidget extends StatelessWidget {
-  final List<DailyMetrics> alerts;
-  final bool isRefreshing;
-  final bool showOpportunities;
 
   const AlertsWidget({
     super.key,
@@ -14,6 +11,9 @@ class AlertsWidget extends StatelessWidget {
     this.isRefreshing = false,
     this.showOpportunities = false,
   });
+  final List<DailyMetrics> alerts;
+  final bool isRefreshing;
+  final bool showOpportunities;
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +36,14 @@ class AlertsWidget extends StatelessWidget {
 
 /// Widget para mostrar una alerta individual
 class AlertTileWidget extends StatelessWidget {
-  final DailyMetrics alert;
-  final bool showOpportunityBadge;
 
   const AlertTileWidget({
     super.key,
     required this.alert,
     this.showOpportunityBadge = false,
   });
+  final DailyMetrics alert;
+  final bool showOpportunityBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -207,15 +207,15 @@ class AlertTileWidget extends StatelessWidget {
 
 /// Widget para mostrar métricas
 class _MetricChip extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isNegative;
 
   const _MetricChip({
     required this.label,
     required this.value,
     required this.isNegative,
   });
+  final String label;
+  final String value;
+  final bool isNegative;
 
   @override
   Widget build(BuildContext context) {
@@ -248,8 +248,7 @@ class _EmptyAlertsWidget extends StatelessWidget {
   const _EmptyAlertsWidget();
 
   @override
-  Widget build(BuildContext context) {
-    return const Center(
+  Widget build(BuildContext context) => const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -266,5 +265,4 @@ class _EmptyAlertsWidget extends StatelessWidget {
         ],
       ),
     );
-  }
 }

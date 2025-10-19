@@ -3,12 +3,6 @@ import 'package:equatable/equatable.dart';
 /// Entidad que representa una vela diaria (OHLCV)
 /// Usado para análisis histórico
 class DailyCandle extends Equatable {
-  final DateTime date;
-  final double open;
-  final double high;
-  final double low;
-  final double close;
-  final double volume;
 
   const DailyCandle({
     required this.date,
@@ -18,6 +12,12 @@ class DailyCandle extends Equatable {
     required this.close,
     required this.volume,
   });
+  final DateTime date;
+  final double open;
+  final double high;
+  final double low;
+  final double close;
+  final double volume;
 
   /// Calcula la caída profunda para este día
   /// Requiere el cierre del día anterior

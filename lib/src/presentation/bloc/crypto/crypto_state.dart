@@ -22,9 +22,9 @@ class CryptoLoading extends CryptoState {
 
 /// Estado cargado con lista de criptomonedas
 class CryptoLoaded extends CryptoState {
-  final List<Crypto> cryptos;
 
   const CryptoLoaded(this.cryptos);
+  final List<Crypto> cryptos;
 
   @override
   List<Object?> get props => [cryptos];
@@ -32,9 +32,9 @@ class CryptoLoaded extends CryptoState {
 
 /// Estado refrescando
 class CryptoRefreshing extends CryptoState {
-  final List<Crypto> cryptos;
 
   const CryptoRefreshing(this.cryptos);
+  final List<Crypto> cryptos;
 
   @override
   List<Object?> get props => [cryptos];
@@ -42,10 +42,10 @@ class CryptoRefreshing extends CryptoState {
 
 /// Estado cargado con criptomonedas y métricas
 class CryptoWithMetricsLoaded extends CryptoState {
-  final List<Crypto> cryptos;
-  final Map<String, DailyMetrics> metrics;
 
   const CryptoWithMetricsLoaded({required this.cryptos, required this.metrics});
+  final List<Crypto> cryptos;
+  final Map<String, DailyMetrics> metrics;
 
   @override
   List<Object?> get props => [cryptos, metrics];
@@ -53,9 +53,9 @@ class CryptoWithMetricsLoaded extends CryptoState {
 
 /// Estado de error
 class CryptoError extends CryptoState {
-  final String message;
 
   const CryptoError(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];

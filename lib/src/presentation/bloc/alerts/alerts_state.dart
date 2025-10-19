@@ -21,10 +21,10 @@ class AlertsLoading extends AlertsState {
 
 /// Estado cargado con alertas
 class AlertsLoaded extends AlertsState {
-  final List<DailyMetrics> alerts;
-  final List<DailyMetrics> topOpportunities;
 
   const AlertsLoaded({required this.alerts, required this.topOpportunities});
+  final List<DailyMetrics> alerts;
+  final List<DailyMetrics> topOpportunities;
 
   @override
   List<Object?> get props => [alerts, topOpportunities];
@@ -32,13 +32,13 @@ class AlertsLoaded extends AlertsState {
 
 /// Estado refrescando
 class AlertsRefreshing extends AlertsState {
-  final List<DailyMetrics> alerts;
-  final List<DailyMetrics> topOpportunities;
 
   const AlertsRefreshing({
     required this.alerts,
     required this.topOpportunities,
   });
+  final List<DailyMetrics> alerts;
+  final List<DailyMetrics> topOpportunities;
 
   @override
   List<Object?> get props => [alerts, topOpportunities];
@@ -51,9 +51,9 @@ class NoAlerts extends AlertsState {
 
 /// Estado de error
 class AlertsError extends AlertsState {
-  final String message;
 
   const AlertsError(this.message);
+  final String message;
 
   @override
   List<Object?> get props => [message];

@@ -3,17 +3,6 @@ import 'package:equatable/equatable.dart';
 /// Entidad de dominio para una criptomoneda
 /// Contiene solo la lógica de negocio, sin dependencias externas
 class Crypto extends Equatable {
-  final String symbol;
-  final String name;
-  final String? imageUrl; // <-- AÑADIDO
-  final double currentPrice;
-  final double priceChange24h;
-  final double priceChangePercent24h;
-  final double high24h;
-  final double low24h;
-  final double open24h;
-  final double volume24h;
-  final DateTime lastUpdated;
 
   const Crypto({
     required this.symbol,
@@ -28,6 +17,17 @@ class Crypto extends Equatable {
     required this.volume24h,
     required this.lastUpdated,
   });
+  final String symbol;
+  final String name;
+  final String? imageUrl; // <-- AÑADIDO
+  final double currentPrice;
+  final double priceChange24h;
+  final double priceChangePercent24h;
+  final double high24h;
+  final double low24h;
+  final double open24h;
+  final double volume24h;
+  final DateTime lastUpdated;
 
   /// Calcula el precio de cierre anterior estimado
   double get previousClose => open24h;
@@ -95,8 +95,7 @@ class Crypto extends Equatable {
     double? open24h,
     double? volume24h,
     DateTime? lastUpdated,
-  }) {
-    return Crypto(
+  }) => Crypto(
       symbol: symbol ?? this.symbol,
       name: name ?? this.name,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -110,5 +109,4 @@ class Crypto extends Equatable {
       volume24h: volume24h ?? this.volume24h,
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
-  }
 }

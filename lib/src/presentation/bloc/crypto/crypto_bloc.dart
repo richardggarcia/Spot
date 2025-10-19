@@ -1,20 +1,17 @@
 import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../core/utils/logger.dart';
 import '../../../domain/entities/daily_metrics.dart';
 import '../../../domain/ports/streaming_data_port.dart';
-import '../../../domain/use_cases/get_crypto_data_usecase.dart';
 import '../../../domain/use_cases/get_alerts_usecase.dart';
-import '../../../core/utils/logger.dart';
+import '../../../domain/use_cases/get_crypto_data_usecase.dart';
 import 'crypto_event.dart';
 import 'crypto_state.dart';
 
 /// BLoC para manejar el estado de las criptomonedas
 class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
-  final GetCryptoDataUseCase _getCryptoDataUseCase;
-  final GetAlertsUseCase _getAlertsUseCase;
-  final StreamingDataPort _streamingDataPort;
-
-  StreamSubscription? _priceSubscription;
 
   CryptoBloc({
     required GetCryptoDataUseCase getCryptoDataUseCase,
@@ -23,7 +20,7 @@ class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
   })  : _getCryptoDataUseCase = getCryptoDataUseCase,
         _getAlertsUseCase = getAlertsUseCase,
         _streamingDataPort = streamingDataPort,
-        super(CryptoInitial()) {
+        super(const CryptoInitial()) {
     on<GetAllCryptos>(_onGetAllCryptos);
     on<GetCryptoBySymbol>(_onGetCryptoBySymbol);
     on<RefreshCryptos>(_onRefreshCryptos);
@@ -33,6 +30,11 @@ class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
     on<StopRealtimeUpdates>(_onStopRealtimeUpdates);
     on<PriceTickReceived>(_onPriceTickReceived);
   }
+  final GetCryptoDataUseCase _getCryptoDataUseCase;
+  final GetAlertsUseCase _getAlertsUseCase;
+  final StreamingDataPort _streamingDataPort;
+
+  StreamSubscription<RealtimePriceTick>? _priceSubscription;
 
   @override
   Future<void> close() {
@@ -53,7 +55,7 @@ class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
         // Añadir un evento interno al BLoC para procesar el tick
         add(PriceTickReceived(tick));
       },
-      onError: (error) {
+      onError: (Object error) {
         AppLogger.error('Error in price stream', error);
         // Opcional: emitir un estado de error de stream
       },
@@ -100,7 +102,7 @@ class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
     GetAllCryptos event,
     Emitter<CryptoState> emit,
   ) async {
-    emit(CryptoLoading());
+    emit(const CryptoLoading());
     try {
       AppLogger.info('Obteniendo todas las criptomonedas');
       final cryptos = await _getCryptoDataUseCase.execute();
@@ -117,7 +119,7 @@ class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
     Emitter<CryptoState> emit,
   ) async {
     if (state is! CryptoLoaded) {
-      emit(CryptoLoading());
+      emit(const CryptoLoading());
     }
 
     try {
@@ -156,7 +158,7 @@ class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
     if (state is CryptoLoaded) {
       emit(CryptoRefreshing((state as CryptoLoaded).cryptos));
     } else {
-      emit(CryptoLoading());
+      emit(const CryptoLoading());
     }
 
     try {
@@ -204,10 +206,10 @@ class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
     GetAllCryptosWithMetrics event,
     Emitter<CryptoState> emit,
   ) async {
-    emit(CryptoLoading());
+    emit(const CryptoLoading());
 
     // Intentar hasta 2 veces con un delay entre intentos
-    int attempt = 0;
+    var attempt = 0;
     const maxAttempts = 2;
 
     while (attempt < maxAttempts) {
@@ -220,7 +222,7 @@ class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
 
         // 2. Emitir estado con cryptos pero métricas vacías
         // Esto permite que la UI se muestre inmediatamente
-        emit(CryptoWithMetricsLoaded(cryptos: cryptos, metrics: {}));
+        emit(CryptoWithMetricsLoaded(cryptos: cryptos, metrics: const {}));
 
         AppLogger.info('Se cargaron ${cryptos.length} criptomonedas, calculando métricas...');
 
@@ -251,7 +253,7 @@ class CryptoBloc extends Bloc<CryptoEvent, CryptoState> {
         } else {
           // Esperar un poco antes de reintentar
           AppLogger.info('Reintentando en 2 segundos...');
-          await Future.delayed(const Duration(seconds: 2));
+          await Future<void>.delayed(const Duration(seconds: 2));
         }
       }
     }

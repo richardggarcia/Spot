@@ -3,9 +3,9 @@ import '../../domain/entities/daily_analysis.dart';
 
 /// Widget para mostrar una fila de análisis diario en la tabla, con diseño mejorado.
 class DailyRowWidget extends StatelessWidget {
-  final DailyAnalysis analysis;
 
   const DailyRowWidget({super.key, required this.analysis});
+  final DailyAnalysis analysis;
 
   /// Constructor para el header de la tabla.
   static Widget header(BuildContext context) {
@@ -73,7 +73,6 @@ class DailyRowWidget extends StatelessWidget {
         border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Fecha y Día
           Expanded(
@@ -153,9 +152,7 @@ class DailyRowWidget extends StatelessWidget {
     );
   }
 
-  Color _getChangeColor(double change) {
-    return change >= 0 ? Colors.green.shade700 : Colors.red.shade700;
-  }
+  Color _getChangeColor(double change) => change >= 0 ? Colors.green.shade700 : Colors.red.shade700;
 
   Color _getDeepDropColor(double drop) {
     if (drop <= -0.06) return Colors.red.shade900;
@@ -173,10 +170,6 @@ class DailyRowWidget extends StatelessWidget {
 
 /// Celda para el header de la tabla
 class _HeaderCell extends StatelessWidget {
-  final String text;
-  final int flex;
-  final TextStyle? style;
-  final TextAlign alignment;
 
   const _HeaderCell({
     required this.text,
@@ -184,33 +177,34 @@ class _HeaderCell extends StatelessWidget {
     this.style,
     this.alignment = TextAlign.left,
   });
+  final String text;
+  final int flex;
+  final TextStyle? style;
+  final TextAlign alignment;
 
   @override
-  Widget build(BuildContext context) {
-    return Expanded(
+  Widget build(BuildContext context) => Expanded(
       flex: flex,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Text(text, style: style, textAlign: alignment, maxLines: 2),
       ),
     );
-  }
 }
 
 /// Celda para datos de la tabla
 class _DataCell extends StatelessWidget {
+
+  const _DataCell({required this.text, this.flex = 1, this.style});
   final String text;
   final int flex;
   final TextStyle? style;
 
-  const _DataCell({required this.text, this.flex = 1, this.style});
-
   @override
-  Widget build(BuildContext context) {
-    return Expanded(
+  Widget build(BuildContext context) => Expanded(
       flex: flex,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Text(
           text,
           style: style,
@@ -219,5 +213,4 @@ class _DataCell extends StatelessWidget {
         ),
       ),
     );
-  }
 }

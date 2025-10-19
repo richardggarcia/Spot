@@ -15,9 +15,9 @@ class GetAllAlerts extends AlertsEvent {
 
 /// Evento para obtener las mejores oportunidades
 class GetTopOpportunities extends AlertsEvent {
-  final int limit;
 
   const GetTopOpportunities({this.limit = 5});
+  final int limit;
 
   @override
   List<Object?> get props => [limit];

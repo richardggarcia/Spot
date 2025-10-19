@@ -4,21 +4,6 @@ import '../../theme/app_colors.dart';
 
 /// Widget base para tarjetas arrastrables con animaciones y persistencia
 class DraggableCard extends StatefulWidget {
-  final Widget child;
-  final String cardId;
-  final Offset initialPosition;
-  final VoidCallback? onTap;
-  final VoidCallback? onDoubleTap;
-  final bool isDraggable;
-  final bool isResizable;
-  final Size? initialSize;
-  final double elevation;
-  final Duration animationDuration;
-  final Curve animationCurve;
-  final bool bringToFrontOnDrag;
-  final Function(String cardId, Offset position)? onPositionChanged;
-  final Function(String cardId)? onDragStart;
-  final Function(String cardId)? onDragEnd;
 
   const DraggableCard({
     super.key,
@@ -38,6 +23,21 @@ class DraggableCard extends StatefulWidget {
     this.onDragStart,
     this.onDragEnd,
   });
+  final Widget child;
+  final String cardId;
+  final Offset initialPosition;
+  final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
+  final bool isDraggable;
+  final bool isResizable;
+  final Size? initialSize;
+  final double elevation;
+  final Duration animationDuration;
+  final Curve animationCurve;
+  final bool bringToFrontOnDrag;
+  final void Function(String cardId, Offset position)? onPositionChanged;
+  final void Function(String cardId)? onDragStart;
+  final void Function(String cardId)? onDragEnd;
 
   @override
   State<DraggableCard> createState() => _DraggableCardState();
@@ -75,14 +75,14 @@ class _DraggableCardState extends State<DraggableCard>
       vsync: this,
     );
 
-    _dragAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+    _dragAnimation = Tween<double>(begin: 1, end: 1.05).animate(
       CurvedAnimation(
         parent: _dragAnimationController,
         curve: widget.animationCurve,
       ),
     );
 
-    _hoverAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
+    _hoverAnimation = Tween<double>(begin: 1, end: 1.02).animate(
       CurvedAnimation(
         parent: _hoverAnimationController,
         curve: Curves.easeInOut,
@@ -179,8 +179,7 @@ class _DraggableCardState extends State<DraggableCard>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Positioned(
+  Widget build(BuildContext context) => Positioned(
       left: position.dx,
       top: position.dy,
       child: AnimatedBuilder(
@@ -223,7 +222,7 @@ class _DraggableCardState extends State<DraggableCard>
                         ),
                         if (isDragging)
                           BoxShadow(
-                            color: AppColors.primaryAccent.withAlpha(51),
+                            color: AppColors.darkAccentPrimary.withAlpha(51),
                             blurRadius: 20,
                             spreadRadius: 2,
                           ),
@@ -238,7 +237,6 @@ class _DraggableCardState extends State<DraggableCard>
         },
       ),
     );
-  }
 
   @override
   void dispose() {

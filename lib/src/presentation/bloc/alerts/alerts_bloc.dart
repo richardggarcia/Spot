@@ -1,26 +1,27 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../domain/use_cases/get_alerts_usecase.dart';
+
 import '../../../core/utils/logger.dart';
+import '../../../domain/use_cases/get_alerts_usecase.dart';
 import 'alerts_event.dart';
 import 'alerts_state.dart';
 
 /// BLoC para manejar el estado de las alertas
 class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
-  final GetAlertsUseCase _getAlertsUseCase;
 
   AlertsBloc({required GetAlertsUseCase getAlertsUseCase})
     : _getAlertsUseCase = getAlertsUseCase,
-      super(AlertsInitial()) {
+      super(const AlertsInitial()) {
     on<GetAllAlerts>(_onGetAllAlerts);
     on<GetTopOpportunities>(_onGetTopOpportunities);
     on<RefreshAlerts>(_onRefreshAlerts);
   }
+  final GetAlertsUseCase _getAlertsUseCase;
 
   Future<void> _onGetAllAlerts(
     GetAllAlerts event,
     Emitter<AlertsState> emit,
   ) async {
-    emit(AlertsLoading());
+    emit(const AlertsLoading());
     try {
       AppLogger.info('Obteniendo todas las alertas');
       final alerts = await _getAlertsUseCase.execute();
@@ -28,7 +29,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
       AppLogger.info('Alertas obtenidas: ${alerts.length}');
 
       if (alerts.isEmpty) {
-        emit(NoAlerts());
+        emit(const NoAlerts());
         AppLogger.info('No se encontraron alertas activas');
       } else {
         try {
@@ -39,7 +40,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
         } catch (opportunitiesError) {
           // Si falla al obtener oportunidades, al menos mostrar las alertas
           AppLogger.warning('No se pudieron cargar oportunidades: $opportunitiesError');
-          emit(AlertsLoaded(alerts: alerts, topOpportunities: []));
+          emit(AlertsLoaded(alerts: alerts, topOpportunities: const []));
           AppLogger.info('Se cargaron ${alerts.length} alertas (sin oportunidades)');
         }
       }
@@ -57,7 +58,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
     GetTopOpportunities event,
     Emitter<AlertsState> emit,
   ) async {
-    emit(AlertsLoading());
+    emit(const AlertsLoading());
     try {
       AppLogger.info(
         'Obteniendo mejores oportunidades (límite: ${event.limit})',
@@ -69,7 +70,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
       AppLogger.info('Oportunidades obtenidas: ${opportunities.length}');
 
       if (opportunities.isEmpty) {
-        emit(NoAlerts());
+        emit(const NoAlerts());
         AppLogger.info('No se encontraron oportunidades');
       } else {
         try {
@@ -79,7 +80,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
         } catch (alertsError) {
           // Si falla al obtener todas las alertas, al menos mostrar las oportunidades
           AppLogger.warning('No se pudieron cargar todas las alertas: $alertsError');
-          emit(AlertsLoaded(alerts: [], topOpportunities: opportunities));
+          emit(AlertsLoaded(alerts: const [], topOpportunities: opportunities));
           AppLogger.info('Se cargaron ${opportunities.length} oportunidades (sin alertas)');
         }
       }
@@ -106,7 +107,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
         ),
       );
     } else {
-      emit(AlertsLoading());
+      emit(const AlertsLoading());
     }
 
     try {
@@ -116,7 +117,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
           .executeTopOpportunities();
 
       if (alerts.isEmpty) {
-        emit(NoAlerts());
+        emit(const NoAlerts());
       } else {
         emit(AlertsLoaded(alerts: alerts, topOpportunities: topOpportunities));
       }

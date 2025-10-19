@@ -4,12 +4,6 @@ import 'weekly_summary.dart';
 
 /// Reporte completo mensual con todas las métricas y análisis
 class MonthlyReport extends Equatable {
-  final String symbol;
-  final String cryptoName;
-  final int month; // 1-12
-  final int year;
-  final List<WeeklySummary> weeks;
-  final List<DailyAnalysis> allDays;
 
   const MonthlyReport({
     required this.symbol,
@@ -19,6 +13,12 @@ class MonthlyReport extends Equatable {
     required this.weeks,
     required this.allDays,
   });
+  final String symbol;
+  final String cryptoName;
+  final int month; // 1-12
+  final int year;
+  final List<WeeklySummary> weeks;
+  final List<DailyAnalysis> allDays;
 
   /// Nombre del mes en español
   String get monthName {
@@ -70,7 +70,7 @@ class MonthlyReport extends Equatable {
     final lastWeek = weeks.isNotEmpty ? weeks.last : null;
     final lastDay = allDays.isNotEmpty ? allDays.last : null;
 
-    String weeklyAnalysis = '';
+    var weeklyAnalysis = '';
     if (lastWeek != null) {
       final lastWeekDesc = lastWeek.description.toLowerCase();
       weeklyAnalysis =

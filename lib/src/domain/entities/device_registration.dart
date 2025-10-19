@@ -1,10 +1,5 @@
 /// Modelo para el registro de dispositivo en el backend
 class DeviceRegistration {
-  final String fcmToken;
-  final String platform;
-  final List<String> cryptos;
-  final double minDropPercent;
-  final NotificationPreferences? preferences;
 
   const DeviceRegistration({
     required this.fcmToken,
@@ -14,18 +9,7 @@ class DeviceRegistration {
     this.preferences,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'fcmToken': fcmToken,
-      'platform': platform,
-      'cryptos': cryptos,
-      'minDropPercent': minDropPercent,
-      if (preferences != null) 'preferences': preferences!.toJson(),
-    };
-  }
-
-  factory DeviceRegistration.fromJson(Map<String, dynamic> json) {
-    return DeviceRegistration(
+  factory DeviceRegistration.fromJson(Map<String, dynamic> json) => DeviceRegistration(
       fcmToken: json['fcmToken'] as String,
       platform: json['platform'] as String,
       cryptos: (json['cryptos'] as List<dynamic>).cast<String>(),
@@ -36,66 +20,67 @@ class DeviceRegistration {
             )
           : null,
     );
-  }
+  final String fcmToken;
+  final String platform;
+  final List<String> cryptos;
+  final double minDropPercent;
+  final NotificationPreferences? preferences;
+
+  Map<String, dynamic> toJson() => {
+      'fcmToken': fcmToken,
+      'platform': platform,
+      'cryptos': cryptos,
+      'minDropPercent': minDropPercent,
+      if (preferences != null) 'preferences': preferences!.toJson(),
+    };
 }
 
 /// Preferencias de notificaciones
 class NotificationPreferences {
-  final QuietHours? quietHours;
-  final int? maxAlertsPerDay;
 
   const NotificationPreferences({
     this.quietHours,
     this.maxAlertsPerDay,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      if (quietHours != null) 'quietHours': quietHours!.toJson(),
-      if (maxAlertsPerDay != null) 'maxAlertsPerDay': maxAlertsPerDay,
-    };
-  }
-
-  factory NotificationPreferences.fromJson(Map<String, dynamic> json) {
-    return NotificationPreferences(
+  factory NotificationPreferences.fromJson(Map<String, dynamic> json) => NotificationPreferences(
       quietHours: json['quietHours'] != null
           ? QuietHours.fromJson(json['quietHours'] as Map<String, dynamic>)
           : null,
       maxAlertsPerDay: json['maxAlertsPerDay'] as int?,
     );
-  }
+  final QuietHours? quietHours;
+  final int? maxAlertsPerDay;
+
+  Map<String, dynamic> toJson() => {
+      if (quietHours != null) 'quietHours': quietHours!.toJson(),
+      if (maxAlertsPerDay != null) 'maxAlertsPerDay': maxAlertsPerDay,
+    };
 }
 
 /// Horario silencioso
-class QuietHours {
-  final String start; // Formato: "22:00"
-  final String end; // Formato: "08:00"
+class QuietHours { // Formato: "08:00"
 
   const QuietHours({
     required this.start,
     required this.end,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'start': start,
-      'end': end,
-    };
-  }
-
-  factory QuietHours.fromJson(Map<String, dynamic> json) {
-    return QuietHours(
+  factory QuietHours.fromJson(Map<String, dynamic> json) => QuietHours(
       start: json['start'] as String,
       end: json['end'] as String,
     );
-  }
+  final String start; // Formato: "22:00"
+  final String end;
+
+  Map<String, dynamic> toJson() => {
+      'start': start,
+      'end': end,
+    };
 }
 
 /// Respuesta del backend al registrar dispositivo
 class DeviceRegistrationResponse {
-  final bool success;
-  final String? tokenId;
-  final String message;
 
   const DeviceRegistrationResponse({
     required this.success,
@@ -103,11 +88,12 @@ class DeviceRegistrationResponse {
     required this.message,
   });
 
-  factory DeviceRegistrationResponse.fromJson(Map<String, dynamic> json) {
-    return DeviceRegistrationResponse(
+  factory DeviceRegistrationResponse.fromJson(Map<String, dynamic> json) => DeviceRegistrationResponse(
       success: json['success'] as bool,
       tokenId: json['tokenId'] as String?,
       message: json['message'] as String,
     );
-  }
+  final bool success;
+  final String? tokenId;
+  final String message;
 }

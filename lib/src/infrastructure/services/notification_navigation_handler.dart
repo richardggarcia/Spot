@@ -6,10 +6,10 @@ import '../../presentation/pages/historical_view_page.dart';
 /// Manejador de navegación para notificaciones
 /// Permite navegar a páginas específicas cuando el usuario toca una notificación
 class NotificationNavigationHandler {
-  static final NotificationNavigationHandler _instance =
-      NotificationNavigationHandler._internal();
   factory NotificationNavigationHandler() => _instance;
   NotificationNavigationHandler._internal();
+  static final NotificationNavigationHandler _instance =
+      NotificationNavigationHandler._internal();
 
   /// GlobalKey para acceder al navigator desde cualquier lugar
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -63,7 +63,7 @@ class NotificationNavigationHandler {
 
     // Navegar a la página de análisis histórico
     await Navigator.of(context).push(
-      MaterialPageRoute(
+      MaterialPageRoute<void>(
         builder: (context) => HistoricalViewPage(
           symbol: data.symbol!,
           cryptoName: data.cryptoName ?? data.symbol!,

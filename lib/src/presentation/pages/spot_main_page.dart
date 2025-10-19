@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../bloc/crypto/crypto_bloc.dart';
-import '../bloc/crypto/crypto_event.dart';
-import '../bloc/crypto/crypto_state.dart';
+import '../../domain/entities/crypto.dart';
 import '../bloc/alerts/alerts_bloc.dart';
 import '../bloc/alerts/alerts_event.dart';
 import '../bloc/alerts/alerts_state.dart';
-import '../widgets/crypto_card_widget.dart';
-import '../widgets/alerts_widget.dart';
-import '../widgets/premium_app_bar.dart';
+import '../bloc/crypto/crypto_bloc.dart';
+import '../bloc/crypto/crypto_event.dart';
+import '../bloc/crypto/crypto_state.dart';
 import '../managers/card_position_manager.dart';
-import '../widgets/loading_widget.dart';
+import '../widgets/alerts_widget.dart';
+import '../widgets/crypto_card_widget.dart';
 import '../widgets/error_widget.dart';
+import '../widgets/loading_widget.dart';
+import '../widgets/premium_app_bar.dart';
 import 'historical_view_page.dart';
 import 'notification_settings_page.dart';
 
@@ -21,8 +22,7 @@ class SpotMainPage extends StatelessWidget {
   const SpotMainPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
+  Widget build(BuildContext context) => DefaultTabController(
       length: 3,
       child: Scaffold(
         appBar: PremiumAppBar(
@@ -34,7 +34,7 @@ class SpotMainPage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
+                  MaterialPageRoute<void>(
                     builder: (context) => const NotificationSettingsPage(),
                   ),
                 );
@@ -54,7 +54,6 @@ class SpotMainPage extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 /// Tab de mercado, ahora con estado para manejar el ciclo de vida del WebSocket.
@@ -102,11 +101,11 @@ class _MarketTabState extends State<_MarketTab> {
     await manager.saveCardOrder(symbols);
   }
 
-  List<dynamic> _getOrderedList(List<dynamic> cryptos) {
+  List<Crypto> _getOrderedList(List<Crypto> cryptos) {
     if (_orderedSymbols.isEmpty) return cryptos;
 
-    final cryptoMap = {for (var c in cryptos) c.symbol: c};
-    final ordered = <dynamic>[];
+    final cryptoMap = {for (final c in cryptos) c.symbol: c};
+    final ordered = <Crypto>[];
 
     // Agregar en el orden guardado
     for (final symbol in _orderedSymbols) {
@@ -123,8 +122,7 @@ class _MarketTabState extends State<_MarketTab> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return BlocListener<CryptoBloc, CryptoState>(
+  Widget build(BuildContext context) => BlocListener<CryptoBloc, CryptoState>(
       listener: (context, state) {
         // Una vez que tenemos la lista de criptos, iniciamos el WebSocket.
         if (state is CryptoWithMetricsLoaded) {
@@ -147,7 +145,7 @@ class _MarketTabState extends State<_MarketTab> {
               ),
             );
           } else if (state is CryptoWithMetricsLoaded) {
-            final orderedCryptos = _getOrderedList(state.cryptos);
+            final orderedCryptos = _getOrderedList(state.cryptos.cast<Crypto>());
 
             return ReorderableListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
@@ -159,7 +157,7 @@ class _MarketTabState extends State<_MarketTab> {
                   }
                   final item = orderedCryptos.removeAt(oldIndex);
                   orderedCryptos.insert(newIndex, item);
-                  _orderedSymbols = orderedCryptos.map((c) => c.symbol as String).toList();
+                  _orderedSymbols = orderedCryptos.map((c) => c.symbol).toList();
                   _saveOrder(_orderedSymbols);
                 });
               },
@@ -174,7 +172,7 @@ class _MarketTabState extends State<_MarketTab> {
                     crypto: crypto,
                     metrics: metrics,
                     onTap: () {
-                      Navigator.push(
+                      Navigator.push<void>(
                         context,
                         MaterialPageRoute(
                           builder: (context) => HistoricalViewPage(
@@ -194,7 +192,7 @@ class _MarketTabState extends State<_MarketTab> {
                 ? state.cryptos
                 : (state as CryptoRefreshing).cryptos;
 
-            final orderedCryptos = _getOrderedList(cryptos);
+            final orderedCryptos = _getOrderedList(cryptos.cast<Crypto>());
 
             return ReorderableListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
@@ -206,7 +204,7 @@ class _MarketTabState extends State<_MarketTab> {
                   }
                   final item = orderedCryptos.removeAt(oldIndex);
                   orderedCryptos.insert(newIndex, item);
-                  _orderedSymbols = orderedCryptos.map((c) => c.symbol as String).toList();
+                  _orderedSymbols = orderedCryptos.map((c) => c.symbol).toList();
                   _saveOrder(_orderedSymbols);
                 });
               },
@@ -221,7 +219,7 @@ class _MarketTabState extends State<_MarketTab> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
+                        MaterialPageRoute<void>(
                           builder: (context) => HistoricalViewPage(
                             symbol: crypto.symbol,
                             cryptoName: crypto.name,
@@ -238,7 +236,6 @@ class _MarketTabState extends State<_MarketTab> {
         },
       ),
     );
-  }
 }
 
 /// Tab de alertas
@@ -246,8 +243,7 @@ class _AlertsTab extends StatelessWidget {
   const _AlertsTab();
 
   @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AlertsBloc, AlertsState>(
+  Widget build(BuildContext context) => BlocBuilder<AlertsBloc, AlertsState>(
       builder: (context, state) {
         if (state is AlertsLoading || state is AlertsInitial) {
           return const LoadingWidget(message: 'Buscando alertas activas...');
@@ -276,7 +272,6 @@ class _AlertsTab extends StatelessWidget {
         return const SizedBox.shrink();
       },
     );
-  }
 }
 
 /// Tab de oportunidades
@@ -284,8 +279,7 @@ class _OpportunitiesTab extends StatelessWidget {
   const _OpportunitiesTab();
 
   @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AlertsBloc, AlertsState>(
+  Widget build(BuildContext context) => BlocBuilder<AlertsBloc, AlertsState>(
       builder: (context, state) {
         if (state is AlertsLoading || state is AlertsInitial) {
           return const LoadingWidget(message: 'Analizando oportunidades...');
@@ -293,7 +287,7 @@ class _OpportunitiesTab extends StatelessWidget {
           return AppErrorWidget(
             message: state.message,
             onRetry: () =>
-                context.read<AlertsBloc>().add(GetTopOpportunities()),
+                context.read<AlertsBloc>().add(const GetTopOpportunities()),
           );
         } else if (state is NoAlerts) {
           return const _NoOpportunitiesWidget();
@@ -304,7 +298,7 @@ class _OpportunitiesTab extends StatelessWidget {
 
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<AlertsBloc>().add(GetTopOpportunities());
+              context.read<AlertsBloc>().add(const GetTopOpportunities());
             },
             child: opportunities.isEmpty
                 ? const _NoOpportunitiesWidget()
@@ -318,7 +312,6 @@ class _OpportunitiesTab extends StatelessWidget {
         return const SizedBox.shrink();
       },
     );
-  }
 }
 
 /// Widget para cuando no hay alertas
@@ -326,8 +319,7 @@ class _NoAlertsWidget extends StatelessWidget {
   const _NoAlertsWidget();
 
   @override
-  Widget build(BuildContext context) {
-    return const Center(
+  Widget build(BuildContext context) => const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -350,7 +342,6 @@ class _NoAlertsWidget extends StatelessWidget {
         ],
       ),
     );
-  }
 }
 
 /// Widget para cuando no hay oportunidades
@@ -358,8 +349,7 @@ class _NoOpportunitiesWidget extends StatelessWidget {
   const _NoOpportunitiesWidget();
 
   @override
-  Widget build(BuildContext context) {
-    return const Center(
+  Widget build(BuildContext context) => const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -382,5 +372,4 @@ class _NoOpportunitiesWidget extends StatelessWidget {
         ],
       ),
     );
-  }
 }

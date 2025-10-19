@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Gestor de posiciones para tarjetas arrastrables
 class CardPositionManager {
@@ -11,11 +12,11 @@ class CardPositionManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       final positions = prefs.getString(_positionsKey) ?? '{}';
-      final Map<String, dynamic> posMap = json.decode(positions);
+      final posMap = json.decode(positions) as Map<String, dynamic>;
       posMap[cardId] = {'x': position.dx, 'y': position.dy};
       await prefs.setString(_positionsKey, json.encode(posMap));
     } catch (e) {
-      debugPrint('Error saving position for $cardId: $e');
+      // Error saving position handled silently
     }
   }
 
@@ -24,15 +25,15 @@ class CardPositionManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       final positions = prefs.getString(_positionsKey) ?? '{}';
-      final Map<String, dynamic> posMap = json.decode(positions);
+      final posMap = json.decode(positions) as Map<String, dynamic>;
 
       if (posMap.containsKey(cardId)) {
-        final pos = posMap[cardId];
-        return Offset(pos['x']?.toDouble() ?? 0.0, pos['y']?.toDouble() ?? 0.0);
+        final pos = posMap[cardId] as Map<String, dynamic>;
+        return Offset(pos['x'] as double? ?? 0.0, pos['y'] as double? ?? 0.0);
       }
       return null;
     } catch (e) {
-      debugPrint('Error getting position for $cardId: $e');
+      // Error getting position handled silently
       return null;
     }
   }
@@ -41,7 +42,7 @@ class CardPositionManager {
   static Future<void> saveAllPositions(Map<String, Offset> positions) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final Map<String, dynamic> posMap = {};
+      final posMap = <String, dynamic>{};
 
       positions.forEach((cardId, position) {
         posMap[cardId] = {'x': position.dx, 'y': position.dy};
@@ -49,7 +50,7 @@ class CardPositionManager {
 
       await prefs.setString(_positionsKey, json.encode(posMap));
     } catch (e) {
-      debugPrint('Error saving all positions: $e');
+      // Error saving all positions handled silently
     }
   }
 
@@ -58,19 +59,20 @@ class CardPositionManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       final positions = prefs.getString(_positionsKey) ?? '{}';
-      final Map<String, dynamic> posMap = json.decode(positions);
-      final Map<String, Offset> result = {};
+      final posMap = json.decode(positions) as Map<String, dynamic>;
+      final result = <String, Offset>{};
 
       posMap.forEach((cardId, pos) {
+        final position = pos as Map<String, dynamic>;
         result[cardId] = Offset(
-          pos['x']?.toDouble() ?? 0.0,
-          pos['y']?.toDouble() ?? 0.0,
+          position['x'] as double? ?? 0.0,
+          position['y'] as double? ?? 0.0,
         );
       });
 
       return result;
     } catch (e) {
-      debugPrint('Error getting all positions: $e');
+      // Error getting all positions handled silently
       return {};
     }
   }
@@ -80,11 +82,11 @@ class CardPositionManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       final positions = prefs.getString(_positionsKey) ?? '{}';
-      final Map<String, dynamic> posMap = json.decode(positions);
-      posMap.remove(cardId);
+      final posMap = json.decode(positions) as Map<String, dynamic>
+        ..remove(cardId);
       await prefs.setString(_positionsKey, json.encode(posMap));
     } catch (e) {
-      debugPrint('Error removing position for $cardId: $e');
+      // Error removing position handled silently
     }
   }
 
@@ -94,7 +96,7 @@ class CardPositionManager {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_positionsKey);
     } catch (e) {
-      debugPrint('Error clearing all positions: $e');
+      // Error clearing all positions handled silently
     }
   }
 
@@ -103,10 +105,10 @@ class CardPositionManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       final positions = prefs.getString(_positionsKey) ?? '{}';
-      final Map<String, dynamic> posMap = json.decode(positions);
+      final posMap = json.decode(positions) as Map<String, dynamic>;
       return posMap.containsKey(cardId);
     } catch (e) {
-      debugPrint('Error checking position for $cardId: $e');
+      // Error checking position handled silently
       return false;
     }
   }
@@ -117,7 +119,7 @@ class CardPositionManager {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('card_order', json.encode(orderedSymbols));
     } catch (e) {
-      debugPrint('Error saving card order: $e');
+      // Error saving card order handled silently
     }
   }
 
@@ -127,10 +129,10 @@ class CardPositionManager {
       final prefs = await SharedPreferences.getInstance();
       final orderJson = prefs.getString('card_order');
       if (orderJson == null) return [];
-      final List<dynamic> decoded = json.decode(orderJson);
+      final decoded = json.decode(orderJson) as List<dynamic>;
       return decoded.cast<String>();
     } catch (e) {
-      debugPrint('Error getting card order: $e');
+      // Error getting card order handled silently
       return [];
     }
   }
@@ -141,7 +143,7 @@ class CardPositionManager {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('card_order');
     } catch (e) {
-      debugPrint('Error clearing card order: $e');
+      // Error clearing card order handled silently
     }
   }
 }

@@ -2,18 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'daily_candle.dart';
 
 /// Análisis completo de un día con todas las métricas calculadas
-class DailyAnalysis extends Equatable {
-  final DateTime date;
-  final String weekday; // Lunes, Martes, etc.
-  final DailyCandle candle;
-  final double previousClose;
-
-  // Métricas calculadas
-  final double deepDrop; // Caída Profunda (↓)
-  final double rebound; // Rebote (↑)
-  final double netChange; // Cierre Neto (24h)
-  final bool hasAlert; // Si cumple criterios de alerta
-  final String verdict; // Veredicto clave
+class DailyAnalysis extends Equatable { // Veredicto clave
 
   const DailyAnalysis({
     required this.date,
@@ -26,27 +15,6 @@ class DailyAnalysis extends Equatable {
     required this.hasAlert,
     required this.verdict,
   });
-
-  /// Precio de oportunidad (mínimo del día)
-  double get opportunityPrice => candle.low;
-
-  // --- Getters para formateo ---
-
-  String get formattedDeepDrop {
-    final percentage = (deepDrop * 100);
-    return '${percentage.toStringAsFixed(1)}%';
-  }
-
-  String get formattedRebound {
-    final percentage = (rebound * 100);
-    return '${percentage.toStringAsFixed(1)}%';
-  }
-
-  String get formattedNetChange {
-    final percentage = (netChange * 100);
-    final sign = percentage >= 0 ? '+' : '';
-    return '$sign${percentage.toStringAsFixed(1)}%';
-  }
 
   /// Factory para crear desde un candle
   factory DailyAnalysis.fromCandle({
@@ -86,6 +54,38 @@ class DailyAnalysis extends Equatable {
       hasAlert: hasAlert,
       verdict: autoVerdict,
     );
+  }
+  final DateTime date;
+  final String weekday; // Lunes, Martes, etc.
+  final DailyCandle candle;
+  final double previousClose;
+
+  // Métricas calculadas
+  final double deepDrop; // Caída Profunda (↓)
+  final double rebound; // Rebote (↑)
+  final double netChange; // Cierre Neto (24h)
+  final bool hasAlert; // Si cumple criterios de alerta
+  final String verdict;
+
+  /// Precio de oportunidad (mínimo del día)
+  double get opportunityPrice => candle.low;
+
+  // --- Getters para formateo ---
+
+  String get formattedDeepDrop {
+    final percentage = deepDrop * 100;
+    return '${percentage.toStringAsFixed(1)}%';
+  }
+
+  String get formattedRebound {
+    final percentage = rebound * 100;
+    return '${percentage.toStringAsFixed(1)}%';
+  }
+
+  String get formattedNetChange {
+    final percentage = netChange * 100;
+    final sign = percentage >= 0 ? '+' : '';
+    return '$sign${percentage.toStringAsFixed(1)}%';
   }
 
   /// Genera veredicto automático basado en las métricas

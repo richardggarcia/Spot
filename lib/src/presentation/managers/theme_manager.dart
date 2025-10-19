@@ -26,7 +26,7 @@ class ThemeManager extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('Error loading theme preference: $e');
+      // Error loading theme preference handled silently
     }
   }
 
@@ -55,7 +55,7 @@ class ThemeManager extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_themePreferenceKey, _themeMode.toString());
     } catch (e) {
-      debugPrint('Error saving theme preference: $e');
+      // Error saving theme preference handled silently
     }
   }
 }

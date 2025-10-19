@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/app_colors.dart';
-import '../managers/theme_manager.dart';
 import 'package:provider/provider.dart';
+
+import '../managers/theme_manager.dart';
+import '../theme/app_colors.dart';
 
 /// Premium AppBar with gradient background and theme toggle
 /// Provides an elegant, professional look with smooth animations
 class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final List<Widget>? additionalActions;
-  final PreferredSizeWidget? bottom;
-  final bool centerTitle;
 
   const PremiumAppBar({
     super.key,
@@ -19,6 +16,10 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.bottom,
     this.centerTitle = true,
   });
+  final String title;
+  final List<Widget>? additionalActions;
+  final PreferredSizeWidget? bottom;
+  final bool centerTitle;
 
   @override
   Size get preferredSize => Size.fromHeight(
@@ -83,7 +84,7 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
           // Theme toggle button
           _ThemeToggleButton(
             isDark: isDark,
-            onToggle: () => themeManager.toggleTheme(),
+            onToggle: themeManager.toggleTheme,
           ),
           const SizedBox(width: 8),
         ],
@@ -95,13 +96,13 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
 
 /// Theme toggle button with animated icon transition
 class _ThemeToggleButton extends StatefulWidget {
-  final bool isDark;
-  final VoidCallback onToggle;
 
   const _ThemeToggleButton({
     required this.isDark,
     required this.onToggle,
   });
+  final bool isDark;
+  final VoidCallback onToggle;
 
   @override
   State<_ThemeToggleButton> createState() => _ThemeToggleButtonState();
@@ -110,19 +111,16 @@ class _ThemeToggleButton extends StatefulWidget {
 class _ThemeToggleButtonState extends State<_ThemeToggleButton> {
 
   @override
-  Widget build(BuildContext context) {
-    return IconButton(
+  Widget build(BuildContext context) => IconButton(
       icon: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
-        transitionBuilder: (child, animation) {
-          return RotationTransition(
+        transitionBuilder: (child, animation) => RotationTransition(
             turns: animation,
             child: FadeTransition(
               opacity: animation,
               child: child,
             ),
-          );
-        },
+          ),
         child: Icon(
           widget.isDark ? Icons.light_mode : Icons.dark_mode,
           key: ValueKey(widget.isDark),
@@ -136,19 +134,18 @@ class _ThemeToggleButtonState extends State<_ThemeToggleButton> {
       tooltip: widget.isDark ? 'Modo claro' : 'Modo oscuro',
       splashRadius: 24,
     );
-  }
 }
 
 /// Premium TabBar with matching style
 class PremiumTabBar extends StatelessWidget implements PreferredSizeWidget {
-  final List<Tab> tabs;
-  final TabController? controller;
 
   const PremiumTabBar({
     super.key,
     required this.tabs,
     this.controller,
   });
+  final List<Tab> tabs;
+  final TabController? controller;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -162,7 +159,6 @@ class PremiumTabBar extends StatelessWidget implements PreferredSizeWidget {
         border: Border(
           bottom: BorderSide(
             color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-            width: 1,
           ),
         ),
       ),

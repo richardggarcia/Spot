@@ -4,9 +4,9 @@ import 'coingecko_price_adapter.dart'; // Reutilizamos el mapeo de ID
 
 /// Adapter para enriquecer una lista de criptos con sus logos.
 class LogoEnrichmentAdapter {
-  final CoinGeckoPriceAdapter _coinGeckoAdapter;
 
   LogoEnrichmentAdapter(this._coinGeckoAdapter);
+  final CoinGeckoPriceAdapter _coinGeckoAdapter;
 
   /// Toma una lista de Crypto, obtiene sus logos de CoinGecko y devuelve la lista enriquecida.
   Future<List<Crypto>> enrichLogos(List<Crypto> cryptos) async {
@@ -23,7 +23,7 @@ class LogoEnrichmentAdapter {
       final coingeckoData = await _coinGeckoAdapter.getPricesForSymbols(symbols);
 
       // Crear un mapa de Symbol -> ImageUrl para búsqueda rápida
-      final logoMap = { for (var data in coingeckoData) data.symbol : data.imageUrl };
+      final logoMap = { for (final data in coingeckoData) data.symbol : data.imageUrl };
 
       // Crear una nueva lista de cryptos con la URL del logo
       final enrichedCryptos = cryptos.map((crypto) {

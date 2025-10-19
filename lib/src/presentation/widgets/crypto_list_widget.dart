@@ -3,14 +3,14 @@ import '../../domain/entities/crypto.dart';
 
 /// Widget para mostrar lista de criptomonedas
 class CryptoListWidget extends StatelessWidget {
-  final List<Crypto> cryptos;
-  final bool isRefreshing;
 
   const CryptoListWidget({
     super.key,
     required this.cryptos,
     this.isRefreshing = false,
   });
+  final List<Crypto> cryptos;
+  final bool isRefreshing;
 
   @override
   Widget build(BuildContext context) {
@@ -30,13 +30,12 @@ class CryptoListWidget extends StatelessWidget {
 
 /// Widget para mostrar una criptomoneda individual
 class CryptoTileWidget extends StatelessWidget {
-  final Crypto crypto;
 
   const CryptoTileWidget({super.key, required this.crypto});
+  final Crypto crypto;
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
+  Widget build(BuildContext context) => Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
@@ -85,7 +84,6 @@ class CryptoTileWidget extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 /// Widget para estado vacío
@@ -93,8 +91,7 @@ class _EmptyStateWidget extends StatelessWidget {
   const _EmptyStateWidget();
 
   @override
-  Widget build(BuildContext context) {
-    return const Center(
+  Widget build(BuildContext context) => const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -116,5 +113,4 @@ class _EmptyStateWidget extends StatelessWidget {
         ],
       ),
     );
-  }
 }

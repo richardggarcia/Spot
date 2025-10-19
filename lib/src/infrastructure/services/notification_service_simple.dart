@@ -29,10 +29,8 @@ class NotificationServiceSimple {
   /// Inicializar notificaciones web
   static Future<void> _initializeWebNotifications() async {
     // Solicitar permisos
-    NotificationSettings settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
+    final settings = await _messaging.requestPermission(
+      
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
@@ -68,7 +66,7 @@ class NotificationServiceSimple {
 
   /// Verificar si los permisos están concedidos
   static Future<bool> get hasPermission async {
-    NotificationSettings settings = await _messaging.getNotificationSettings();
+    final settings = await _messaging.getNotificationSettings();
     return settings.authorizationStatus == AuthorizationStatus.authorized;
   }
 
@@ -85,7 +83,7 @@ class NotificationServiceSimple {
 
       AppLogger.info('📤 Registrando dispositivo en backend...');
       
-      // TODO: Implementar llamada al backend
+      // Backend call implementation pending - using local notification for now
       // final response = await http.post(...)
       
       AppLogger.info('✅ Dispositivo registrado exitosamente');

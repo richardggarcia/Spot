@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../core/errors/app_exceptions.dart';
 import '../../core/utils/logger.dart';
@@ -11,15 +12,12 @@ import '../../domain/ports/price_data_port.dart';
 /// Backup para cryptos que no están en Binance
 /// Requiere API key (plan Demo gratuito: 10K calls/mes)
 class CoinGeckoPriceAdapter implements PriceDataPort {
-  final Dio _dio;
-  final String _baseUrl;
-  final String? _apiKey;
 
   CoinGeckoPriceAdapter({
-    String baseUrl = 'https://api.coingecko.com/api/v3',
+    String? baseUrl,
     String? apiKey,
     Dio? dio,
-  }) : _baseUrl = baseUrl,
+  }) : _baseUrl = baseUrl ?? _getBaseUrl(),
        _apiKey = apiKey,
        _dio =
            dio ??
@@ -27,8 +25,35 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
              BaseOptions(
                connectTimeout: const Duration(seconds: 30),
                receiveTimeout: const Duration(seconds: 30),
+               headers: kIsWeb ? {'Origin': 'http://localhost:3003'} : null,
              ),
            );
+  final Dio _dio;
+  final String _baseUrl;
+
+  /// Obtiene el URL base según el entorno
+  static String _getBaseUrl() {
+    if (kIsWeb) {
+      // En producción (URL real) usar API directo
+      // Solo para desarrollo local usar proxy
+      const currentHost = String.fromEnvironment(
+        'FLUTTER_WEB_HOST',
+        defaultValue: 'localhost',
+      );
+
+      if (currentHost == 'localhost' || currentHost.contains('192.168')) {
+        // Desarrollo local - usar proxy
+        return 'http://192.168.1.34:8080/api/coingecko';
+      } else {
+        // Producción - usar API directo
+        return 'https://api.coingecko.com/api/v3';
+      }
+    } else {
+      // URL directo para móvil
+      return 'https://api.coingecko.com/api/v3';
+    }
+  }
+  final String? _apiKey;
 
   @override
   Future<List<Crypto>> getPricesForSymbols(List<String> symbols) async {
@@ -36,9 +61,9 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
       AppLogger.info('Fetching prices from CoinGecko for: $symbols');
 
       // Convertir símbolos a IDs de CoinGecko
-      final coinIds = symbols.map((s) => _symbolToCoinGeckoId(s)).join(',');
+      final coinIds = symbols.map(_symbolToCoinGeckoId).join(',');
 
-      final response = await _dio.get(
+      final response = await _dio.get<List<dynamic>>(
         '$_baseUrl/coins/markets',
         queryParameters: {
           'vs_currency': 'usd',
@@ -54,10 +79,10 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
         );
       }
 
-      final List<dynamic> data = response.data as List<dynamic>;
+      final data = response.data!;
 
       if (data.isEmpty) {
-        throw ApiException('No data returned from CoinGecko');
+        throw const ApiException('No data returned from CoinGecko');
       }
 
       return data
@@ -82,7 +107,7 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
 
       final coinId = _symbolToCoinGeckoId(symbol);
 
-      final response = await _dio.get(
+      final response = await _dio.get<List<dynamic>>(
         '$_baseUrl/coins/markets',
         queryParameters: {
           'vs_currency': 'usd',
@@ -102,7 +127,7 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
         );
       }
 
-      final List<dynamic> data = response.data as List<dynamic>;
+      final data = response.data!;
 
       if (data.isEmpty) {
         return null;
@@ -206,7 +231,7 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
 
       // CoinGecko OHLC endpoint: /coins/{id}/ohlc
       // Retorna datos OHLC en formato: [[timestamp, open, high, low, close], ...]
-      final response = await _dio.get(
+      final response = await _dio.get<List<dynamic>>(
         '$_baseUrl/coins/$coinId/ohlc',
         queryParameters: {
           'vs_currency': 'usd',
@@ -222,10 +247,10 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
         );
       }
 
-      final List<dynamic> ohlcData = response.data as List<dynamic>;
+      final ohlcData = response.data!;
 
       if (ohlcData.isEmpty) {
-        throw ApiException('No historical data returned from CoinGecko');
+        throw const ApiException('No historical data returned from CoinGecko');
       }
 
       // Mapear datos OHLC a DailyCandle
@@ -239,7 +264,7 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
           high: (data[2] as num).toDouble(),
           low: (data[3] as num).toDouble(),
           close: (data[4] as num).toDouble(),
-          volume: 0.0, // CoinGecko OHLC no incluye volumen
+          volume: 0,
         );
       }).toList();
 

@@ -3,16 +3,16 @@ import '../../domain/entities/monthly_report.dart';
 
 /// Widget para mostrar el panorama mensual completo con un diseño mejorado.
 class MonthlyPanoramaWidget extends StatelessWidget {
-  final MonthlyReport report;
 
   const MonthlyPanoramaWidget({super.key, required this.report});
+  final MonthlyReport report;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -58,7 +58,6 @@ class MonthlyPanoramaWidget extends StatelessWidget {
     return Column(
       children: [
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Métrica Principal (Caída)
             Expanded(
@@ -135,15 +134,13 @@ class MonthlyPanoramaWidget extends StatelessWidget {
 
 /// Widget de fila de información con icono y texto.
 class _InfoRow extends StatelessWidget {
+
+  const _InfoRow({required this.icon, required this.text});
   final IconData icon;
   final String text;
 
-  const _InfoRow({required this.icon, required this.text});
-
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+  Widget build(BuildContext context) => Row(
       children: [
         Icon(icon, size: 18, color: Colors.grey.shade700),
         const SizedBox(width: 8),
@@ -155,5 +152,4 @@ class _InfoRow extends StatelessWidget {
         ),
       ],
     );
-  }
 }

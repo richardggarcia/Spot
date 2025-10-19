@@ -1,12 +1,18 @@
 import '../../core/utils/logger.dart';
 import '../../domain/entities/crypto.dart';
-import '../../domain/ports/price_data_port.dart';
 import '../../domain/entities/daily_candle.dart';
+import '../../domain/ports/price_data_port.dart';
 
 /// Adapter híbrido con fallback automático
 /// Prioridad: Binance (gratis) → CoinGecko (backup)
 /// Maneja automáticamente cryptos no disponibles en cada API
 class HybridPriceAdapter implements PriceDataPort {
+
+  HybridPriceAdapter({
+    required PriceDataPort primaryAdapter,
+    required PriceDataPort backupAdapter,
+  }) : _primaryAdapter = primaryAdapter,
+       _backupAdapter = backupAdapter;
   final PriceDataPort _primaryAdapter; // Binance
   final PriceDataPort _backupAdapter; // CoinGecko
 
@@ -18,12 +24,6 @@ class HybridPriceAdapter implements PriceDataPort {
     'BGB', // Bitget Token - no está en Binance
   };
 
-  HybridPriceAdapter({
-    required PriceDataPort primaryAdapter,
-    required PriceDataPort backupAdapter,
-  }) : _primaryAdapter = primaryAdapter,
-       _backupAdapter = backupAdapter;
-
   @override
   Future<List<Crypto>> getPricesForSymbols(List<String> symbols) async {
     final results = <Crypto>[];
@@ -33,7 +33,7 @@ class HybridPriceAdapter implements PriceDataPort {
         .where((s) => !_nonBinanceSymbols.contains(s))
         .toList();
     final coinGeckoSymbols = symbols
-        .where((s) => _nonBinanceSymbols.contains(s))
+        .where(_nonBinanceSymbols.contains)
         .toList();
 
     // Obtener de Binance (mayoría de cryptos)

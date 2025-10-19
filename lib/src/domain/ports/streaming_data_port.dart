@@ -2,15 +2,15 @@ import 'dart:async';
 
 /// Representa un tick de precio en tiempo real recibido del stream.
 class RealtimePriceTick {
-  final String symbol;
-  final double price;
-  final DateTime timestamp;
 
   RealtimePriceTick({
     required this.symbol,
     required this.price,
     required this.timestamp,
   });
+  final String symbol;
+  final double price;
+  final DateTime timestamp;
 
   @override
   String toString() => 'Tick for $symbol: \$$price @ $timestamp';

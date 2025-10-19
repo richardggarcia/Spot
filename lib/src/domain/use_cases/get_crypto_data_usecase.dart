@@ -4,9 +4,9 @@ import '../repositories/crypto_repository.dart';
 /// Caso de uso para obtener datos de criptomonedas
 /// Orquesta la lógica de negocio para obtener datos de mercado
 class GetCryptoDataUseCase {
-  final CryptoRepository _cryptoRepository;
 
   GetCryptoDataUseCase(this._cryptoRepository);
+  final CryptoRepository _cryptoRepository;
 
   /// Ejecuta el caso de uso: obtiene todas las criptomonedas
   Future<List<Crypto>> execute() async {

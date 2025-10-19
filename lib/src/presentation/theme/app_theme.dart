@@ -7,14 +7,12 @@ import 'text_styles.dart';
 /// Provides both dark and light themes with sophisticated design
 class AppTheme {
   // ============ DARK THEME ============
-  static ThemeData get darkTheme {
-    return ThemeData(
+  static ThemeData get darkTheme => ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
 
       // Color scheme - Premium dark
       colorScheme: const ColorScheme.dark(
-        brightness: Brightness.dark,
         primary: AppColors.darkAccentPrimary,
         secondary: AppColors.darkAccentSecondary,
         tertiary: AppColors.darkAccentTertiary,
@@ -65,7 +63,6 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color: AppColors.darkBorder.withValues(alpha: 0.5),
-            width: 1,
           ),
         ),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -145,11 +142,11 @@ class AppTheme {
         fillColor: AppColors.darkCard,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.darkBorder, width: 1),
+          borderSide: const BorderSide(color: AppColors.darkBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.darkBorder, width: 1),
+          borderSide: const BorderSide(color: AppColors.darkBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -160,7 +157,7 @@ class AppTheme {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.darkBearish, width: 1),
+          borderSide: const BorderSide(color: AppColors.darkBearish),
         ),
         labelStyle: AppTextStyles.labelMedium.copyWith(
           color: AppColors.darkTextSecondary,
@@ -185,7 +182,7 @@ class AppTheme {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.darkBorder, width: 1),
+          side: const BorderSide(color: AppColors.darkBorder),
         ),
       ),
 
@@ -196,7 +193,7 @@ class AppTheme {
         shadowColor: AppColors.darkShadow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.darkBorder, width: 1),
+          side: const BorderSide(color: AppColors.darkBorder),
         ),
         titleTextStyle: AppTextStyles.h3.copyWith(color: AppColors.darkTextPrimary),
         contentTextStyle: AppTextStyles.bodyMedium.copyWith(
@@ -221,7 +218,7 @@ class AppTheme {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.darkBorder, width: 1),
+          side: const BorderSide(color: AppColors.darkBorder),
         ),
         behavior: SnackBarBehavior.floating,
         elevation: 6,
@@ -287,26 +284,20 @@ class AppTheme {
         mainAxisMargin: 4,
       ),
     );
-  }
 
   // ============ LIGHT THEME ============
-  static ThemeData get lightTheme {
-    return ThemeData(
+  static ThemeData get lightTheme => ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
 
       // Color scheme - Premium light
       colorScheme: const ColorScheme.light(
-        brightness: Brightness.light,
         primary: AppColors.lightAccentPrimary,
         secondary: AppColors.lightAccentSecondary,
         tertiary: AppColors.lightAccentTertiary,
-        surface: AppColors.lightSurface,
         error: AppColors.lightBearish,
-        onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: AppColors.lightTextPrimary,
-        onError: Colors.white,
         outline: AppColors.lightBorder,
       ),
 
@@ -348,7 +339,6 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(
             color: AppColors.lightBorder,
-            width: 1,
           ),
         ),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -428,11 +418,11 @@ class AppTheme {
         fillColor: AppColors.lightCard,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.lightBorder, width: 1),
+          borderSide: const BorderSide(color: AppColors.lightBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.lightBorder, width: 1),
+          borderSide: const BorderSide(color: AppColors.lightBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -443,7 +433,7 @@ class AppTheme {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.lightBearish, width: 1),
+          borderSide: const BorderSide(color: AppColors.lightBearish),
         ),
         labelStyle: AppTextStyles.labelMedium.copyWith(
           color: AppColors.lightTextSecondary,
@@ -468,7 +458,7 @@ class AppTheme {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.lightBorder, width: 1),
+          side: const BorderSide(color: AppColors.lightBorder),
         ),
       ),
 
@@ -479,7 +469,7 @@ class AppTheme {
         shadowColor: AppColors.lightShadow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.lightBorder, width: 1),
+          side: const BorderSide(color: AppColors.lightBorder),
         ),
         titleTextStyle: AppTextStyles.h3.copyWith(color: AppColors.lightTextPrimary),
         contentTextStyle: AppTextStyles.bodyMedium.copyWith(
@@ -504,7 +494,7 @@ class AppTheme {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.lightBorder, width: 1),
+          side: const BorderSide(color: AppColors.lightBorder),
         ),
         behavior: SnackBarBehavior.floating,
         elevation: 6,
@@ -570,5 +560,4 @@ class AppTheme {
         mainAxisMargin: 4,
       ),
     );
-  }
 }

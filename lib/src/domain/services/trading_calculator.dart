@@ -31,11 +31,7 @@ class TradingCalculator {
 
   /// Determina si hay una alerta de compra
   /// Criterio principal: caída <= -3% (rebote no es requisito)
-  bool hasAlert({required double deepDrop, required double rebound}) {
-    // Alerta cuando hay caída significativa (≥3%)
-    // El rebote es secundario, solo verificamos que no sea negativo
-    return deepDrop <= -0.03;
-  }
+  bool hasAlert({required double deepDrop, required double rebound}) => deepDrop <= -0.03;
 
   /// Calcula métricas diarias completas para una criptomoneda
   /// [crypto] Entidad con datos de precio actuales
@@ -100,7 +96,7 @@ class TradingCalculator {
     required Map<String, double> previousCloses,
     Map<String, String>? verdicts,
   }) {
-    final Map<String, DailyMetrics> results = {};
+    final results = <String, DailyMetrics>{};
 
     for (final crypto in cryptos) {
       try {
@@ -127,12 +123,11 @@ class TradingCalculator {
   }
 
   /// Filtra criptomonedas que cumplen criterios de alerta
-  List<DailyMetrics> filterAlerts(Map<String, DailyMetrics> metricsMap) {
-    return metricsMap.values.where((metrics) => metrics.hasAlert).toList()
-      ..sort(
-        (a, b) => a.deepDrop.compareTo(b.deepDrop),
-      ); // Ordenar por caída más profunda
-  }
+  List<DailyMetrics> filterAlerts(Map<String, DailyMetrics> metricsMap) =>
+      metricsMap.values.where((metrics) => metrics.hasAlert).toList()
+        ..sort(
+          (a, b) => a.deepDrop.compareTo(b.deepDrop),
+        ); // Ordenar por caída más profunda
 
   /// Obtiene las mejores oportunidades (top N)
   List<DailyMetrics> getTopOpportunities(
@@ -144,14 +139,12 @@ class TradingCalculator {
     // Filtrar solo oportunidades de alta calidad
     final opportunities = alerts
         .where((metrics) => metrics.isBuyOpportunity)
-        .toList();
-
-    // Ordenar por severidad de caída y fuerza de rebote
-    opportunities.sort((a, b) {
-      final scoreA = _calculateOpportunityScore(a);
-      final scoreB = _calculateOpportunityScore(b);
-      return scoreB.compareTo(scoreA);
-    });
+        .toList()
+      ..sort((a, b) {
+        final scoreA = _calculateOpportunityScore(a);
+        final scoreB = _calculateOpportunityScore(b);
+        return scoreB.compareTo(scoreA);
+      });
 
     return opportunities.take(limit).toList();
   }

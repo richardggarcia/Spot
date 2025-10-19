@@ -7,28 +7,28 @@ class AppTextStyles {
   static const TextStyle h1 = TextStyle(
     fontSize: 32,
     fontWeight: FontWeight.bold,
-    color: AppColors.primaryText,
+    color: AppColors.darkTextPrimary,
     height: 1.2,
   );
 
   static const TextStyle h2 = TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.bold,
-    color: AppColors.primaryText,
+    color: AppColors.darkTextPrimary,
     height: 1.2,
   );
 
   static const TextStyle h3 = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w600,
-    color: AppColors.primaryText,
+    color: AppColors.darkTextPrimary,
     height: 1.3,
   );
 
   static const TextStyle h4 = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.w600,
-    color: AppColors.primaryText,
+    color: AppColors.darkTextPrimary,
     height: 1.3,
   );
 
@@ -36,21 +36,21 @@ class AppTextStyles {
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.normal,
-    color: AppColors.primaryText,
+    color: AppColors.darkTextPrimary,
     height: 1.5,
   );
 
   static const TextStyle bodyMedium = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
-    color: AppColors.secondaryText,
+    color: AppColors.darkTextSecondary,
     height: 1.4,
   );
 
   static const TextStyle bodySmall = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.normal,
-    color: AppColors.tertiaryText,
+    color: AppColors.darkTextTertiary,
     height: 1.4,
   );
 
@@ -58,57 +58,57 @@ class AppTextStyles {
   static const TextStyle labelLarge = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
-    color: AppColors.primaryText,
+    color: AppColors.darkTextPrimary,
   );
 
   static const TextStyle labelMedium = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w500,
-    color: AppColors.secondaryText,
+    color: AppColors.darkTextSecondary,
   );
 
   static const TextStyle labelSmall = TextStyle(
     fontSize: 10,
     fontWeight: FontWeight.w500,
-    color: AppColors.tertiaryText,
+    color: AppColors.darkTextTertiary,
   );
 
   // Textos para precios y valores numéricos
   static const TextStyle priceLarge = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.bold,
-    color: AppColors.primaryText,
+    color: AppColors.darkTextPrimary,
   );
 
   static const TextStyle priceMedium = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    color: AppColors.primaryText,
+    color: AppColors.darkTextPrimary,
   );
 
   static const TextStyle priceSmall = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
-    color: AppColors.primaryText,
+    color: AppColors.darkTextPrimary,
   );
 
   // Textos para cambios porcentuales
   static TextStyle bullish(BuildContext context) => const TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.bold,
-    color: AppColors.bullish,
+    color: AppColors.darkBullish,
   );
 
   static TextStyle bearish(BuildContext context) => const TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.bold,
-    color: AppColors.bearish,
+    color: AppColors.darkBearish,
   );
 
   static TextStyle neutral(BuildContext context) => const TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.bold,
-    color: AppColors.neutral,
+    color: AppColors.darkNeutral,
   );
 
   // Textos para botones
@@ -121,27 +121,27 @@ class AppTextStyles {
   static const TextStyle buttonSecondary = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
-    color: AppColors.primaryAccent,
+    color: AppColors.darkAccentPrimary,
   );
 
   // Textos para alertas y notificaciones
   static const TextStyle alert = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w600,
-    color: AppColors.alert,
+    color: AppColors.darkAlert,
   );
 
   static const TextStyle warning = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w600,
-    color: AppColors.warning,
+    color: AppColors.darkWarning,
   );
 
   // Textos para códigos y símbolos
   static const TextStyle code = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w500,
-    color: AppColors.primaryAccent,
+    color: AppColors.darkAccentPrimary,
     fontFamily: 'monospace',
   );
 
@@ -149,7 +149,7 @@ class AppTextStyles {
   static const TextStyle disabled = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
-    color: AppColors.disabledText,
+    color: AppColors.darkTextDisabled,
   );
 }
 
