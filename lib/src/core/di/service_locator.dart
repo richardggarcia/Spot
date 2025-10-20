@@ -11,6 +11,7 @@ import '../../infrastructure/adapters/binance_price_adapter.dart';
 import '../../infrastructure/adapters/coingecko_price_adapter.dart';
 import '../../infrastructure/adapters/hybrid_price_adapter.dart';
 import '../../infrastructure/adapters/logo_enrichment_adapter.dart';
+import '../../infrastructure/adapters/mock_price_adapter.dart';
 import '../../infrastructure/repositories/crypto_repository_impl.dart';
 import '../../infrastructure/streaming/binance_streaming_service.dart';
 import '../../presentation/bloc/crypto/crypto_bloc.dart';
@@ -54,6 +55,7 @@ class ServiceLocator {
         () => HybridPriceAdapter(
           primaryAdapter: BinancePriceAdapter(),
           backupAdapter: _getIt<CoinGeckoPriceAdapter>(),
+          mockAdapter: MockPriceAdapter(), // Fallback para CORS issues
         ),
       )
 

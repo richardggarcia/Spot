@@ -5,7 +5,7 @@ import '../../core/utils/logger.dart';
 import '../../domain/entities/device_registration.dart';
 
 /// Servicio para comunicarse con el backend de notificaciones
-/// Backend: http://192.168.1.33:3000
+/// Backend: https://spot.bitsdeve.com
 class BackendNotificationService {
   factory BackendNotificationService() => _instance;
   BackendNotificationService._internal();
@@ -14,7 +14,7 @@ class BackendNotificationService {
 
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://192.168.1.33:3000',
+      baseUrl: 'https://spot.bitsdeve.com',
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       headers: {

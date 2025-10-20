@@ -25,34 +25,19 @@ class CoinGeckoPriceAdapter implements PriceDataPort {
              BaseOptions(
                connectTimeout: const Duration(seconds: 30),
                receiveTimeout: const Duration(seconds: 30),
-               headers: kIsWeb ? {'Origin': 'http://localhost:3003'} : null,
+               headers: kIsWeb ? {
+                'User-Agent': 'Mozilla/5.0 (compatible; Spot Trading App)',
+              } : null,
              ),
            );
   final Dio _dio;
   final String _baseUrl;
 
   /// Obtiene el URL base según el entorno
-  static String _getBaseUrl() {
-    if (kIsWeb) {
-      // En producción (URL real) usar API directo
-      // Solo para desarrollo local usar proxy
-      const currentHost = String.fromEnvironment(
-        'FLUTTER_WEB_HOST',
-        defaultValue: 'localhost',
-      );
-
-      if (currentHost == 'localhost' || currentHost.contains('192.168')) {
-        // Desarrollo local - usar proxy
-        return 'http://192.168.1.34:8080/api/coingecko';
-      } else {
-        // Producción - usar API directo
-        return 'https://api.coingecko.com/api/v3';
-      }
-    } else {
-      // URL directo para móvil
-      return 'https://api.coingecko.com/api/v3';
-    }
-  }
+  static String _getBaseUrl() =>
+    // Usar API directa tanto en web como móvil
+    // CoinGecko permite CORS para requests públicos
+    'https://api.coingecko.com/api/v3';
   final String? _apiKey;
 
   @override

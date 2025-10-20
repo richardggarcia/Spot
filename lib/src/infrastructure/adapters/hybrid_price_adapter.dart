@@ -4,17 +4,20 @@ import '../../domain/entities/daily_candle.dart';
 import '../../domain/ports/price_data_port.dart';
 
 /// Adapter híbrido con fallback automático
-/// Prioridad: Binance (gratis) → CoinGecko (backup)
+/// Prioridad: Binance (gratis) → CoinGecko (backup) → Mock (último recurso)
 /// Maneja automáticamente cryptos no disponibles en cada API
 class HybridPriceAdapter implements PriceDataPort {
 
   HybridPriceAdapter({
     required PriceDataPort primaryAdapter,
     required PriceDataPort backupAdapter,
+    PriceDataPort? mockAdapter,
   }) : _primaryAdapter = primaryAdapter,
-       _backupAdapter = backupAdapter;
+       _backupAdapter = backupAdapter,
+       _mockAdapter = mockAdapter;
   final PriceDataPort _primaryAdapter; // Binance
   final PriceDataPort _backupAdapter; // CoinGecko
+  final PriceDataPort? _mockAdapter; // Mock fallback
 
   /// Cryptos que NO están en Binance (usar CoinGecko directamente)
   final Set<String> _nonBinanceSymbols = {
@@ -56,7 +59,19 @@ class HybridPriceAdapter implements PriceDataPort {
           results.addAll(fallbackResults);
         } catch (backupError) {
           AppLogger.error('Both APIs failed for: $binanceSymbols', backupError);
-          rethrow;
+          // Último recurso: usar mock adapter si está disponible
+          if (_mockAdapter != null) {
+            AppLogger.warning('Using mock adapter as last resort for: $binanceSymbols');
+            try {
+              final mockResults = await _mockAdapter.getPricesForSymbols(binanceSymbols);
+              results.addAll(mockResults);
+            } catch (mockError) {
+              AppLogger.error('Even mock adapter failed for: $binanceSymbols', mockError);
+              rethrow;
+            }
+          } else {
+            rethrow;
+          }
         }
       }
     }
@@ -71,8 +86,19 @@ class HybridPriceAdapter implements PriceDataPort {
         results.addAll(coinGeckoResults);
       } catch (e) {
         AppLogger.error('CoinGecko failed for: $coinGeckoSymbols', e);
-        // No hay fallback para estas (solo CoinGecko las tiene)
-        rethrow;
+        // Último recurso: usar mock adapter si está disponible
+        if (_mockAdapter != null) {
+          AppLogger.warning('Using mock adapter as last resort for: $coinGeckoSymbols');
+          try {
+            final mockResults = await _mockAdapter.getPricesForSymbols(coinGeckoSymbols);
+            results.addAll(mockResults);
+          } catch (mockError) {
+            AppLogger.error('Even mock adapter failed for: $coinGeckoSymbols', mockError);
+            rethrow;
+          }
+        } else {
+          rethrow;
+        }
       }
     }
 

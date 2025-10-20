@@ -20,22 +20,19 @@ class BinancePriceAdapter implements PriceDataPort {
             BaseOptions(
               connectTimeout: const Duration(seconds: 30),
               receiveTimeout: const Duration(seconds: 30),
-              headers: kIsWeb ? {'Origin': 'http://localhost:3003'} : null,
+              headers: kIsWeb ? {
+                'User-Agent': 'Mozilla/5.0 (compatible; Spot Trading App)',
+              } : null,
             ),
           );
   final Dio _dio;
   final String _baseUrl;
 
   /// Obtiene el URL base según el entorno
-  static String _getBaseUrl() {
-    if (kIsWeb) {
-      // Usar proxy local para evitar CORS en web
-      return 'http://localhost:8081/api/binance';
-    } else {
-      // URL directo para móvil
-      return 'https://api.binance.com';
-    }
-  }
+  static String _getBaseUrl() =>
+    // Usar API directa tanto en web como móvil
+    // Binance permite CORS para requests públicos
+    'https://api.binance.com';
 
   @override
   Future<List<Crypto>> getPricesForSymbols(List<String> symbols) async {
