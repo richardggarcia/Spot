@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -9,11 +10,13 @@ import '../bloc/crypto/crypto_bloc.dart';
 import '../bloc/crypto/crypto_event.dart';
 import '../bloc/crypto/crypto_state.dart';
 import '../managers/card_position_manager.dart';
+
 import '../widgets/alerts_widget.dart';
 import '../widgets/crypto_card_widget.dart';
 import '../widgets/error_widget.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/premium_app_bar.dart';
+import 'crypto_management_page.dart';
 import 'historical_view_page.dart';
 import 'notification_settings_page.dart';
 
@@ -29,17 +32,31 @@ class SpotMainPage extends StatelessWidget {
           title: 'Buy The Dip',
           additionalActions: [
             IconButton(
-              icon: const Icon(Icons.settings),
-              tooltip: 'Configuración de Notificaciones',
+              icon: const Icon(Icons.tune),
+              tooltip: 'Gestionar Criptomonedas',
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute<void>(
-                    builder: (context) => const NotificationSettingsPage(),
+                    builder: (context) => const CryptoManagementPage(),
                   ),
                 );
               },
             ),
+            // Solo mostrar configuración de notificaciones en móvil
+            if (!kIsWeb)
+              IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: 'Configuración de Notificaciones',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (context) => const NotificationSettingsPage(),
+                    ),
+                  );
+                },
+              ),
           ],
           bottom: const PremiumTabBar(
             tabs: [

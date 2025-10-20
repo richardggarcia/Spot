@@ -10,6 +10,7 @@ class WeeklySummaryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -27,7 +28,7 @@ class WeeklySummaryWidget extends StatelessWidget {
                 '📈 Resumen Semanal de Volatilidad',
                 style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue.shade900,
+                  color: isDark ? Colors.blue.shade300 : Colors.blue.shade900,
                 ),
               ),
             ),
@@ -51,6 +52,7 @@ class WeeklySummaryWidget extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final headerStyle = textTheme.labelMedium?.copyWith(
       color: Colors.white,
       fontWeight: FontWeight.bold,
@@ -58,7 +60,7 @@ class WeeklySummaryWidget extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      color: Colors.blue.shade800,
+      color: isDark ? Colors.blue.shade700 : Colors.blue.shade800,
       child: Row(
         children: [
           _HeaderCell(title: 'Semana', style: headerStyle, flex: 2),
@@ -101,6 +103,7 @@ class _WeekRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final keyPoint = week.keyBuyingPoint;
     final hasOpportunity = week.maxDeepDrop <= -0.05;
 
@@ -112,7 +115,9 @@ class _WeekRow extends StatelessWidget {
             : Colors.transparent,
         border: isLastRow
             ? null
-            : Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            : Border(bottom: BorderSide(
+                color: isDark ? Colors.grey.shade700 : Colors.grey.shade200
+              )),
       ),
       child: Row(
         children: [
@@ -123,6 +128,7 @@ class _WeekRow extends StatelessWidget {
               '#${week.weekNumber}',
               style: textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white.withValues(alpha: 0.87) : null,
               ),
               textAlign: TextAlign.center,
             ),
@@ -164,6 +170,7 @@ class _WeekRow extends StatelessWidget {
                         '\$${week.keyBuyingPrice!.toStringAsFixed(0)}',
                         style: textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white.withValues(alpha: 0.87) : null,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -171,7 +178,7 @@ class _WeekRow extends StatelessWidget {
                       Text(
                         week.description,
                         style: textTheme.labelSmall?.copyWith(
-                          color: Colors.grey.shade600,
+                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                           fontStyle: FontStyle.italic,
                         ),
                         textAlign: TextAlign.center,
@@ -183,7 +190,7 @@ class _WeekRow extends StatelessWidget {
                 : Text(
                     '-',
                     style: textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade500,
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
                     ),
                     textAlign: TextAlign.center,
                   ),

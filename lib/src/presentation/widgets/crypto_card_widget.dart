@@ -26,6 +26,11 @@ class CryptoCardWidget extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
+        // Mejorar interacción en web
+        hoverColor: isDark 
+            ? Colors.white.withValues(alpha: 0.05) 
+            : Colors.black.withValues(alpha: 0.03),
+        splashColor: const Color(0xFF5B8FF9).withValues(alpha: 0.1),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

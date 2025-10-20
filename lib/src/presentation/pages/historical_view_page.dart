@@ -7,6 +7,7 @@ import '../../domain/entities/daily_analysis.dart';
 import '../../domain/entities/monthly_report.dart';
 import '../../domain/ports/price_data_port.dart';
 import '../../domain/services/historical_analysis_service.dart';
+import '../theme/app_colors.dart';
 import '../widgets/monthly_panorama_widget.dart';
 import '../widgets/weekly_summary_widget.dart';
 
@@ -122,14 +123,18 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Scaffold(
       body: RefreshIndicator(
         onRefresh: _loadHistoricalData,
-        child: _buildBody(),
+        child: _buildBody(isDark),
       ),
     );
+  }
 
-  Widget _buildBody() {
+  Widget _buildBody(bool isDark) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -140,22 +145,39 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline,
                 size: 64,
-                color: Colors.orange,
+                color: isDark ? Colors.orange.shade300 : Colors.orange,
               ),
               const SizedBox(height: 16),
               Text(
                 _error!,
-                style: const TextStyle(fontSize: 14),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _loadHistoricalData,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Volver'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    onPressed: _loadHistoricalData,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reintentar'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -228,12 +250,15 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
         dowBuilder: (context, day) {
           final text = DateFormat.E('es_ES').format(day);
           final isWeekend = day.weekday == DateTime.sunday || day.weekday == DateTime.saturday;
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return Center(
             child: Text(
               text.substring(0, 2), // Mostrar solo las dos primeras letras
               style: TextStyle(
-                color: isWeekend ? Colors.red : Colors.black87,
-                fontSize: 12, // Tamaño de fuente más pequeño
+                color: isWeekend 
+                    ? (isDark ? Colors.red.shade300 : Colors.red)
+                    : (isDark ? Colors.white70 : Colors.black87),
+                fontSize: 12,
               ),
             ),
           );
@@ -241,16 +266,38 @@ class _HistoricalViewPageState extends State<HistoricalViewPage> with TickerProv
       ),
       calendarStyle: CalendarStyle(
         todayDecoration: BoxDecoration(
-          color: Colors.blue.shade200,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.blue.shade700
+              : Colors.blue.shade200,
           shape: BoxShape.circle,
         ),
         selectedDecoration: BoxDecoration(
-          color: Colors.blue.shade500,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.blue.shade600
+              : Colors.blue.shade500,
           shape: BoxShape.circle,
         ),
-        markerDecoration: const BoxDecoration(
-          color: Colors.red,
+        markerDecoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.red.shade400
+              : Colors.red,
           shape: BoxShape.circle,
+        ),
+        // Colores de texto del calendario
+        defaultTextStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black87,
+        ),
+        weekendTextStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.red.shade300
+              : Colors.red,
+        ),
+        outsideTextStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey.shade600
+              : Colors.grey.shade400,
         ),
       ),
       headerStyle: const HeaderStyle(
@@ -323,7 +370,14 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
       children: [
-        Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey[600])),
+        Text(
+          label, 
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: Theme.of(context).brightness == Brightness.dark 
+              ? Colors.grey[400] 
+              : Colors.grey[600]
+          )
+        ),
         const SizedBox(height: 4),
         Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: color, fontWeight: FontWeight.bold)),
       ],

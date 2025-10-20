@@ -2,26 +2,61 @@
 class AppConstants {
   AppConstants._();
 
-  /// Lista de criptomonedas a monitorear (símbolos sin USDT)
-  static const List<String> monitoredSymbols = [
+  /// Lista de criptomonedas por defecto (símbolos sin USDT)
+  static const List<String> defaultMonitoredSymbols = [
     'BTC',
     'ETH',
     'BNB',
-    'MNT',
-    'BCH',
-    'LTC',
     'SOL',
-    'KCS',
-    'TON',
-    'RON',
-    'SUI',
-    'BGB',
     'XRP',
     'LINK',
+    'BCH',
+    'LTC',
   ];
 
-  /// URL base para la API Aspiradora
-  static const String aspiradoraBaseUrl = 'https://spot.bitsdeve.com';
+  /// Lista completa de criptomonedas disponibles (incluyendo las con datos limitados)
+  static const List<String> allAvailableSymbols = [
+    // Cryptos principales con historial completo
+    'BTC',
+    'ETH',
+    'BNB',
+    'SOL',
+    'XRP',
+    'LINK',
+    'BCH',
+    'LTC',
+    'TON',
+    'SUI',
+    'DOGE',
+    'ADA',
+    'AVAX',
+    'DOT',
+    'MATIC',
+    'UNI',
+    'ATOM',
+    'FIL',
+    'TRX',
+    'ETC',
+    // Cryptos con datos limitados
+    'MNT',
+    'KCS',
+    'RON',
+    'BGB',
+  ];
+
+  /// Cryptos con datos históricos limitados
+  static const List<String> limitedHistorySymbols = [
+    'MNT',
+    'KCS',
+    'RON',
+    'BGB',
+  ];
+
+  /// Lista de criptomonedas a monitorear (ahora dinámico, fallback a default)
+  static List<String> get monitoredSymbols => defaultMonitoredSymbols;
+
+  /// URL base para la API Aspiradora (legacy)
+  static const String aspiradoraBaseUrl = 'http://192.168.1.34:8080';
 
   /// Tiempo de timeout para peticiones HTTP (segundos)
   static const int apiTimeoutSeconds = 30;

@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../core/errors/app_exceptions.dart';
 import '../../core/utils/logger.dart';
 import '../../domain/entities/device_registration.dart';
 
 /// Servicio para comunicarse con el backend de notificaciones
-/// Backend: https://spot.bitsdeve.com
+/// Backend: http://192.168.1.34:8080
 class BackendNotificationService {
   factory BackendNotificationService() => _instance;
   BackendNotificationService._internal();
@@ -14,7 +15,7 @@ class BackendNotificationService {
 
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'https://spot.bitsdeve.com',
+      baseUrl: 'http://192.168.1.34:8080',
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       headers: {
@@ -239,12 +240,21 @@ class BackendNotificationService {
 
   /// Obtiene el nombre de la plataforma
   static String getPlatform() {
-    if (Platform.isIOS) {
-      return 'ios';
-    } else if (Platform.isAndroid) {
-      return 'android';
-    } else {
-      return 'unknown';
+    if (kIsWeb) {
+      return 'web';
+    }
+    
+    try {
+      if (Platform.isIOS) {
+        return 'ios';
+      } else if (Platform.isAndroid) {
+        return 'android';
+      } else {
+        return 'unknown';
+      }
+    } catch (e) {
+      // Fallback para web u otras plataformas
+      return 'web';
     }
   }
 }

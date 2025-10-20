@@ -15,7 +15,7 @@ import '../../infrastructure/adapters/mock_price_adapter.dart';
 import '../../infrastructure/repositories/crypto_repository_impl.dart';
 import '../../infrastructure/streaming/binance_streaming_service.dart';
 import '../../presentation/bloc/crypto/crypto_bloc.dart';
-import '../constants/app_constants.dart';
+import '../utils/crypto_preferences.dart';
 
 /// Configuración de inyección de dependencias
 /// Implementa arquitectura hexagonal con Ports y Adapters
@@ -26,13 +26,16 @@ class ServiceLocator {
 
   /// Configura todas las dependencias
   static Future<void> setup({String? coinGeckoApiKey}) async {
+    // Obtener cryptos seleccionadas por el usuario
+    final selectedCryptos = await CryptoPreferences.getSelectedCryptos();
+    
     _getIt
       // Core
       ..registerLazySingleton<Logger>(Logger.new)
 
-      // Constants
+      // Constants - ahora dinámico basado en preferencias del usuario
       ..registerLazySingleton<List<String>>(
-        () => AppConstants.monitoredSymbols,
+        () => selectedCryptos,
       )
 
       // Domain Services

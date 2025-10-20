@@ -10,6 +10,7 @@ class MonthlyPanoramaWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -24,7 +25,7 @@ class MonthlyPanoramaWidget extends StatelessWidget {
               '🎯 Panorama Mensual',
               style: textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.blue.shade900,
+                color: isDark ? Colors.blue.shade300 : Colors.blue.shade900,
               ),
               textAlign: TextAlign.center,
             ),
@@ -41,7 +42,7 @@ class MonthlyPanoramaWidget extends StatelessWidget {
               report.panorama,
               style: textTheme.bodyMedium?.copyWith(
                 height: 1.5,
-                color: Colors.black87,
+                color: isDark ? Colors.white.withValues(alpha: 0.9) : Colors.black87,
               ),
               textAlign: TextAlign.left, // Mejor para leer párrafos largos
             ),
@@ -54,6 +55,7 @@ class MonthlyPanoramaWidget extends StatelessWidget {
   Widget _buildMaxOpportunitySection(BuildContext context) {
     final maxOpp = report.maxOpportunity!;
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       children: [
@@ -66,14 +68,16 @@ class MonthlyPanoramaWidget extends StatelessWidget {
                 children: [
                   Text(
                     'Caída Máxima',
-                    style: textTheme.labelMedium?.copyWith(color: Colors.red.shade800),
+                    style: textTheme.labelMedium?.copyWith(
+                      color: isDark ? Colors.red.shade300 : Colors.red.shade800
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '${(maxOpp.deepDrop * 100).toStringAsFixed(1)}%',
                     style: textTheme.displaySmall?.copyWith(
-                      color: Colors.red.shade800,
+                      color: isDark ? Colors.red.shade300 : Colors.red.shade800,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -85,7 +89,7 @@ class MonthlyPanoramaWidget extends StatelessWidget {
             Container(
               height: 60,
               width: 1,
-              color: Colors.grey.shade300,
+              color: isDark ? Colors.grey.shade600 : Colors.grey.shade300,
               margin: const EdgeInsets.symmetric(horizontal: 16),
             ),
 
@@ -121,7 +125,7 @@ class MonthlyPanoramaWidget extends StatelessWidget {
               '"${maxOpp.verdict}"',
               style: textTheme.bodyMedium?.copyWith(
                 fontStyle: FontStyle.italic,
-                color: Colors.black54,
+                color: isDark ? Colors.white60 : Colors.black54,
               ),
               textAlign: TextAlign.center,
             ),
@@ -140,16 +144,25 @@ class _InfoRow extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
       children: [
-        Icon(icon, size: 18, color: Colors.grey.shade700),
+        Icon(
+          icon, 
+          size: 18, 
+          color: isDark ? Colors.grey.shade400 : Colors.grey.shade700
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: isDark ? Colors.white.withValues(alpha: 0.87) : null,
+            ),
           ),
         ),
       ],
     );
+  }
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/utils/logger.dart';
@@ -21,11 +22,11 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   Map<String, dynamic>? _deviceInfo;
   double _minDropPercent = 3;
 
-  // Lista de todas las cryptos disponibles
+  // Lista de todas las cryptos disponibles (actualizada con nuevas opciones)
   final List<String> _availableCryptos = [
-    'BTC', 'ETH', 'BNB', 'SOL', 'XRP',
-    'LINK', 'LTC', 'BCH', 'TON', 'SUI',
-    'MNT', 'RON', 'KCS', 'BGB',
+    'BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'LINK', 'BCH', 'LTC',
+    'TON', 'SUI', 'DOGE', 'ADA', 'AVAX', 'DOT', 'MATIC', 'UNI',
+    'ATOM', 'FIL', 'TRX', 'ETC', 'MNT', 'KCS', 'RON', 'BGB',
   ];
 
   Set<String> _selectedCryptos = {};
@@ -40,40 +41,99 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     try {
       setState(() => _isLoading = true);
 
-      // Obtener token FCM
+      if (kIsWeb) {
+        // En web, solicitar permisos de notificación del navegador
+        AppLogger.info('Ejecutando en web - solicitando permisos de notificación');
+        
+        try {
+          _notificationsEnabled = await NotificationService.areNotificationsEnabled();
+          _fcmToken = NotificationService.fcmToken ?? 'web-token-${DateTime.now().millisecondsSinceEpoch}';
+          
+          _selectedCryptos = {'BTC', 'ETH', 'BNB', 'SOL', 'XRP'};
+          _minDropPercent = 3.0;
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(_notificationsEnabled 
+                  ? '🌐 Notificaciones web activadas' 
+                  : '🌐 Haz clic en "Permitir" para activar notificaciones'),
+                backgroundColor: _notificationsEnabled ? Colors.green : Colors.orange,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        } catch (e) {
+          _useDefaultSettings();
+        }
+        return;
+      }
+
+      // Solo para móvil: obtener token FCM
       _fcmToken = NotificationService.fcmToken;
 
-      // Verificar si las notificaciones están habilitadas
-      _notificationsEnabled = await NotificationService.areNotificationsEnabled();
+      // Verificar permisos de notificaciones (solo móvil)
+      try {
+        _notificationsEnabled = await NotificationService.areNotificationsEnabled()
+            .timeout(const Duration(seconds: 1));
+      } catch (e) {
+        AppLogger.error('Error obteniendo permisos de notificación', e);
+        _notificationsEnabled = false;
+      }
 
-      // Obtener información del dispositivo del backend
+      // Obtener información del dispositivo del backend con timeout (solo móvil)
       if (_fcmToken != null) {
-        _deviceInfo = await NotificationService.getDeviceInfo();
+        try {
+          _deviceInfo = await NotificationService.getDeviceInfo()
+              .timeout(const Duration(seconds: 2));
 
-        if (_deviceInfo != null) {
-          // Cargar preferencias guardadas
-          final cryptos = _deviceInfo!['cryptos'] as List<dynamic>?;
-          if (cryptos != null) {
-            _selectedCryptos = Set<String>.from(cryptos);
+          if (_deviceInfo != null) {
+            // Cargar preferencias guardadas del backend
+            final cryptos = _deviceInfo!['cryptos'] as List<dynamic>?;
+            if (cryptos != null) {
+              _selectedCryptos = Set<String>.from(cryptos);
+            } else {
+              // Por defecto, seleccionar las principales
+              _selectedCryptos = {'BTC', 'ETH', 'BNB', 'SOL', 'XRP'};
+            }
+
+            final minDrop = _deviceInfo!['minDropPercent'] as num?;
+            if (minDrop != null) {
+              _minDropPercent = minDrop.toDouble();
+            }
           } else {
-            // Por defecto, seleccionar todas
-            _selectedCryptos = Set<String>.from(_availableCryptos);
+            AppLogger.warning('No se pudo obtener información del dispositivo del backend');
+            _useDefaultSettings();
           }
-
-          final minDrop = _deviceInfo!['minDropPercent'] as num?;
-          if (minDrop != null) {
-            _minDropPercent = minDrop.toDouble();
+        } catch (e) {
+          AppLogger.error('Error conectando con backend, usando configuración local', e);
+          _useDefaultSettings();
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('⚠️ Modo offline: usando configuración local'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 2),
+              ),
+            );
           }
-        } else {
-          // Si no hay info del dispositivo, usar valores por defecto
-          _selectedCryptos = Set<String>.from(_availableCryptos);
         }
+      } else {
+        AppLogger.warning('No hay token FCM disponible');
+        _useDefaultSettings();
       }
     } catch (e) {
-      AppLogger.error('Error al cargar configuración', e);
+      AppLogger.error('Error general al cargar configuración', e);
+      _useDefaultSettings();
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar configuración: $e')),
+          SnackBar(
+            content: Text('Error al cargar configuración: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
         );
       }
     } finally {
@@ -83,31 +143,65 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     }
   }
 
+  /// Configuración por defecto cuando hay problemas de conectividad
+  void _useDefaultSettings() {
+    _selectedCryptos = {'BTC', 'ETH', 'BNB', 'SOL', 'XRP'};
+    _minDropPercent = 3.0;
+    _notificationsEnabled = false; // Por seguridad, deshabilitado por defecto
+  }
+
   Future<void> _savePreferences() async {
     try {
       setState(() => _isLoading = true);
 
+      // Validar que hay al menos una crypto seleccionada si están habilitadas las notificaciones
+      if (_notificationsEnabled && _selectedCryptos.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ Selecciona al menos una criptomoneda'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Intentar guardar con timeout
       await NotificationService.updatePreferences(
         cryptos: _selectedCryptos.toList(),
         minDropPercent: _minDropPercent,
         preferences: {'enabled': _notificationsEnabled},
-      );
+      ).timeout(const Duration(seconds: 3));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Preferencias guardadas correctamente'),
+            content: Text('✅ Preferencias guardadas correctamente'),
             backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
       AppLogger.error('Error al guardar preferencias', e);
+      
       if (mounted) {
+        var errorMessage = 'Error al guardar';
+        if (e.toString().contains('TimeoutException')) {
+          errorMessage = '⏱️ Timeout: verifica tu conexión a internet';
+        } else if (e.toString().contains('SocketException')) {
+          errorMessage = '🌐 Sin conexión: configuración guardada localmente';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Reintentar',
+              textColor: Colors.white,
+              onPressed: _savePreferences,
+            ),
           ),
         );
       }
@@ -122,7 +216,17 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     if (_selectedCryptos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Selecciona al menos una crypto'),
+          content: Text('⚠️ Selecciona al menos una crypto'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (!_notificationsEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ Activa las notificaciones primero'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -134,23 +238,33 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       await NotificationService.sendTestNotification(
         symbol: symbol,
         dropPercent: -_minDropPercent,
-      );
+      ).timeout(const Duration(seconds: 3));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Notificación de prueba enviada para $symbol'),
+            content: Text('🔔 Notificación de prueba enviada para $symbol'),
             backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
       AppLogger.error('Error al enviar notificación de prueba', e);
+      
       if (mounted) {
+        var errorMessage = 'Error al enviar notificación';
+        if (e.toString().contains('TimeoutException')) {
+          errorMessage = '⏱️ Timeout: verifica tu conexión';
+        } else if (e.toString().contains('SocketException')) {
+          errorMessage = '🌐 Sin conexión a internet';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al enviar: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -173,8 +287,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     );
 
   Widget _buildContent() {
-    // Mostrar advertencia si es iOS
-    if (Platform.isIOS) {
+    // Mostrar advertencia si es iOS (solo en móvil, no en web)
+    if (!kIsWeb && Platform.isIOS) {
       return _buildIOSWarning();
     }
 
@@ -279,12 +393,17 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       ),
     );
 
-  Widget _buildInfoRow(String label, String value, Color color) => Row(
+  Widget _buildInfoRow(String label, String value, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(
+            fontSize: 14, 
+            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+          ),
         ),
         Row(
           children: [
@@ -309,6 +428,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
         ),
       ],
     );
+  }
 
   Widget _buildToggleCard() => Card(
       child: SwitchListTile(
