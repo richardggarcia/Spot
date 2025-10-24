@@ -3,61 +3,66 @@ import '../../domain/entities/crypto.dart';
 import '../../domain/entities/daily_metrics.dart';
 import '../theme/app_colors.dart';
 import '../theme/text_styles.dart';
+import 'helpers/theme_aware_widget.dart';
 
 /// Widget de tarjeta individual para mostrar información de criptomoneda.
 /// Diseño v4: Adaptado al nuevo tema profesional de trading.
+/// CORREGIDO: Implementado ThemeAwareWidget para manejo robusto de temas
 class CryptoCardWidget extends StatelessWidget {
-
   const CryptoCardWidget({
     super.key,
     required this.crypto,
     this.metrics,
     this.onTap,
   });
+
   final Crypto crypto;
   final DailyMetrics? metrics;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ThemeAwareWidget(
+      builder: (context, isDark, themeManager) {
+        return Card(
+          key: ValueKey('crypto_${crypto.symbol}_${crypto.currentPrice}'),
+          clipBehavior: Clip.antiAlias,
+          elevation: 2,
+          child: InkWell(
+            onTap: onTap,
+            // CORREGIDO: usar isDark directo del ThemeAwareWidget
+            hoverColor: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.03),
+            splashColor: const Color(0xFF5B8FF9).withValues(alpha: 0.1),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // --- SECCIÓN 1: DATOS DE MERCADO ---
+                  _buildMarketData(context, isDark),
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        // Mejorar interacción en web
-        hoverColor: isDark 
-            ? Colors.white.withValues(alpha: 0.05) 
-            : Colors.black.withValues(alpha: 0.03),
-        splashColor: const Color(0xFF5B8FF9).withValues(alpha: 0.1),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // --- SECCIÓN 1: DATOS DE MERCADO ---
-              _buildMarketData(context),
-              
-              // --- SECCIÓN 2: ANÁLISIS INTERNO ---
-              if (metrics != null) ...[
-                Divider(
-                  height: 24,
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                ),
-                _buildAnalysisData(context),
-              ],
-            ],
+                  // --- SECCIÓN 2: ANÁLISIS INTERNO ---
+                  if (metrics != null) ...[
+                    Divider(
+                      height: 24,
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    ),
+                    _buildAnalysisData(context, isDark),
+                  ],
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   /// Construye la sección de datos de mercado (logo, precio, cambio).
-  Widget _buildMarketData(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildMarketData(BuildContext context, bool isDark) {
     final changeColor = crypto.isPositive
         ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
         : (isDark ? AppColors.darkBearish : AppColors.lightBearish);
@@ -156,8 +161,7 @@ class CryptoCardWidget extends StatelessWidget {
   }
 
   /// Construye la sección de análisis (veredicto, oportunidad).
-  Widget _buildAnalysisData(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildAnalysisData(BuildContext context, bool isDark) {
     final verdict = metrics!.verdict ?? _getDefaultVerdict(metrics!);
     final iconInfo = _getVerdictIcon(metrics!, isDark);
 

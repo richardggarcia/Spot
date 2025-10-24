@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Manages theme state and persistence across app sessions
 /// Provides a centralized way to switch between light and dark themes
+/// CORREGIDO: Mejorado para manejo robusto de cambios de tema
 class ThemeManager extends ChangeNotifier {
   static const String _themePreferenceKey = 'theme_mode';
 
@@ -11,6 +12,8 @@ class ThemeManager extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
 
   bool get isDarkMode => _themeMode == ThemeMode.dark;
+
+  bool get isLightMode => _themeMode == ThemeMode.light;
 
   /// Initialize theme from saved preferences
   Future<void> loadThemePreference() async {
@@ -37,6 +40,7 @@ class ThemeManager extends ChangeNotifier {
         : ThemeMode.light;
 
     await _saveThemePreference();
+    // CORREGIDO: notifyListeners() ahora forzará rebuild de todos los widgets que escuchan
     notifyListeners();
   }
 

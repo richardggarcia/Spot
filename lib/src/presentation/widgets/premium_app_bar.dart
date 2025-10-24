@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 
-import '../managers/theme_manager.dart';
 import '../theme/app_colors.dart';
+import 'helpers/theme_aware_widget.dart';
 
 /// Premium AppBar with gradient background and theme toggle
 /// Provides an elegant, professional look with smooth animations
@@ -28,10 +27,9 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final themeManager = Provider.of<ThemeManager>(context, listen: false);
-
-    return Container(
+    return ThemeAwareWidget(
+      builder: (context, isDark, themeManager) {
+        return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -84,12 +82,14 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
           // Theme toggle button
           _ThemeToggleButton(
             isDark: isDark,
-            onToggle: themeManager.toggleTheme,
+            onToggle: () => themeManager.toggleTheme(),
           ),
           const SizedBox(width: 8),
         ],
         bottom: bottom,
       ),
+        );
+      },
     );
   }
 }
@@ -152,9 +152,9 @@ class PremiumTabBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
+    return ThemeAwareWidget(
+      builder: (context, isDark, themeManager) {
+        return Container(
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -186,6 +186,8 @@ class PremiumTabBar extends StatelessWidget implements PreferredSizeWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
+        );
+      },
     );
   }
 }

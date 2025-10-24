@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,7 +17,6 @@ import '../widgets/loading_widget.dart';
 import '../widgets/premium_app_bar.dart';
 import 'crypto_management_page.dart';
 import 'historical_view_page.dart';
-import 'notification_settings_page.dart';
 
 /// Main spot trading page with premium UI
 class SpotMainPage extends StatelessWidget {
@@ -43,20 +41,6 @@ class SpotMainPage extends StatelessWidget {
                 );
               },
             ),
-            // Solo mostrar configuración de notificaciones en móvil
-            if (!kIsWeb)
-              IconButton(
-                icon: const Icon(Icons.settings),
-                tooltip: 'Configuración de Notificaciones',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (context) => const NotificationSettingsPage(),
-                    ),
-                  );
-                },
-              ),
           ],
           bottom: const PremiumTabBar(
             tabs: [
