@@ -201,6 +201,24 @@ La aplicación analiza las siguientes 14 criptomonedas principales:
 - Git
 - Cuenta de Firebase (opcional, para analytics y crashlytics)
 
+### 🔔 Preparar notificaciones Push en iOS (pendiente de activar cuenta)
+1. **Suscríbete a Apple Developer Program** (USD 99/año) con el Apple ID que uses en Xcode.
+2. En [Apple Developer](https://developer.apple.com/account/resources/identifiers/list), crea/edita el *App ID* de `Buy The Dip` y habilita la capability **Push Notifications**.
+3. Desde la misma cuenta, genera una **clave APNs Auth Key (.p8)** y anota el *Key ID*.
+4. Abre [Firebase Console → Project Settings → Cloud Messaging](https://console.firebase.google.com/) y sube la clave `.p8` junto con el *Team ID* y *Bundle ID* (`com.buytheip.app` o el que definas).
+5. En Xcode:
+   - Abre `ios/Runner.xcworkspace`.
+   - Selecciona el target **Runner**, pestaña *Signing & Capabilities*, asigna tu **Team** y activa **Push Notifications** + **Background Modes → Remote notifications**.
+   - En `Runner.entitlements`, reemplaza el comentario e incluye:
+     ```xml
+     <key>aps-environment</key>
+     <string>development</string>
+     ```
+     Cambia a `production` para builds App Store/AdHoc.
+6. Ejecuta `pod install` dentro de `ios/` (o simplemente vuelve a compilar desde Xcode).
+7. Construye y corre la app en tu iPhone. Acepta el diálogo de notificaciones; el nuevo `MobilePushNotificationService` registrará el token automáticamente y lo enviará al backend.
+8. Usa el endpoint `/api/test-notification` del backend o Firebase Console para enviar una prueba y confirma que abre el flujo histórico correcto en la app.
+
 ### **Instalación**
 
 ```bash

@@ -1,11 +1,15 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'firebase_options.dart';
 import 'src/core/di/service_locator.dart';
 import 'src/core/utils/logger.dart';
 import 'src/infrastructure/services/notification_navigation_handler.dart';
+import 'src/infrastructure/services/web_push_notification_service.dart';
 import 'src/presentation/bloc/alerts/alerts_bloc.dart';
 import 'src/presentation/bloc/alerts/alerts_event.dart';
 import 'src/presentation/bloc/crypto/crypto_bloc.dart';
@@ -18,6 +22,56 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   AppLogger.info('🚀 Iniciando SPOT - Trading de Price Action');
+
+  var firebaseInitialized = false;
+
+  FirebaseOptions? firebaseOptions;
+  if (kIsWeb) {
+    firebaseOptions = DefaultFirebaseOptions.web;
+  } else {
+    firebaseOptions = DefaultFirebaseOptions.maybeCurrentPlatform();
+  }
+
+  try {
+    if (firebaseOptions != null) {
+      await Firebase.initializeApp(options: firebaseOptions);
+      firebaseInitialized = true;
+      AppLogger.info('🔥 Firebase inicializado con opciones específicas');
+    } else if (!kIsWeb) {
+      await Firebase.initializeApp();
+      firebaseInitialized = true;
+      AppLogger.info(
+        '🔥 Firebase inicializado usando configuración nativa (GoogleService-Info.plist)',
+      );
+    } else {
+      AppLogger.warning(
+        '⚠️ Firebase no tiene configuración para esta plataforma; '
+        'se continúa sin servicios de notificaciones.',
+      );
+    }
+  } catch (error, stackTrace) {
+    AppLogger.error('❌ Error inicializando Firebase', error, stackTrace);
+  }
+
+  if (firebaseInitialized) {
+    if (kIsWeb) {
+      await WebPushNotificationService.instance.initialize();
+    } else {
+      // Temporarily disabled for iOS (requires paid developer account for APNS)
+      AppLogger.warning(
+        '⚠️ Notificaciones móviles temporalmente deshabilitadas (requiere cuenta de desarrollador paga de iOS para APNS)',
+      );
+      // TODO(team): Re-enable when iOS developer account is configured
+      // FirebaseMessaging.onBackgroundMessage(
+      //   firebaseMessagingBackgroundHandler,
+      // );
+      // await MobilePushNotificationService.instance.initialize();
+    }
+  } else {
+    AppLogger.warning(
+      '⚠️ Firebase no quedó inicializado; las notificaciones push estarán deshabilitadas.',
+    );
+  }
 
   // Configure dependency injection
   await ServiceLocator.setup();

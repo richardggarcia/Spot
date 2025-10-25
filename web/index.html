@@ -40,6 +40,26 @@
   <script src="https://www.gstatic.com/firebasejs/11.15.0/firebase-messaging-compat.js"></script>
 </head>
 <body>
+  <!-- Utilidad para limpiar caches / service workers si se llama con ?clear-sw=1 -->
+  <script>
+    (function () {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('clear-sw') === '1' && 'serviceWorker' in navigator) {
+          console.log('[Spot] Limpiando service workers y caches (clear-sw=1)');
+          navigator.serviceWorker.getRegistrations().then((registrations) => {
+            registrations.forEach((registration) => registration.unregister());
+          });
+          if (window.caches?.keys) {
+            caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+          }
+        }
+      } catch (error) {
+        console.warn('[Spot] No se pudo limpiar SW automáticamente', error);
+      }
+    })();
+  </script>
+
   <!-- Register Firebase Messaging Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {

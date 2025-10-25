@@ -21,10 +21,8 @@ class CryptoCardWidget extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return ThemeAwareWidget(
-      builder: (context, isDark, themeManager) {
-        return Card(
+  Widget build(BuildContext context) => ThemeAwareWidget(
+      builder: (context, isDark, themeManager) => Card(
           key: ValueKey('crypto_${crypto.symbol}_${crypto.currentPrice}'),
           clipBehavior: Clip.antiAlias,
           elevation: 2,
@@ -56,10 +54,8 @@ class CryptoCardWidget extends StatelessWidget {
               ),
             ),
           ),
-        );
-      },
+        ),
     );
-  }
 
   /// Construye la sección de datos de mercado (logo, precio, cambio).
   Widget _buildMarketData(BuildContext context, bool isDark) {

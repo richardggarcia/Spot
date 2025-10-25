@@ -26,10 +26,8 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
       );
 
   @override
-  Widget build(BuildContext context) {
-    return ThemeAwareWidget(
-      builder: (context, isDark, themeManager) {
-        return Container(
+  Widget build(BuildContext context) => ThemeAwareWidget(
+      builder: (context, isDark, themeManager) => Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -88,10 +86,8 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
         bottom: bottom,
       ),
-        );
-      },
+        ),
     );
-  }
 }
 
 /// Theme toggle button with animated icon transition
@@ -151,10 +147,8 @@ class PremiumTabBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
-  Widget build(BuildContext context) {
-    return ThemeAwareWidget(
-      builder: (context, isDark, themeManager) {
-        return Container(
+  Widget build(BuildContext context) => ThemeAwareWidget(
+      builder: (context, isDark, themeManager) => Container(
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -186,8 +180,6 @@ class PremiumTabBar extends StatelessWidget implements PreferredSizeWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
-        );
-      },
+        ),
     );
-  }
 }

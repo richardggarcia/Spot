@@ -58,6 +58,9 @@ class AppConstants {
   /// URL base para la API Aspiradora (legacy)
   static const String aspiradoraBaseUrl = 'http://192.168.1.34:8080';
 
+  /// URL base del servidor Spot Alerts (Node.js). Usado para registrar tokens web.
+  static const String spotAlertsServerBaseUrl = 'http://192.168.1.33:3000';
+
   /// Tiempo de timeout para peticiones HTTP (segundos)
   static const int apiTimeoutSeconds = 30;
 

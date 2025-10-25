@@ -14,13 +14,9 @@ class ThemeAwareWidget extends StatelessWidget {
   final Widget Function(BuildContext context, bool isDark, ThemeManager themeManager) builder;
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<ThemeManager>(
-      builder: (context, themeManager, child) {
-        return builder(context, themeManager.isDarkMode, themeManager);
-      },
+  Widget build(BuildContext context) => Consumer<ThemeManager>(
+      builder: (context, themeManager, child) => builder(context, themeManager.isDarkMode, themeManager),
     );
-  }
 }
 
 /// Extension para facilitar acceso al tema desde cualquier context
@@ -35,10 +31,8 @@ extension ThemeContext on BuildContext {
   bool get isDark => themeManager.isDarkMode;
 
   /// Acceso directo al estado isDark (con listener)
-  bool get isDarkListen => Provider.of<ThemeManager>(this, listen: true).isDarkMode;
+  bool get isDarkListen => Provider.of<ThemeManager>(this).isDarkMode;
 
   /// Obtener colores de acuerdo al tema actual
-  Color getThemedColor(Color darkColor, Color lightColor) {
-    return isDark ? darkColor : lightColor;
-  }
+  Color getThemedColor(Color darkColor, Color lightColor) => isDark ? darkColor : lightColor;
 }

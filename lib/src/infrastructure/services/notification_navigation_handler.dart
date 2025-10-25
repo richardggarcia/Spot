@@ -67,6 +67,7 @@ class NotificationNavigationHandler {
         builder: (context) => HistoricalViewPage(
           symbol: data.symbol!,
           cryptoName: data.cryptoName ?? data.symbol!,
+          alertInsight: data,
         ),
       ),
     );
