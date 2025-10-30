@@ -40,6 +40,17 @@ El trading de Price Action analiza movimientos puros de precio sin indicadores, 
 - **Logos dinámicos** de criptomonedas con enriquecimiento automático
 - **Veredictos impulsados por IA** usando integración LLM para contexto del mercado
 
+### 📝 **Trading Journal Profesional**
+- **CRUD Completo** de operaciones de trading (Crear, Leer, Actualizar, Eliminar)
+- **Gráficos de Velas Profesionales** tipo exchange con Syncfusion Charts
+- **Múltiples Timeframes**: 15m, 1h, 4h para análisis detallado
+- **Marcas Visuales** de entrada/salida en el gráfico con líneas y puntos
+- **Datos Intradía Reales** desde Binance para cada operación
+- **Formulario Avanzado** con segmented button (LONG/SHORT) y secciones organizadas
+- **Menú Contextual** para editar/eliminar operaciones fácilmente
+- **Backend Seguro** con autenticación API Key y arquitectura REST
+- **Sincronización Cloud** con Firestore para acceso multi-dispositivo
+
 ### 📊 **Métricas Profesionales de Trading**
 - **Cálculo de Caída Profunda**: `(Mínimo de Hoy / Cierre de Ayer) - 1`
 - **Fuerza de Rebote**: `(Precio Actual / Mínimo de Hoy) - 1`  
@@ -50,11 +61,13 @@ El trading de Price Action analiza movimientos puros de precio sin indicadores, 
 - **Arquitectura Hexagonal** (patrón Ports & Adapters)
 - **Diseño Dirigido por Dominio** con lógica de negocio pura
 - **Firebase Integration** para backend escalable y analytics
+- **Backend REST API** en Node.js con autenticación segura
 - **Streaming Data Ports** para datos en tiempo real
 - **Gestión de Estado BLoC** para UI reactiva
 - **Inyección de Dependencias** con localizador de servicios GetIt
 - **Adaptadores especializados** (Binance, CoinGecko, Logo Enrichment)
-- **Seguridad avanzada** con manejo seguro de API keys
+- **Seguridad avanzada** con API Key authentication y crypto.timingSafeEqual
+- **Clean Architecture** con separación de capas (Domain, Infrastructure, Presentation)
 
 ### 🎨 **UI/UX Moderna**
 - **Interfaz basada en Tarjetas** optimizada para escaneo rápido
@@ -200,6 +213,7 @@ La aplicación analiza las siguientes 14 criptomonedas principales:
 - Android Studio / VS Code
 - Git
 - Cuenta de Firebase (opcional, para analytics y crashlytics)
+- Backend Node.js (opcional, para Trading Journal con sincronización cloud)
 
 ### 🔔 Preparar notificaciones Push en iOS (pendiente de activar cuenta)
 1. **Suscríbete a Apple Developer Program** (USD 99/año) con el Apple ID que uses en Xcode.
@@ -248,6 +262,88 @@ flutter build ios --release
 
 # Web
 flutter build web --release
+```
+
+---
+
+## 📝 **Configuración del Trading Journal**
+
+### **Backend Node.js (Opcional)**
+
+El Trading Journal requiere un backend REST API para sincronización cloud. Si solo deseas usar las funcionalidades de análisis de precios, esta configuración es **opcional**.
+
+#### **Configurar tu propio Backend:**
+
+1. **Clonar el repositorio del backend** (separado del proyecto Flutter)
+2. **Instalar dependencias:**
+   ```bash
+   cd spot-alerts-server
+   npm install
+   ```
+
+3. **Configurar variables de entorno** (`.env`):
+   ```env
+   JOURNAL_API_KEY=tu-api-key-segura-aqui
+   FIREBASE_PROJECT_ID=tu-proyecto-firebase
+   ```
+
+4. **Generar una API Key segura:**
+   ```bash
+   openssl rand -hex 32
+   ```
+
+5. **Iniciar el servidor:**
+   ```bash
+   node server.js
+   # o con PM2:
+   pm2 start server.js --name spot-server
+   ```
+
+#### **Ejecutar la App con tu Backend:**
+
+```bash
+# Desarrollo local
+flutter run \
+  --dart-define=SPOT_JOURNAL_BASE_URL=http://localhost:3000 \
+  --dart-define=SPOT_JOURNAL_API_KEY=tu-api-key
+
+# Producción con dominio
+flutter run \
+  --dart-define=SPOT_JOURNAL_BASE_URL=https://tu-dominio.com \
+  --dart-define=SPOT_JOURNAL_API_KEY=tu-api-key
+```
+
+#### **Crear Script Personal (Recomendado):**
+
+```bash
+# run_spot_dev.sh (agregar a .gitignore)
+#!/bin/bash
+export BACKEND_URL="https://tu-dominio.com"
+export API_KEY="tu-api-key-segura"
+export DEVICE_ID="tu-device-id"
+
+flutter run -d $DEVICE_ID \
+  --dart-define=SPOT_JOURNAL_BASE_URL=$BACKEND_URL \
+  --dart-define=SPOT_JOURNAL_API_KEY=$API_KEY
+```
+
+### **Seguridad del Backend**
+
+- ✅ **Autenticación API Key** en todos los endpoints `/journal*`
+- ✅ **Validación segura** con `crypto.timingSafeEqual`
+- ✅ **Logging de intentos no autorizados** con IP tracking
+- ✅ **Headers aceptados**: `X-API-Key` o `Authorization: Bearer`
+- ⚠️ **IMPORTANTE**: Nunca commitear API keys al repositorio público
+
+### **Endpoints Disponibles**
+
+```
+GET    /journal        - Listar todas las operaciones
+GET    /journal/:id    - Obtener operación específica
+POST   /journal        - Crear nueva operación
+PUT    /journal/:id    - Actualizar operación completa
+PATCH  /journal/:id    - Actualizar parcial
+DELETE /journal/:id    - Eliminar operación
 ```
 
 ---

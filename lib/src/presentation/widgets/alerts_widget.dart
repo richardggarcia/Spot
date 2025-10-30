@@ -4,7 +4,6 @@ import '../theme/app_colors.dart';
 
 /// Widget para mostrar lista de alertas
 class AlertsWidget extends StatelessWidget {
-
   const AlertsWidget({
     super.key,
     required this.alerts,
@@ -36,7 +35,6 @@ class AlertsWidget extends StatelessWidget {
 
 /// Widget para mostrar una alerta individual
 class AlertTileWidget extends StatelessWidget {
-
   const AlertTileWidget({
     super.key,
     required this.alert,
@@ -54,6 +52,7 @@ class AlertTileWidget extends StatelessWidget {
       color: _getAlertColor(context, isDark).withValues(alpha: 0.1),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
+        isThreeLine: true,
         leading: Stack(
           children: [
             CircleAvatar(
@@ -80,26 +79,40 @@ class AlertTileWidget extends StatelessWidget {
           ],
         ),
         title: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: Text(
                 alert.crypto.name,
                 style: const TextStyle(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.fade,
+                softWrap: true,
               ),
             ),
             if (alert.dropSeverity.index >= DropSeverity.high.index)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.red[400],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'ALERTA',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+              Flexible(
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red[400],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'ALERTA',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -112,18 +125,21 @@ class AlertTileWidget extends StatelessWidget {
             Text(
               alert.crypto.symbol.replaceAll('USDT', ''),
               style: TextStyle(
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
               ),
             ),
             const SizedBox(height: 4),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _MetricChip(
                   label: 'Caída',
                   value: alert.formattedDeepDrop,
                   isNegative: true,
                 ),
-                const SizedBox(width: 8),
                 _MetricChip(
                   label: 'Rebote',
                   value: alert.formattedRebound,
@@ -136,8 +152,11 @@ class AlertTileWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: (isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary)
-                      .withValues(alpha: 0.1),
+                  color:
+                      (isDark
+                              ? AppColors.darkAccentPrimary
+                              : AppColors.lightAccentPrimary)
+                          .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -145,7 +164,9 @@ class AlertTileWidget extends StatelessWidget {
                     Icon(
                       Icons.lightbulb,
                       size: 16,
-                      color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                      color: isDark
+                          ? AppColors.darkAccentPrimary
+                          : AppColors.lightAccentPrimary,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
@@ -153,7 +174,9 @@ class AlertTileWidget extends StatelessWidget {
                         'Análisis: ${alert.verdict}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -164,26 +187,43 @@ class AlertTileWidget extends StatelessWidget {
             ],
           ],
         ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              alert.crypto.formattedPrice,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              alert.crypto.formattedChangePercent,
-              style: TextStyle(
-                color: alert.crypto.isPositive
-                    ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
-                    : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+        trailing: SizedBox(
+          width: 90,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  alert.crypto.formattedPrice,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  alert.crypto.formattedChangePercent,
+                  style: TextStyle(
+                    color: alert.crypto.isPositive
+                        ? (isDark
+                              ? AppColors.darkBullish
+                              : AppColors.lightBullish)
+                        : (isDark
+                              ? AppColors.darkBearish
+                              : AppColors.lightBearish),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -198,16 +238,19 @@ class AlertTileWidget extends StatelessWidget {
       case DropSeverity.moderate:
         return isDark ? AppColors.darkWarning : AppColors.lightWarning;
       case DropSeverity.low:
-        return isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary;
+        return isDark
+            ? AppColors.darkAccentPrimary
+            : AppColors.lightAccentPrimary;
       case DropSeverity.minimal:
-        return isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+        return isDark
+            ? AppColors.darkTextSecondary
+            : AppColors.lightTextSecondary;
     }
   }
 }
 
 /// Widget para mostrar métricas
 class _MetricChip extends StatelessWidget {
-
   const _MetricChip({
     required this.label,
     required this.value,
@@ -225,8 +268,10 @@ class _MetricChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: isNegative
-            ? (isDark ? AppColors.darkBearish : AppColors.lightBearish).withValues(alpha: 0.2)
-            : (isDark ? AppColors.darkBullish : AppColors.lightBullish).withValues(alpha: 0.2),
+            ? (isDark ? AppColors.darkBearish : AppColors.lightBearish)
+                  .withValues(alpha: 0.2)
+            : (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+                  .withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -249,20 +294,20 @@ class _EmptyAlertsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.notifications_off, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Sin alertas activas',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey,
-            ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.notifications_off, size: 64, color: Colors.grey),
+        SizedBox(height: 16),
+        Text(
+          'Sin alertas activas',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey,
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 }

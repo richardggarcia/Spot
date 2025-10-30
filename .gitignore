@@ -94,3 +94,8 @@ firebase.json
 ios/build/
 ios/ios/
 ios/DerivedData/
+
+# Personal run scripts
+run_spot_dev.sh
+*.local.sh
+.env.local
