@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../../domain/entities/trade_note.dart';
+import '../theme/app_colors.dart';
 
 class TradeNoteFormResult {
   const TradeNoteFormResult({
@@ -93,171 +95,275 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final viewInsets = MediaQuery.of(context).viewInsets;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Padding(
-      padding: viewInsets.add(
-        const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
       ),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _isEditing ? 'Editar operación' : 'Nueva operación',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const _SectionTitle(label: 'Instrumento'),
-              TextFormField(
-                controller: _symbolController,
-                textCapitalization: TextCapitalization.characters,
-                decoration: const InputDecoration(
-                  labelText: 'Símbolo (ej: BTC)',
-                  prefixIcon: Icon(Icons.currency_bitcoin),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Ingresa un símbolo';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              const _SectionTitle(label: 'Detalles de entrada'),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _entryPriceController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: 'Precio de entrada',
-                        prefixIcon: Icon(Icons.price_check),
-                      ),
-                      validator: (value) {
-                        final trimmed = value?.trim() ?? '';
-                        if (trimmed.isEmpty) {
-                          return 'Ingresa un precio de entrada';
-                        }
-                        final parsed = double.tryParse(trimmed);
-                        if (parsed == null) return 'Precio inválido';
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment(value: 'buy', label: Text('Compra')),
-                        ButtonSegment(value: 'sell', label: Text('Venta')),
+      child: Padding(
+        padding: viewInsets.add(
+          const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        ),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isEditing ? 'EDIT TRADE' : 'NEW TRADE',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary,
+                          ),
+                        ),
+                        Text(
+                          'Enter your trade details',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                          ),
+                        ),
                       ],
-                      selected: <String>{_side},
-                      onSelectionChanged: (selection) {
-                        if (selection.isNotEmpty) {
-                          setState(() => _side = selection.first);
-                        }
-                      },
-                      showSelectedIcon: false,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              _DateButton(
-                label: 'Fecha y hora de entrada',
-                value: _dateFormat.format(_entryAt.toLocal()),
-                onTap: () => _pickDate(isEntry: true),
-              ),
-              const SizedBox(height: 24),
-              const _SectionTitle(label: 'Salida (opcional)'),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _exitPriceController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      decoration: const InputDecoration(
-                        labelText: 'Precio de salida',
-                        prefixIcon: Icon(Icons.trending_up),
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.close,
+                          color: isDark
+                            ? AppColors.darkTextPrimary
+                            : AppColors.lightTextPrimary,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _DateButton(
-                      label: 'Fecha de salida',
-                      value: _exitAt != null
-                          ? _dateFormat.format(_exitAt!.toLocal())
-                          : 'Selecciona fecha',
-                      onTap: () => _pickDate(isEntry: false),
-                      allowClear: true,
-                      onClear: () => setState(() => _exitAt = null),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Side Selector - BIG SEGMENTED BUTTON
+                _ProfessionalSideSelector(
+                  selectedSide: _side,
+                  onSideChanged: (side) => setState(() => _side = side),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 24),
+
+                // Symbol Input
+                _ExchangeInputField(
+                  controller: _symbolController,
+                  labelText: 'TRADING PAIR',
+                  placeholder: 'BTC',
+                  prefixIcon: Icons.currency_bitcoin,
+                  textCapitalization: TextCapitalization.characters,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Enter trading pair';
+                    }
+                    return null;
+                  },
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 20),
+
+                // Entry Section
+                _SectionHeader(
+                  title: 'ENTRY DETAILS',
+                  icon: Icons.login,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ExchangeInputField(
+                        controller: _entryPriceController,
+                        labelText: 'ENTRY PRICE',
+                        placeholder: '0.00',
+                        prefixIcon: Icons.price_check,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        validator: (value) {
+                          final trimmed = value?.trim() ?? '';
+                          if (trimmed.isEmpty) {
+                            return 'Required field';
+                          }
+                          final parsed = double.tryParse(trimmed);
+                          if (parsed == null) return 'Invalid price';
+                          return null;
+                        },
+                        isDark: isDark,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const _SectionTitle(label: 'Información adicional'),
-              TextFormField(
-                controller: _sizeController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _ExchangeInputField(
+                        controller: _sizeController,
+                        labelText: 'POSITION SIZE',
+                        placeholder: '0.0000',
+                        prefixIcon: Icons.pie_chart_outline,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        isDark: isDark,
+                      ),
+                    ),
+                  ],
                 ),
-                decoration: const InputDecoration(
-                  labelText: 'Tamaño posición',
-                  prefixIcon: Icon(Icons.pie_chart_outline),
+                const SizedBox(height: 16),
+                _ExchangeDateButton(
+                  label: 'ENTRY DATE & TIME',
+                  value: _dateFormat.format(_entryAt.toLocal()),
+                  onTap: () => _pickDate(isEntry: true),
+                  isDark: isDark,
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notesController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Notas (setup, contexto...)',
-                  alignLabelWithHint: true,
-                  prefixIcon: Icon(Icons.notes_outlined),
+
+                const SizedBox(height: 32),
+
+                // Exit Section
+                _SectionHeader(
+                  title: 'EXIT DETAILS (Optional)',
+                  icon: Icons.logout,
+                  isDark: isDark,
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _tagsController,
-                decoration: const InputDecoration(
-                  labelText: 'Tags (separadas por coma)',
-                  prefixIcon: Icon(Icons.sell_outlined),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ExchangeInputField(
+                        controller: _exitPriceController,
+                        labelText: 'EXIT PRICE',
+                        placeholder: '0.00',
+                        prefixIcon: Icons.trending_up,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        isDark: isDark,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _ExchangeDateButton(
+                        label: 'EXIT DATE',
+                        value: _exitAt != null
+                            ? _dateFormat.format(_exitAt!.toLocal())
+                            : 'Select date',
+                        onTap: () => _pickDate(isEntry: false),
+                        allowClear: true,
+                        onClear: () => setState(() => _exitAt = null),
+                        isDark: isDark,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _submit,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: Text(
-                    _isEditing ? 'Actualizar operación' : 'Guardar operación',
-                  ),
+
+                const SizedBox(height: 32),
+
+                // Notes Section
+                _SectionHeader(
+                  title: 'ADDITIONAL INFO',
+                  icon: Icons.info_outline,
+                  isDark: isDark,
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                _ExchangeTextArea(
+                  controller: _notesController,
+                  labelText: 'TRADE NOTES',
+                  placeholder: 'Describe your setup, market conditions, strategy...',
+                  maxLines: 4,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 16),
+                _ExchangeInputField(
+                  controller: _tagsController,
+                  labelText: 'TAGS',
+                  placeholder: 'scalping, breakout, support',
+                  prefixIcon: Icons.sell_outlined,
+                  isDark: isDark,
+                ),
+
+                const SizedBox(height: 32),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: isDark
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorder,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'CANCEL',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _side == 'buy'
+                            ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+                            : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          _isEditing ? 'UPDATE TRADE' : 'EXECUTE TRADE',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -326,29 +432,374 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.label});
+class _ProfessionalSideSelector extends StatelessWidget {
+  const _ProfessionalSideSelector({
+    required this.selectedSide,
+    required this.onSideChanged,
+    required this.isDark,
+  });
 
-  final String label;
+  final String selectedSide;
+  final ValueChanged<String> onSideChanged;
+  final bool isDark;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      label.toUpperCase(),
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        letterSpacing: 0.6,
-        fontWeight: FontWeight.w600,
+  Widget build(BuildContext context) => Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
       ),
-    ),
-  );
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => onSideChanged('buy'),
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: selectedSide == 'buy'
+                    ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+                    : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.trending_up,
+                      color: selectedSide == 'buy'
+                        ? Colors.white
+                        : (isDark ? AppColors.darkBullish : AppColors.lightBullish),
+                      size: 28,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'LONG',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: selectedSide == 'buy'
+                          ? Colors.white
+                          : (isDark ? AppColors.darkBullish : AppColors.lightBullish),
+                      ),
+                    ),
+                    Text(
+                      'Buy Position',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: selectedSide == 'buy'
+                          ? Colors.white70
+                          : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => onSideChanged('sell'),
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: selectedSide == 'sell'
+                    ? (isDark ? AppColors.darkBearish : AppColors.lightBearish)
+                    : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.trending_down,
+                      color: selectedSide == 'sell'
+                        ? Colors.white
+                        : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
+                      size: 28,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'SHORT',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: selectedSide == 'sell'
+                          ? Colors.white
+                          : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
+                      ),
+                    ),
+                    Text(
+                      'Sell Position',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: selectedSide == 'sell'
+                          ? Colors.white70
+                          : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
 }
 
-class _DateButton extends StatelessWidget {
-  const _DateButton({
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    required this.icon,
+    required this.isDark,
+  });
+
+  final String title;
+  final IconData icon;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) => Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark
+              ? AppColors.darkAccentPrimary.withValues(alpha: 0.2)
+              : AppColors.lightAccentPrimary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+}
+
+class _ExchangeInputField extends StatelessWidget {
+  const _ExchangeInputField({
+    required this.controller,
+    required this.labelText,
+    required this.placeholder,
+    required this.isDark,
+    this.prefixIcon,
+    this.keyboardType,
+    this.textCapitalization,
+    this.validator,
+  });
+
+  final TextEditingController controller;
+  final String labelText;
+  final String placeholder;
+  final bool isDark;
+  final IconData? prefixIcon;
+  final TextInputType? keyboardType;
+  final TextCapitalization? textCapitalization;
+  final String? Function(String?)? validator;
+
+  List<TextInputFormatter>? _buildInputFormatters() {
+    // Si es un campo numérico decimal, agregamos formatters especiales
+    if (keyboardType == const TextInputType.numberWithOptions(decimal: true)) {
+      return [
+        // Permitir dígitos, punto y coma
+        FilteringTextInputFormatter.allow(RegExp(r'^\d*[.,]?\d*$')),
+        // Reemplazar coma por punto automáticamente
+        TextInputFormatter.withFunction((oldValue, newValue) {
+          final newText = newValue.text.replaceAll(',', '.');
+          return TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(offset: newText.length),
+          );
+        }),
+      ];
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          labelText,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          inputFormatters: _buildInputFormatters(),
+          textCapitalization: textCapitalization ?? TextCapitalization.none,
+          validator: validator,
+          style: TextStyle(
+            fontSize: 16,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: InputDecoration(
+            hintText: placeholder,
+            hintStyle: TextStyle(
+              color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+              fontWeight: FontWeight.normal,
+            ),
+            prefixIcon: prefixIcon != null
+                ? Icon(
+                    prefixIcon,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    size: 20,
+                  )
+                : null,
+            filled: true,
+            fillColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
+                width: 2,
+              ),
+            ),
+            errorStyle: TextStyle(
+              color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
+              fontSize: 12,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+      ],
+    );
+}
+
+class _ExchangeTextArea extends StatelessWidget {
+  const _ExchangeTextArea({
+    required this.controller,
+    required this.labelText,
+    required this.placeholder,
+    required this.isDark,
+    this.maxLines = 3,
+  });
+
+  final TextEditingController controller;
+  final String labelText;
+  final String placeholder;
+  final bool isDark;
+  final int maxLines;
+
+  @override
+  Widget build(BuildContext context) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          labelText,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          style: TextStyle(
+            fontSize: 16,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: InputDecoration(
+            hintText: placeholder,
+            hintStyle: TextStyle(
+              color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+              fontWeight: FontWeight.normal,
+            ),
+            filled: true,
+            fillColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                width: 2,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+      ],
+    );
+}
+
+class _ExchangeDateButton extends StatelessWidget {
+  const _ExchangeDateButton({
     required this.label,
     required this.value,
     required this.onTap,
+    required this.isDark,
     this.allowClear = false,
     this.onClear,
   });
@@ -356,41 +807,77 @@ class _DateButton extends StatelessWidget {
   final String label;
   final String value;
   final VoidCallback onTap;
+  final bool isDark;
   final bool allowClear;
   final VoidCallback? onClear;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return OutlinedButton(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.calendar_month, color: theme.colorScheme.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCard : AppColors.lightCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
+            child: Row(
               children: [
-                Text(label, style: theme.textTheme.labelSmall),
-                const SizedBox(height: 2),
-                Text(value, style: theme.textTheme.bodyMedium),
+                Icon(
+                  Icons.calendar_month,
+                  color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        value,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (allowClear && onClear != null)
+                  GestureDetector(
+                    onTap: onClear,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.clear,
+                        size: 16,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
-          if (allowClear && onClear != null)
-            IconButton(
-              onPressed: onClear,
-              icon: const Icon(Icons.clear),
-              tooltip: 'Quitar fecha',
-            ),
-        ],
-      ),
+        ),
+      ],
     );
-  }
 }

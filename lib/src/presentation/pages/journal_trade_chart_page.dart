@@ -1,10 +1,7 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
-
-import '../../core/utils/logger.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../../domain/entities/trade_note.dart';
+import '../theme/app_colors.dart';
 
 class JournalTradeChartPage extends StatefulWidget {
   const JournalTradeChartPage({super.key, required this.note});
@@ -16,88 +13,17 @@ class JournalTradeChartPage extends StatefulWidget {
 }
 
 class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
-  late _CandleInterval _selectedInterval;
-  late Future<_ChartPayload> _chartFuture;
-  final Dio _dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 12),
-      receiveTimeout: const Duration(seconds: 12),
-    ),
-  );
+  late final WebViewController _controller;
+  String _selectedInterval = '60'; // 1 hour in minutes
 
   @override
   void initState() {
     super.initState();
-    _selectedInterval = _CandleInterval.m15;
-    _chartFuture = _loadCandles(_selectedInterval);
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.transparent)
+      ..loadRequest(Uri.parse(_buildTradingViewUrl()));
   }
-
-  Future<_ChartPayload> _loadCandles(_CandleInterval interval) async {
-    final symbol = _normalizeSymbol(widget.note.symbol);
-    final pair = '${symbol}USDT';
-
-    try {
-      final response = await _dio.get<List<dynamic>>(
-        'https://api.binance.com/api/v3/klines',
-        queryParameters: <String, Object?>{
-          'symbol': pair,
-          'interval': interval.binanceCode,
-          'limit': interval.limit,
-        },
-      );
-
-      final rawData = response.data;
-      if (rawData == null || rawData.isEmpty) {
-        throw StateError('Binance no devolvió datos para $pair');
-      }
-
-      final candles = rawData
-          .map((raw) => _IntradayCandle.fromKline(raw as List<dynamic>))
-          .toList(growable: false);
-
-      return _ChartPayload(
-        symbol: symbol,
-        interval: interval,
-        candles: candles,
-      );
-    } catch (error, stackTrace) {
-      AppLogger.error('Error cargando velas intradía', error, stackTrace);
-      rethrow;
-    }
-  }
-
-  void _onIntervalChanged(_CandleInterval interval) {
-    if (interval == _selectedInterval) return;
-    setState(() {
-      _selectedInterval = interval;
-      _chartFuture = _loadCandles(interval);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text('Detalle ${widget.note.symbol}')),
-    body: FutureBuilder<_ChartPayload>(
-      future: _chartFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return _ChartError(message: snapshot.error.toString());
-        }
-
-        final payload = snapshot.requireData;
-        return _TradeChartView(
-          payload: payload,
-          note: widget.note,
-          onIntervalChanged: _onIntervalChanged,
-          selectedInterval: _selectedInterval,
-        );
-      },
-    ),
-  );
 
   String _normalizeSymbol(String raw) {
     var symbol = raw.trim().toUpperCase();
@@ -109,481 +35,342 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
     }
     return symbol;
   }
-}
 
-class _TradeChartView extends StatelessWidget {
-  const _TradeChartView({
-    required this.payload,
-    required this.note,
-    required this.selectedInterval,
-    required this.onIntervalChanged,
-  });
+  String _buildTradingViewUrl() {
+    final symbol = _normalizeSymbol(widget.note.symbol);
+    return 'https://s.tradingview.com/widgetembed/?'
+        'symbol=BINANCE:${symbol}USDT&'
+        'interval=$_selectedInterval&'
+        'hideideas=1&'
+        'theme=${Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light'}&'
+        'style=1&' // Candlestick style
+        'locale=en&'
+        'toolbar_bg=rgba(255,255,255,0)&'
+        'allow_symbol_change=0&'
+        'save_image=0&'
+        'hide_top_toolbar=0&'
+        'hide_legend=0&'
+        'studies_overrides={}&'
+        'overrides={}&'
+        'enabled_features=[]&'
+        'disabled_features=["use_localstorage_for_settings"]&'
+        'withdateranges=1&'
+        'hide_side_toolbar=0';
+  }
 
-  final _ChartPayload payload;
-  final TradeNote note;
-  final _CandleInterval selectedInterval;
-  final ValueChanged<_CandleInterval> onIntervalChanged;
+  void _changeInterval(String interval) {
+    setState(() {
+      _selectedInterval = interval;
+      _controller.loadRequest(Uri.parse(_buildTradingViewUrl()));
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dateFormat = DateFormat('dd MMM yyyy – HH:mm');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final entryIndex = _findClosestIndex(payload.candles, note.entryAt);
-    final exitIndex = note.exitAt != null
-        ? _findClosestIndex(payload.candles, note.exitAt!)
-        : null;
-
-    final entryCandle = payload.candles[entryIndex];
-    final exitCandle = exitIndex != null ? payload.candles[exitIndex] : null;
-
-    final firstTime = payload.candles.first.time;
-    final lastTime = payload.candles.last.time;
-
-    final entryLinePoints = [
-      _PlotLinePoint(time: firstTime, value: note.entryPrice),
-      _PlotLinePoint(time: lastTime, value: note.entryPrice),
-    ];
-
-    final exitLinePoints = note.exitPrice != null
-        ? [
-            _PlotLinePoint(time: firstTime, value: note.exitPrice!),
-            _PlotLinePoint(time: lastTime, value: note.exitPrice!),
-          ]
-        : const <_PlotLinePoint>[];
-
-    final verticalBands = <PlotBand>[
-      PlotBand(
-        start: entryCandle.time,
-        end: entryCandle.time,
-        borderColor: Colors.blueAccent.withValues(alpha: 0.4),
-        dashArray: const <double>[6, 4],
-      ),
-    ];
-    if (exitCandle != null) {
-      verticalBands.add(
-        PlotBand(
-          start: exitCandle.time,
-          end: exitCandle.time,
-          borderColor: Colors.orangeAccent.withValues(alpha: 0.4),
-          dashArray: const <double>[6, 4],
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _HeadlineCard(
-            note: note,
-            payload: payload,
-            entryText: dateFormat.format(entryCandle.time),
-            exitText: exitCandle != null
-                ? dateFormat.format(exitCandle.time)
-                : null,
-          ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SegmentedButton<_CandleInterval>(
-              segments: _CandleInterval.values
-                  .map(
-                    (value) => ButtonSegment<_CandleInterval>(
-                      value: value,
-                      label: Text(value.label),
-                    ),
-                  )
-                  .toList(growable: false),
-              selected: <_CandleInterval>{selectedInterval},
-              onSelectionChanged: (selection) {
-                if (selection.isNotEmpty) {
-                  onIntervalChanged(selection.first);
-                }
-              },
-              showSelectedIcon: false,
-              style: ButtonStyle(
-                padding: WidgetStateProperty.all(
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      appBar: AppBar(
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        elevation: 0,
+        title: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: widget.note.side == 'buy'
+                    ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+                        .withValues(alpha: 0.2)
+                    : (isDark ? AppColors.darkBearish : AppColors.lightBearish)
+                        .withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(
+                widget.note.side == 'buy'
+                    ? Icons.trending_up
+                    : Icons.trending_down,
+                color: widget.note.side == 'buy'
+                    ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+                    : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
+                size: 18,
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Card(
-              elevation: 2,
-              clipBehavior: Clip.antiAlias,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: SfCartesianChart(
-                  zoomPanBehavior: ZoomPanBehavior(
-                    enablePanning: true,
-                    enablePinching: true,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${widget.note.symbol} Trade',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightTextPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  trackballBehavior: TrackballBehavior(
-                    enable: true,
-                    activationMode: ActivationMode.singleTap,
-                    tooltipSettings: InteractiveTooltip(
-                      color: theme.colorScheme.surface,
-                      textStyle: theme.textTheme.bodySmall,
+                  Text(
+                    widget.note.side == 'buy' ? 'LONG' : 'SHORT',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: widget.note.side == 'buy'
+                          ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+                          : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  primaryXAxis: DateTimeAxis(
-                    intervalType: selectedInterval.axisIntervalType,
-                    majorGridLines: const MajorGridLines(width: 0),
-                    plotBands: verticalBands,
-                    labelStyle: theme.textTheme.bodySmall,
-                  ),
-                  primaryYAxis: NumericAxis(
-                    opposedPosition: true,
-                    majorGridLines: const MajorGridLines(width: 0.5),
-                    labelStyle: theme.textTheme.bodySmall,
-                  ),
-                  series: <CartesianSeries<dynamic, DateTime>>[
-                    CandleSeries<_IntradayCandle, DateTime>(
-                      dataSource: payload.candles,
-                      xValueMapper: (candle, _) => candle.time,
-                      lowValueMapper: (candle, _) => candle.low,
-                      highValueMapper: (candle, _) => candle.high,
-                      openValueMapper: (candle, _) => candle.open,
-                      closeValueMapper: (candle, _) => candle.close,
-                      bearColor: Colors.redAccent,
-                      bullColor: Colors.greenAccent[400]!,
-                      enableSolidCandles: true,
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          // Trade Summary Card
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCard : AppColors.lightCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildMetric(
+                      'Entry',
+                      '\$${widget.note.entryPrice.toStringAsFixed(2)}',
+                      isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                      isDark,
                     ),
-                    LineSeries<_PlotLinePoint, DateTime>(
-                      dataSource: entryLinePoints,
-                      xValueMapper: (point, _) => point.time,
-                      yValueMapper: (point, _) => point.value,
-                      color: Colors.blueAccent.withValues(alpha: 0.6),
-                      dashArray: const <double>[6, 4],
-                    ),
-                    if (exitLinePoints.isNotEmpty)
-                      LineSeries<_PlotLinePoint, DateTime>(
-                        dataSource: exitLinePoints,
-                        xValueMapper: (point, _) => point.time,
-                        yValueMapper: (point, _) => point.value,
-                        color: Colors.orangeAccent.withValues(alpha: 0.6),
-                        dashArray: const <double>[6, 4],
+                    if (widget.note.exitPrice != null)
+                      _buildMetric(
+                        'Exit',
+                        '\$${widget.note.exitPrice!.toStringAsFixed(2)}',
+                        isDark ? AppColors.darkWarning : AppColors.lightWarning,
+                        isDark,
                       ),
+                    if (widget.note.exitPrice != null)
+                      _buildMetric(
+                        'P&L',
+                        _calculatePnL(),
+                        _isProfitable()
+                            ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+                            : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
+                        isDark,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Timeframe Selector
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            height: 44,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
+            ),
+            child: Row(
+              children: [
+                _buildTimeframeButton('15m', '15', isDark),
+                _buildTimeframeButton('1H', '60', isDark),
+                _buildTimeframeButton('4H', '240', isDark),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // TradingView Chart with Price Markers
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  children: [
+                    // TradingView WebView
+                    WebViewWidget(controller: _controller),
+                    
+                    // Price Markers Overlay
+                    Positioned(
+                      right: 16,
+                      top: 60,
+                      bottom: 80,
+                      child: _buildPriceMarkers(isDark),
+                    ),
                   ],
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          _LegendRow(exitAvailable: note.exitPrice != null),
+          
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  int _findClosestIndex(List<_IntradayCandle> candles, DateTime target) {
-    final targetUtc = target.toUtc();
-    var closestIndex = 0;
-    var smallestDiff = double.infinity;
-
-    for (var i = 0; i < candles.length; i++) {
-      final diff = candles[i].time
-          .toUtc()
-          .difference(targetUtc)
-          .inMinutes
-          .abs()
-          .toDouble();
-      if (diff < smallestDiff) {
-        smallestDiff = diff;
-        closestIndex = i;
-      }
-    }
-
-    return closestIndex;
+  Widget _buildMetric(String label, String value, Color color, bool isDark) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.lightTextSecondary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
   }
-}
 
-class _HeadlineCard extends StatelessWidget {
-  const _HeadlineCard({
-    required this.note,
-    required this.payload,
-    required this.entryText,
-    this.exitText,
-  });
-
-  final TradeNote note;
-  final _ChartPayload payload;
-  final String entryText;
-  final String? exitText;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${payload.symbol} / USDT',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+  Widget _buildTimeframeButton(String label, String interval, bool isDark) {
+    final isSelected = _selectedInterval == interval;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _changeInterval(interval),
+        child: Container(
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isDark
+                    ? AppColors.darkAccentPrimary
+                    : AppColors.lightAccentPrimary)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary),
               ),
             ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                _SummaryChip(
-                  label: 'Entrada',
-                  value: '\$${note.entryPrice.toStringAsFixed(2)}',
-                ),
-                _SummaryChip(
-                  label: 'Dirección',
-                  value: note.side.toUpperCase(),
-                ),
-                _SummaryChip(label: 'Fecha entrada', value: entryText),
-                if (exitText != null)
-                  _SummaryChip(label: 'Fecha salida', value: exitText!),
-                _SummaryChip(
-                  label: 'Resultado',
-                  value: _formatResult(note),
-                  highlight: note.exitPrice != null,
-                ),
-              ],
-            ),
-            if (note.notes.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(note.notes),
-            ],
-            if (note.tags.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: note.tags
-                    .map((tag) => Chip(label: Text(tag)))
-                    .toList(),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  String _formatResult(TradeNote note) {
-    if (note.exitPrice == null || note.size == null) return '-';
-    final diff = (note.exitPrice! - note.entryPrice) * note.size!;
-    final prefix = diff >= 0 ? '+' : '-';
+  String _calculatePnL() {
+    if (widget.note.exitPrice == null || widget.note.size == null) return '-';
+    final diff = (widget.note.exitPrice! - widget.note.entryPrice) * widget.note.size!;
+    final prefix = diff >= 0 ? '+' : '';
     return '$prefix\$${diff.abs().toStringAsFixed(2)}';
   }
-}
 
-class _LegendRow extends StatelessWidget {
-  const _LegendRow({required this.exitAvailable});
+  bool _isProfitable() {
+    if (widget.note.exitPrice == null) return false;
+    return widget.note.exitPrice! >= widget.note.entryPrice;
+  }
 
-  final bool exitAvailable;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
+  Widget _buildPriceMarkers(bool isDark) {
+    return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        const _LegendItem(color: Colors.blueAccent, label: 'Entrada'),
-        if (exitAvailable)
-          const _LegendItem(color: Colors.orangeAccent, label: 'Salida'),
-        _LegendItem(color: theme.colorScheme.primary, label: 'Precio cierre'),
+        // Entry Price Marker
+        _buildPriceMarker(
+          'ENTRY',
+          widget.note.entryPrice,
+          isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+          isDark,
+        ),
+        
+        if (widget.note.exitPrice != null) ...[
+          const SizedBox(height: 24),
+          // Exit Price Marker
+          _buildPriceMarker(
+            'EXIT',
+            widget.note.exitPrice!,
+            isDark ? AppColors.darkWarning : AppColors.lightWarning,
+            isDark,
+          ),
+        ],
       ],
     );
   }
-}
 
-class _LegendItem extends StatelessWidget {
-  const _LegendItem({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  Widget _buildPriceMarker(String label, double price, Color color, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.3),
+            blurRadius: 8,
+            spreadRadius: 1,
           ),
-          const SizedBox(width: 6),
-          Text(label, style: theme.textTheme.bodySmall),
         ],
       ),
-    );
-  }
-}
-
-class _SummaryChip extends StatelessWidget {
-  const _SummaryChip({
-    required this.label,
-    required this.value,
-    this.highlight = false,
-  });
-
-  final String label;
-  final String value;
-  final bool highlight;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = highlight
-        ? theme.colorScheme.secondaryContainer
-        : theme.colorScheme.surfaceContainerHighest;
-    return Chip(
-      backgroundColor: color,
-      label: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label.toUpperCase(), style: theme.textTheme.labelSmall),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 0.5,
+            ),
+          ),
           const SizedBox(height: 2),
           Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+            '\$${price.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
         ],
       ),
     );
-  }
-}
-
-class _ChartError extends StatelessWidget {
-  const _ChartError({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
-          const SizedBox(height: 16),
-          Text(
-            'No se pudo cargar el gráfico',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(message, textAlign: TextAlign.center),
-        ],
-      ),
-    ),
-  );
-}
-
-class _ChartPayload {
-  const _ChartPayload({
-    required this.symbol,
-    required this.interval,
-    required this.candles,
-  });
-
-  final String symbol;
-  final _CandleInterval interval;
-  final List<_IntradayCandle> candles;
-}
-
-class _IntradayCandle {
-  const _IntradayCandle({
-    required this.time,
-    required this.open,
-    required this.high,
-    required this.low,
-    required this.close,
-    required this.volume,
-  });
-
-  factory _IntradayCandle.fromKline(List<dynamic> data) => _IntradayCandle(
-    time: DateTime.fromMillisecondsSinceEpoch(
-      (data[0] as num).toInt(),
-      isUtc: true,
-    ),
-    open: double.parse(data[1].toString()),
-    high: double.parse(data[2].toString()),
-    low: double.parse(data[3].toString()),
-    close: double.parse(data[4].toString()),
-    volume: double.parse(data[5].toString()),
-  );
-
-  final DateTime time;
-  final double open;
-  final double high;
-  final double low;
-  final double close;
-  final double volume;
-}
-
-class _PlotLinePoint {
-  const _PlotLinePoint({required this.time, required this.value});
-
-  final DateTime time;
-  final double value;
-}
-
-enum _CandleInterval { m15, h1, h4 }
-
-extension on _CandleInterval {
-  String get binanceCode {
-    switch (this) {
-      case _CandleInterval.m15:
-        return '15m';
-      case _CandleInterval.h1:
-        return '1h';
-      case _CandleInterval.h4:
-        return '4h';
-    }
-  }
-
-  int get limit {
-    switch (this) {
-      case _CandleInterval.m15:
-        return 200;
-      case _CandleInterval.h1:
-        return 300;
-      case _CandleInterval.h4:
-        return 300;
-    }
-  }
-
-  String get label {
-    switch (this) {
-      case _CandleInterval.m15:
-        return '15m';
-      case _CandleInterval.h1:
-        return '1h';
-      case _CandleInterval.h4:
-        return '4h';
-    }
-  }
-
-  DateTimeIntervalType get axisIntervalType {
-    switch (this) {
-      case _CandleInterval.m15:
-        return DateTimeIntervalType.hours;
-      case _CandleInterval.h1:
-        return DateTimeIntervalType.hours;
-      case _CandleInterval.h4:
-        return DateTimeIntervalType.hours;
-    }
   }
 }
