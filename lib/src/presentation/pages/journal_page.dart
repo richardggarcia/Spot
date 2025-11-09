@@ -243,9 +243,10 @@ class _JournalPageState extends State<JournalPage> {
       return Scaffold(
         backgroundColor: Colors.transparent,
         body: body,
-        floatingActionButton: _PremiumFAB(
+        floatingActionButton: FloatingActionButton.extended(
           onPressed: state.isSubmitting ? null : _openCreateModal,
-          isDark: isDark,
+          icon: const Icon(Icons.add),
+          label: const Text('Nueva operación'),
         ),
       );
     },
@@ -341,21 +342,6 @@ class _JournalHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completedTrades = notes.where((n) => n.exitPrice != null).toList();
-    final profitableTrades = completedTrades.where((n) =>
-        n.exitPrice != null && n.exitPrice! >= n.entryPrice).toList();
-
-    double totalPnL = 0;
-    for (final trade in completedTrades) {
-      if (trade.exitPrice != null && trade.size != null) {
-        totalPnL += (trade.exitPrice! - trade.entryPrice) * trade.size!;
-      }
-    }
-
-    final winRate = completedTrades.isEmpty
-        ? 0.0
-        : (profitableTrades.length / completedTrades.length * 100);
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
@@ -373,96 +359,13 @@ class _JournalHeader extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isDark
-                    ? AppColors.darkAccentPrimary.withValues(alpha: 0.2)
-                    : AppColors.lightAccentPrimary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.analytics_outlined,
-                  color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Trading Statistics',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                    Text(
-                      '${notes.length} operaciones totales',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  label: 'Total Trades',
-                  value: notes.length.toString(),
-                  icon: Icons.swap_horiz,
-                  color: isDark ? AppColors.darkNeutral : AppColors.lightNeutral,
-                  isDark: isDark,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  label: 'Win Rate',
-                  value: '${winRate.toStringAsFixed(1)}%',
-                  icon: Icons.trending_up,
-                  color: winRate >= 50
-                    ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
-                    : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
-                  isDark: isDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _StatCard(
-            label: 'P&L Acumulado',
-            value: '${totalPnL >= 0 ? '+' : ''}\$${totalPnL.abs().toStringAsFixed(2)}',
-            icon: Icons.account_balance_wallet,
-            color: totalPnL >= 0
-              ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
-              : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
-            isDark: isDark,
-            isLarge: true,
-          ),
-        ],
+      child: _StatCard(
+        label: 'Total Trades',
+        value: notes.length.toString(),
+        icon: Icons.swap_horiz,
+        color: isDark ? AppColors.darkNeutral : AppColors.lightNeutral,
+        isDark: isDark,
+        isLarge: true,
       ),
     );
   }
@@ -1038,79 +941,3 @@ class _ProfessionalTradeCard extends StatelessWidget {
 }
 
 enum _TradeCardAction { edit, delete }
-
-class _PremiumFAB extends StatelessWidget {
-  const _PremiumFAB({
-    required this.onPressed,
-    required this.isDark,
-  });
-
-  final VoidCallback? onPressed;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) => Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: isDark
-            ? [
-                AppColors.darkAccentPrimary,
-                AppColors.darkAccentPrimary.withValues(alpha: 0.8),
-              ]
-            : [
-                AppColors.lightAccentPrimary,
-                AppColors.lightAccentPrimary.withValues(alpha: 0.9),
-              ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary)
-                .withValues(alpha: 0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.add_circle,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'New Trade',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-}
