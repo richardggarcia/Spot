@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 
@@ -37,11 +38,10 @@ class ServiceLocator {
   static Future<void> setup({String? coinGeckoApiKey}) async {
     // Obtener cryptos seleccionadas por el usuario
     final selectedCryptos = await CryptoPreferences.getSelectedCryptos();
-    // API Key del backend buy-the-dip configurada
-    const journalApiKey = String.fromEnvironment(
-      'SPOT_JOURNAL_API_KEY',
-      defaultValue: 'c2acd9e4ccc6bafe41ec285bf47b111eb147d0d0ee99b3693e836a90b1df762a',
-    );
+
+    // Obtener configuración del backend desde variables de entorno
+    final journalApiKey = dotenv.env['SPOT_JOURNAL_API_KEY'] ?? '';
+    final journalBaseUrl = dotenv.env['SPOT_JOURNAL_BASE_URL'];
 
     _getIt
       // Core
@@ -70,7 +70,10 @@ class ServiceLocator {
       // 2. Streaming Data Port (WebSocket)
       ..registerLazySingleton<StreamingDataPort>(BinanceStreamingService.new)
       ..registerLazySingleton<TradeJournalPort>(
-        () => TradeJournalRemoteService(apiKey: journalApiKey),
+        () => TradeJournalRemoteService(
+          apiKey: journalApiKey,
+          baseUrl: journalBaseUrl,
+        ),
       )
       // --- Repositories ---
       ..registerLazySingleton<CryptoRepository>(
