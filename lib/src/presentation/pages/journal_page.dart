@@ -254,9 +254,9 @@ class _JournalPageState extends State<JournalPage> {
   String _getFilterLabel() {
     switch (_selectedFilter) {
       case TradeFilter.long:
-        return 'LONG';
+        return 'BUY';
       case TradeFilter.short:
-        return 'SHORT';
+        return 'SELL';
       case TradeFilter.all:
         return '';
     }
@@ -626,9 +626,9 @@ class _FilterSection extends StatelessWidget {
       case TradeFilter.all:
         return 'TODAS';
       case TradeFilter.long:
-        return 'LONG';
+        return 'BUY';
       case TradeFilter.short:
-        return 'SHORT';
+        return 'SELL';
     }
   }
 }
@@ -675,7 +675,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
     if (note.exitPrice == null || note.size == null) return '-';
     final diff = (note.exitPrice! - note.entryPrice) * note.size!;
     final prefix = diff >= 0 ? '+' : '';
-    return '$prefix\$${diff.abs().toStringAsFixed(2)}';
+    return '$prefix\$${diff.toStringAsFixed(2)}';
   }
 
   double _calculateROI() {
@@ -707,111 +707,46 @@ class _ProfessionalTradeCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header con símbolo, side y menú
               Row(
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _getSideColor().withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  Expanded(
+                    child: Row(
                       children: [
-                        Icon(
-                          note.side == 'buy'
-                            ? Icons.trending_up
-                            : Icons.trending_down,
-                          color: _getSideColor(),
-                          size: 20,
-                        ),
                         Text(
-                          note.side == 'buy' ? 'LONG' : 'SHORT',
+                          note.symbol,
                           style: TextStyle(
-                            fontSize: 8,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: _getSideColor(),
+                            color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.lightTextPrimary,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                note.symbol,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.lightTextPrimary,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getSideColor().withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: _getSideColor().withValues(alpha: 0.3),
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _getSideColor().withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                _dateFormat.format(note.entryAt.toLocal()),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: _getSideColor(),
-                                ),
-                              ),
+                          ),
+                          child: Text(
+                            note.side == 'buy' ? 'BUY' : 'SELL',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: _getSideColor(),
+                              letterSpacing: 0.5,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                'Entry: \$${note.entryPrice.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: isDark
-                                    ? AppColors.darkTextSecondary
-                                    : AppColors.lightTextSecondary,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (note.size != null) ...[
-                              const SizedBox(width: 12),
-                              Flexible(
-                                child: Text(
-                                  'Size: ${note.size!.toStringAsFixed(4)}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: isDark
-                                      ? AppColors.darkTextSecondary
-                                      : AppColors.lightTextSecondary,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -871,36 +806,60 @@ class _ProfessionalTradeCard extends StatelessWidget {
                   ),
                 ],
               ),
-              if (note.exitPrice != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isDark
-                      ? AppColors.darkSurface
-                      : AppColors.lightSurface,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              const SizedBox(height: 16),
+
+              // Timeline: Entry
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _getSideColor(),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      if (note.exitPrice != null) ...[
+                        Container(
+                          width: 2,
+                          height: 40,
+                          color: _getSideColor().withValues(alpha: 0.3),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _dateFormat.format(note.entryAt.toLocal()),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                              ? AppColors.darkTextTertiary
+                              : AppColors.lightTextTertiary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
                           children: [
                             Text(
-                              'Exit Price',
+                              'Entry: ',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 14,
                                 color: isDark
-                                  ? AppColors.darkTextTertiary
-                                  : AppColors.lightTextTertiary,
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              '\$${note.exitPrice!.toStringAsFixed(2)}',
+                              '\$${note.entryPrice.toStringAsFixed(2)}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -908,75 +867,112 @@ class _ProfessionalTradeCard extends StatelessWidget {
                                   ? AppColors.darkTextPrimary
                                   : AppColors.lightTextPrimary,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
+                            if (note.size != null) ...[
+                              Text(
+                                ' • ${note.size!.toStringAsFixed(4)}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'P&L',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                  ? AppColors.darkTextTertiary
-                                  : AppColors.lightTextTertiary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              _calculatePnL(),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: _getPnLColor(),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'ROI',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                  ? AppColors.darkTextTertiary
-                                  : AppColors.lightTextTertiary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              '${_calculateROI().toStringAsFixed(2)}%',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: _getPnLColor(),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                ],
+              ),
+
+              // Timeline: Exit (si existe)
+              if (note.exitPrice != null) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _getPnLColor(),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            note.exitAt != null
+                              ? _dateFormat.format(note.exitAt!.toLocal())
+                              : 'Salida',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                ? AppColors.darkTextTertiary
+                                : AppColors.lightTextTertiary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'Exit: ',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
+                                ),
+                              ),
+                              Text(
+                                '\$${note.exitPrice!.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '• ${_calculatePnL()}',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: _getPnLColor(),
+                                ),
+                              ),
+                              Text(
+                                ' (${_calculateROI().toStringAsFixed(1)}%)',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _getPnLColor(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
-              if (note.notes.isNotEmpty) ...[
-                const SizedBox(height: 12),
+
+              // Tags y notas
+              if (note.tags.isNotEmpty || note.notes.isNotEmpty) ...[
+                const SizedBox(height: 16),
                 Container(
-                  width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isDark
@@ -984,17 +980,53 @@ class _ProfessionalTradeCard extends StatelessWidget {
                       : AppColors.lightSurface,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    note.notes,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (note.tags.isNotEmpty) ...[
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: note.tags.map((tag) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                ? AppColors.darkAccentPrimary.withValues(alpha: 0.2)
+                                : AppColors.lightAccentPrimary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              tag,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark
+                                  ? AppColors.darkAccentPrimary
+                                  : AppColors.lightAccentPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          )).toList(),
+                        ),
+                        if (note.notes.isNotEmpty) const SizedBox(height: 8),
+                      ],
+                      if (note.notes.isNotEmpty)
+                        Text(
+                          note.notes,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                            fontStyle: FontStyle.italic,
+                            height: 1.4,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
                   ),
                 ),
               ],
