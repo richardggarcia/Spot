@@ -240,15 +240,20 @@ class _JournalPageState extends State<JournalPage> {
         );
       }
 
+      final fabColor = isDark
+        ? AppColors.darkAccentEarth
+        : AppColors.lightAccentEarth;
+
       return Scaffold(
         backgroundColor: Colors.transparent,
         body: body,
-        floatingActionButton: FloatingActionButton.extended(
+        floatingActionButton: FloatingActionButton(
           onPressed: state.isSubmitting ? null : _openCreateModal,
-          icon: const Icon(Icons.add),
-          label: const Text('Nueva operación'),
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+          backgroundColor: fabColor,
+          foregroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+          shape: const CircleBorder(),
+          elevation: 4,
+          child: const Icon(Icons.add),
         ),
       );
     },
@@ -343,34 +348,32 @@ class _JournalHeader extends StatelessWidget {
   final bool isDark;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : AppColors.lightCard,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
           ),
-        ],
-      ),
-      child: _StatCard(
-        label: 'Total Trades',
-        value: notes.length.toString(),
-        icon: Icons.swap_horiz,
-        color: isDark ? AppColors.darkNeutral : AppColors.lightNeutral,
-        isDark: isDark,
-        isLarge: true,
-      ),
-    );
-  }
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: _StatCard(
+          label: 'Total Trades',
+          value: notes.length.toString(),
+          icon: Icons.swap_horiz,
+          color: isDark ? AppColors.darkNeutral : AppColors.lightNeutral,
+          isDark: isDark,
+          isLarge: true,
+        ),
+      );
 }
 
 class _StatCard extends StatelessWidget {
@@ -554,6 +557,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
   final bool isDark;
 
   static final DateFormat _dateFormat = DateFormat('dd MMM, HH:mm');
+  static const double _sizeEpsilon = 0.0001;
 
   Color _getSideColor() {
     if (note.side == 'buy') {
@@ -570,32 +574,64 @@ class _ProfessionalTradeCard extends StatelessWidget {
       : AppColors.lightTextSecondary;
     }
 
-    final isProfit = note.exitPrice! >= note.entryPrice;
-    return isProfit
+    return _isProfitableTrade()
       ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
       : (isDark ? AppColors.darkBearish : AppColors.lightBearish);
   }
 
   String _calculatePnL() {
-    if (note.exitPrice == null || note.size == null) return '-';
-    final diff = (note.exitPrice! - note.entryPrice) * note.size!;
-    final prefix = diff >= 0 ? '+' : '';
+    final pnlValue = _resolvePnLValue();
+    if (pnlValue == null) return '-';
+    final prefix = pnlValue >= 0 ? '+' : '';
 
     // Format large numbers more compactly
-    final absDiff = diff.abs();
+    final absDiff = pnlValue.abs();
     if (absDiff >= 1000000) {
-      return '$prefix\$${(diff / 1000000).toStringAsFixed(2)}M';
+      return '$prefix\$${(pnlValue / 1000000).toStringAsFixed(2)}M';
     } else if (absDiff >= 1000) {
-      return '$prefix\$${(diff / 1000).toStringAsFixed(2)}k';
+      return '$prefix\$${(pnlValue / 1000).toStringAsFixed(2)}k';
     }
-    return '$prefix\$${diff.toStringAsFixed(2)}';
+    return '$prefix\$${pnlValue.toStringAsFixed(2)}';
   }
 
   double _calculateROI() {
-    if (note.exitPrice == null || note.size == null) return 0;
-    final invested = note.entryPrice * note.size!;
-    final profit = (note.exitPrice! - note.entryPrice) * note.size!;
+    final pnlValue = _resolvePnLValue();
+    if (note.exitPrice == null || pnlValue == null) return 0;
+    final positionSize = _positionSizeForRoi();
+    if (positionSize <= 0) return 0;
+    final invested = note.entryPrice * positionSize;
+    if (invested == 0) return 0;
+    final profit = pnlValue;
     return (profit / invested) * 100;
+  }
+
+  double? _resolvePnLValue() {
+    if (note.exitPrice == null) return null;
+    final priceDiff = note.exitPrice! - note.entryPrice;
+    if (_hasCustomSize()) {
+      return priceDiff * note.size!;
+    }
+    return priceDiff;
+  }
+
+  bool _hasCustomSize() {
+    final size = note.size;
+    if (size == null || size <= 0) return false;
+    return (size - 1).abs() > _sizeEpsilon;
+  }
+
+  double _positionSizeForRoi() {
+    final size = note.size;
+    if (size == null || size <= 0) return 1;
+    return size;
+  }
+
+  bool _isProfitableTrade() {
+    if (note.exitPrice == null) return false;
+    if (note.side == 'sell') {
+      return note.exitPrice! <= note.entryPrice;
+    }
+    return note.exitPrice! >= note.entryPrice;
   }
 
   @override

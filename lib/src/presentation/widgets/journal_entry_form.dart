@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../domain/entities/trade_note.dart';
 import '../theme/app_colors.dart';
 
+const double _kFieldHeight = 56;
+
 class TradeNoteFormResult {
   const TradeNoteFormResult({
     required this.symbol,
@@ -184,7 +186,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                   },
                   isDark: isDark,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
                 // Entry Section
                 _SectionHeader(
@@ -313,6 +315,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                         onPressed: () => Navigator.of(context).pop(),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          minimumSize: const Size.fromHeight(_kFieldHeight),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                             side: BorderSide(
@@ -323,7 +326,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                           ),
                         ),
                         child: Text(
-                          'CANCELAR',
+                          'Cancelar',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -340,18 +343,21 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                       child: ElevatedButton(
                         onPressed: _submit,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _side == 'buy'
-                            ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
-                            : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
-                          foregroundColor: Colors.white,
+                          backgroundColor: isDark
+                            ? AppColors.darkAccentEarth
+                            : AppColors.lightAccentEarth,
+                          foregroundColor: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurface,
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          minimumSize: const Size.fromHeight(_kFieldHeight),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           elevation: 0,
                         ),
                         child: Text(
-                          _isEditing ? 'ACTUALIZAR OPERACIÓN' : 'GUARDAR OPERACIÓN',
+                          _isEditing ? 'Actualizar' : 'Guardar',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -654,69 +660,73 @@ class _ExchangeInputField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: _buildInputFormatters(),
-          textCapitalization: textCapitalization ?? TextCapitalization.none,
-          validator: validator,
-          style: TextStyle(
-            fontSize: 16,
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-            fontWeight: FontWeight.w500,
-          ),
-          decoration: InputDecoration(
-            hintText: placeholder,
-            hintStyle: TextStyle(
-              color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
-              fontWeight: FontWeight.normal,
+        SizedBox(
+          height: _kFieldHeight,
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            textAlignVertical: TextAlignVertical.center,
+            inputFormatters: _buildInputFormatters(),
+            textCapitalization: textCapitalization ?? TextCapitalization.none,
+            validator: validator,
+            style: TextStyle(
+              fontSize: 16,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+              fontWeight: FontWeight.w500,
             ),
-            prefixIcon: prefixIcon != null
-                ? Icon(
-                    prefixIcon,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                    size: 20,
-                  )
-                : null,
-            filled: true,
-            fillColor: isDark ? AppColors.darkCard : AppColors.lightCard,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            decoration: InputDecoration(
+              hintText: placeholder,
+              hintStyle: TextStyle(
+                color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+                fontWeight: FontWeight.normal,
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              prefixIcon: prefixIcon != null
+                  ? Icon(
+                      prefixIcon,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      size: 20,
+                    )
+                  : null,
+              filled: true,
+              fillColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                ),
               ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
-                width: 2,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                ),
               ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
+                  width: 2,
+                ),
+              ),
+              errorStyle: TextStyle(
                 color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
+                fontSize: 12,
               ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
-                width: 2,
-              ),
-            ),
-            errorStyle: TextStyle(
-              color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
-              fontSize: 12,
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ],
@@ -830,7 +840,8 @@ class _ExchangeDateButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            height: _kFieldHeight,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: isDark ? AppColors.darkCard : AppColors.lightCard,
               borderRadius: BorderRadius.circular(12),
@@ -847,19 +858,13 @@ class _ExchangeDateButton extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    ),
                   ),
                 ),
                 if (allowClear && onClear != null)
