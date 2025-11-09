@@ -11,7 +11,8 @@ class TradeJournalRemoteService implements TradeJournalPort {
     String? baseUrl,
     String? apiKey,
   }) {
-    final resolvedBaseUrl = baseUrl ?? _resolveBaseUrl();
+    // Use provided baseUrl or default to public endpoint
+    final resolvedBaseUrl = baseUrl ?? 'https://spot.bitsdeve.com';
     final resolvedApiKey = _resolveEffectiveApiKey(apiKey);
 
     final client =
@@ -42,13 +43,6 @@ class TradeJournalRemoteService implements TradeJournalPort {
   }
 
   TradeJournalRemoteService._(this._dio);
-
-  static String _resolveBaseUrl() {
-    const envUrl = String.fromEnvironment('SPOT_JOURNAL_BASE_URL');
-    if (envUrl.isNotEmpty) return envUrl;
-    // Default backend endpoint (Pi local network)
-    return 'http://192.168.1.33:3000';
-  }
 
   static String _resolveEffectiveApiKey(String? override) {
     const envKey = String.fromEnvironment('SPOT_JOURNAL_API_KEY');
