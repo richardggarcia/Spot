@@ -580,6 +580,14 @@ class _ProfessionalTradeCard extends StatelessWidget {
     if (note.exitPrice == null || note.size == null) return '-';
     final diff = (note.exitPrice! - note.entryPrice) * note.size!;
     final prefix = diff >= 0 ? '+' : '';
+
+    // Format large numbers more compactly
+    final absDiff = diff.abs();
+    if (absDiff >= 1000000) {
+      return '$prefix\$${(diff / 1000000).toStringAsFixed(2)}M';
+    } else if (absDiff >= 1000) {
+      return '$prefix\$${(diff / 1000).toStringAsFixed(2)}k';
+    }
     return '$prefix\$${diff.toStringAsFixed(2)}';
   }
 
