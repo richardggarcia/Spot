@@ -110,7 +110,8 @@ class SpotTradingApp extends StatelessWidget {
       ),
       BlocProvider(
         create: (context) =>
-            ServiceLocator.get<JournalBloc>()..add(const LoadJournalNotes()),
+            ServiceLocator.get<JournalBloc>()
+              ..add(const LoadJournalNotes(userId: 'richard')),
       ),
     ],
     child: Consumer<ThemeManager>(

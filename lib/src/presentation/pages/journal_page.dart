@@ -19,8 +19,10 @@ class JournalPage extends StatefulWidget {
 
 class _JournalPageState extends State<JournalPage> {
   TradeFilter _selectedFilter = TradeFilter.all;
+  static const String _userId = 'richard'; // Usuario configurado para el backend
+
   Future<void> _onRefresh() async {
-    context.read<JournalBloc>().add(const LoadJournalNotes());
+    context.read<JournalBloc>().add(const LoadJournalNotes(userId: _userId));
   }
 
   Future<void> _openCreateModal() async {
@@ -44,6 +46,7 @@ class _JournalPageState extends State<JournalPage> {
         size: result.size,
         notes: result.notes,
         tags: result.tags,
+        userId: _userId,
       ),
     );
   }

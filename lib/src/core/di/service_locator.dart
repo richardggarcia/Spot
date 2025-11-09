@@ -37,7 +37,11 @@ class ServiceLocator {
   static Future<void> setup({String? coinGeckoApiKey}) async {
     // Obtener cryptos seleccionadas por el usuario
     final selectedCryptos = await CryptoPreferences.getSelectedCryptos();
-    const journalApiKey = String.fromEnvironment('SPOT_JOURNAL_API_KEY');
+    // API Key del backend buy-the-dip configurada
+    const journalApiKey = String.fromEnvironment(
+      'SPOT_JOURNAL_API_KEY',
+      defaultValue: 'c2acd9e4ccc6bafe41ec285bf47b111eb147d0d0ee99b3693e836a90b1df762a',
+    );
 
     _getIt
       // Core

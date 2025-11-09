@@ -46,8 +46,8 @@ class TradeJournalRemoteService implements TradeJournalPort {
   static String _resolveBaseUrl() {
     const envUrl = String.fromEnvironment('SPOT_JOURNAL_BASE_URL');
     if (envUrl.isNotEmpty) return envUrl;
-    // Default public endpoint
-    return 'http://spot.bitsdeve.com';
+    // Default backend endpoint (Pi local network)
+    return 'http://192.168.1.33:3000';
   }
 
   static String _resolveEffectiveApiKey(String? override) {
