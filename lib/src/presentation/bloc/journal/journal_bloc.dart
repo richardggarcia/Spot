@@ -46,7 +46,11 @@ class JournalBloc extends Bloc<JournalEvent, JournalState> {
         ),
       );
 
-      emit(state.copyWith(notes: notes, isLoading: false, clearError: true));
+      // Ordenar notas por fecha de entrada (más recientes primero)
+      final sortedNotes = List<TradeNote>.from(notes)
+        ..sort((a, b) => b.entryAt.compareTo(a.entryAt));
+
+      emit(state.copyWith(notes: sortedNotes, isLoading: false, clearError: true));
     } catch (error, stackTrace) {
       AppLogger.error('Failed to load journal notes', error, stackTrace);
       emit(
@@ -81,7 +85,9 @@ class JournalBloc extends Bloc<JournalEvent, JournalState> {
         ),
       );
 
-      final updatedNotes = [newNote, ...state.notes];
+      // Agregar nueva nota y ordenar por fecha de entrada (más recientes primero)
+      final updatedNotes = [newNote, ...state.notes]
+        ..sort((a, b) => b.entryAt.compareTo(a.entryAt));
 
       emit(
         state.copyWith(
@@ -135,9 +141,11 @@ class JournalBloc extends Bloc<JournalEvent, JournalState> {
         return;
       }
 
+      // Actualizar nota y reordenar por fecha de entrada (más recientes primero)
       final updatedNotes = state.notes
           .map((note) => note.id == updated.id ? updated : note)
-          .toList(growable: false);
+          .toList()
+        ..sort((a, b) => b.entryAt.compareTo(a.entryAt));
 
       emit(
         state.copyWith(

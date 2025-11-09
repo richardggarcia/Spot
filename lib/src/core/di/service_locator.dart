@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
 
@@ -21,6 +23,7 @@ import '../../infrastructure/adapters/mock_price_adapter.dart';
 import '../../infrastructure/repositories/crypto_repository_impl.dart';
 import '../../infrastructure/repositories/trade_journal_repository_impl.dart';
 import '../../infrastructure/services/trade_journal_remote_service.dart';
+import '../../infrastructure/services/user_preferences_remote_service.dart';
 import '../../infrastructure/streaming/binance_streaming_service.dart';
 import '../../presentation/bloc/crypto/crypto_bloc.dart';
 import '../../presentation/bloc/journal/journal_bloc.dart';
@@ -35,9 +38,34 @@ class ServiceLocator {
 
   /// Configura todas las dependencias
   static Future<void> setup({String? coinGeckoApiKey}) async {
-    // Obtener cryptos seleccionadas por el usuario
+    // Obtener configuración del backend desde variables de entorno
+    final journalApiKey = dotenv.env['SPOT_JOURNAL_API_KEY'] ?? '';
+    final journalBaseUrl = dotenv.env['SPOT_JOURNAL_BASE_URL'];
+    const userId = 'richard'; // Usuario configurado
+
+    // Configurar servicio remoto de preferencias antes de cargar cryptos
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: journalBaseUrl ?? 'https://spot.bitsdeve.com',
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 20),
+        sendTimeout: const Duration(seconds: 20),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (journalApiKey.isNotEmpty) 'X-API-Key': journalApiKey,
+          if (journalApiKey.isNotEmpty) 'Authorization': 'Bearer $journalApiKey',
+        },
+      ),
+    );
+    final preferencesService = UserPreferencesRemoteService(
+      dio: dio,
+      userId: userId,
+    );
+    CryptoPreferences.configureRemoteService(preferencesService);
+
+    // Obtener cryptos seleccionadas por el usuario (ahora puede cargar del backend)
     final selectedCryptos = await CryptoPreferences.getSelectedCryptos();
-    const journalApiKey = String.fromEnvironment('SPOT_JOURNAL_API_KEY');
 
     _getIt
       // Core
@@ -66,7 +94,10 @@ class ServiceLocator {
       // 2. Streaming Data Port (WebSocket)
       ..registerLazySingleton<StreamingDataPort>(BinanceStreamingService.new)
       ..registerLazySingleton<TradeJournalPort>(
-        () => TradeJournalRemoteService(apiKey: journalApiKey),
+        () => TradeJournalRemoteService(
+          apiKey: journalApiKey,
+          baseUrl: journalBaseUrl,
+        ),
       )
       // --- Repositories ---
       ..registerLazySingleton<CryptoRepository>(

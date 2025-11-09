@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../domain/entities/trade_note.dart';
 import '../theme/app_colors.dart';
 
+const double _kFieldHeight = 56;
+
 class TradeNoteFormResult {
   const TradeNoteFormResult({
     required this.symbol,
@@ -122,7 +124,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isEditing ? 'EDIT TRADE' : 'NEW TRADE',
+                          _isEditing ? 'EDITAR OPERACIÓN' : 'NUEVA OPERACIÓN',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -132,7 +134,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                           ),
                         ),
                         Text(
-                          'Enter your trade details',
+                          'Ingresa los detalles de tu operación',
                           style: TextStyle(
                             fontSize: 14,
                             color: isDark
@@ -172,23 +174,23 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                 // Symbol Input
                 _ExchangeInputField(
                   controller: _symbolController,
-                  labelText: 'TRADING PAIR',
+                  labelText: 'PAR DE TRADING',
                   placeholder: 'BTC',
                   prefixIcon: Icons.currency_bitcoin,
                   textCapitalization: TextCapitalization.characters,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Enter trading pair';
+                      return 'Ingresa el par de trading';
                     }
                     return null;
                   },
                   isDark: isDark,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
                 // Entry Section
                 _SectionHeader(
-                  title: 'ENTRY DETAILS',
+                  title: 'DETALLES DE ENTRADA',
                   icon: Icons.login,
                   isDark: isDark,
                 ),
@@ -198,7 +200,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                     Expanded(
                       child: _ExchangeInputField(
                         controller: _entryPriceController,
-                        labelText: 'ENTRY PRICE',
+                        labelText: 'PRECIO DE ENTRADA',
                         placeholder: '0.00',
                         prefixIcon: Icons.price_check,
                         keyboardType: const TextInputType.numberWithOptions(
@@ -207,10 +209,10 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                         validator: (value) {
                           final trimmed = value?.trim() ?? '';
                           if (trimmed.isEmpty) {
-                            return 'Required field';
+                            return 'Campo requerido';
                           }
                           final parsed = double.tryParse(trimmed);
-                          if (parsed == null) return 'Invalid price';
+                          if (parsed == null) return 'Precio inválido';
                           return null;
                         },
                         isDark: isDark,
@@ -220,7 +222,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                     Expanded(
                       child: _ExchangeInputField(
                         controller: _sizeController,
-                        labelText: 'POSITION SIZE',
+                        labelText: 'TAMAÑO DE POSICIÓN',
                         placeholder: '0.0000',
                         prefixIcon: Icons.pie_chart_outline,
                         keyboardType: const TextInputType.numberWithOptions(
@@ -233,7 +235,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                 ),
                 const SizedBox(height: 16),
                 _ExchangeDateButton(
-                  label: 'ENTRY DATE & TIME',
+                  label: 'FECHA Y HORA DE ENTRADA',
                   value: _dateFormat.format(_entryAt.toLocal()),
                   onTap: () => _pickDate(isEntry: true),
                   isDark: isDark,
@@ -243,7 +245,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
 
                 // Exit Section
                 _SectionHeader(
-                  title: 'EXIT DETAILS (Optional)',
+                  title: 'DETALLES DE SALIDA (Opcional)',
                   icon: Icons.logout,
                   isDark: isDark,
                 ),
@@ -253,7 +255,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                     Expanded(
                       child: _ExchangeInputField(
                         controller: _exitPriceController,
-                        labelText: 'EXIT PRICE',
+                        labelText: 'PRECIO DE SALIDA',
                         placeholder: '0.00',
                         prefixIcon: Icons.trending_up,
                         keyboardType: const TextInputType.numberWithOptions(
@@ -265,10 +267,10 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: _ExchangeDateButton(
-                        label: 'EXIT DATE',
+                        label: 'FECHA DE SALIDA',
                         value: _exitAt != null
                             ? _dateFormat.format(_exitAt!.toLocal())
-                            : 'Select date',
+                            : 'Seleccionar fecha',
                         onTap: () => _pickDate(isEntry: false),
                         allowClear: true,
                         onClear: () => setState(() => _exitAt = null),
@@ -282,23 +284,23 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
 
                 // Notes Section
                 _SectionHeader(
-                  title: 'ADDITIONAL INFO',
+                  title: 'INFORMACIÓN ADICIONAL',
                   icon: Icons.info_outline,
                   isDark: isDark,
                 ),
                 const SizedBox(height: 16),
                 _ExchangeTextArea(
                   controller: _notesController,
-                  labelText: 'TRADE NOTES',
-                  placeholder: 'Describe your setup, market conditions, strategy...',
+                  labelText: 'NOTAS DE LA OPERACIÓN',
+                  placeholder: 'Describe tu setup, condiciones del mercado, estrategia...',
                   maxLines: 4,
                   isDark: isDark,
                 ),
                 const SizedBox(height: 16),
                 _ExchangeInputField(
                   controller: _tagsController,
-                  labelText: 'TAGS',
-                  placeholder: 'scalping, breakout, support',
+                  labelText: 'ETIQUETAS',
+                  placeholder: 'scalping, breakout, soporte',
                   prefixIcon: Icons.sell_outlined,
                   isDark: isDark,
                 ),
@@ -313,6 +315,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                         onPressed: () => Navigator.of(context).pop(),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          minimumSize: const Size.fromHeight(_kFieldHeight),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                             side: BorderSide(
@@ -323,7 +326,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                           ),
                         ),
                         child: Text(
-                          'CANCEL',
+                          'Cancelar',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -340,18 +343,21 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                       child: ElevatedButton(
                         onPressed: _submit,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _side == 'buy'
-                            ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
-                            : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
-                          foregroundColor: Colors.white,
+                          backgroundColor: isDark
+                            ? AppColors.darkAccentEarth
+                            : AppColors.lightAccentEarth,
+                          foregroundColor: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurface,
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          minimumSize: const Size.fromHeight(_kFieldHeight),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           elevation: 0,
                         ),
                         child: Text(
-                          _isEditing ? 'UPDATE TRADE' : 'EXECUTE TRADE',
+                          _isEditing ? 'Actualizar' : 'Guardar',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -478,7 +484,7 @@ class _ProfessionalSideSelector extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'LONG',
+                      'BUY',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -488,7 +494,7 @@ class _ProfessionalSideSelector extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Buy Position',
+                      'Compra',
                       style: TextStyle(
                         fontSize: 11,
                         color: selectedSide == 'buy'
@@ -524,7 +530,7 @@ class _ProfessionalSideSelector extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'SHORT',
+                      'SELL',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -534,7 +540,7 @@ class _ProfessionalSideSelector extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Sell Position',
+                      'Venta',
                       style: TextStyle(
                         fontSize: 11,
                         color: selectedSide == 'sell'
@@ -654,69 +660,73 @@ class _ExchangeInputField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: _buildInputFormatters(),
-          textCapitalization: textCapitalization ?? TextCapitalization.none,
-          validator: validator,
-          style: TextStyle(
-            fontSize: 16,
-            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-            fontWeight: FontWeight.w500,
-          ),
-          decoration: InputDecoration(
-            hintText: placeholder,
-            hintStyle: TextStyle(
-              color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
-              fontWeight: FontWeight.normal,
+        SizedBox(
+          height: _kFieldHeight,
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            textAlignVertical: TextAlignVertical.center,
+            inputFormatters: _buildInputFormatters(),
+            textCapitalization: textCapitalization ?? TextCapitalization.none,
+            validator: validator,
+            style: TextStyle(
+              fontSize: 16,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+              fontWeight: FontWeight.w500,
             ),
-            prefixIcon: prefixIcon != null
-                ? Icon(
-                    prefixIcon,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                    size: 20,
-                  )
-                : null,
-            filled: true,
-            fillColor: isDark ? AppColors.darkCard : AppColors.lightCard,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            decoration: InputDecoration(
+              hintText: placeholder,
+              hintStyle: TextStyle(
+                color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+                fontWeight: FontWeight.normal,
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              prefixIcon: prefixIcon != null
+                  ? Icon(
+                      prefixIcon,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      size: 20,
+                    )
+                  : null,
+              filled: true,
+              fillColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                ),
               ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
-                width: 2,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                ),
               ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
+                ),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
+                  width: 2,
+                ),
+              ),
+              errorStyle: TextStyle(
                 color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
+                fontSize: 12,
               ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
-                width: 2,
-              ),
-            ),
-            errorStyle: TextStyle(
-              color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
-              fontSize: 12,
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ],
@@ -830,7 +840,8 @@ class _ExchangeDateButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            height: _kFieldHeight,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: isDark ? AppColors.darkCard : AppColors.lightCard,
               borderRadius: BorderRadius.circular(12),
@@ -847,19 +858,13 @@ class _ExchangeDateButton extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    ),
                   ),
                 ),
                 if (allowClear && onClear != null)

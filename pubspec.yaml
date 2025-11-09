@@ -17,6 +17,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^8.1.5
+  flutter_dotenv: ^5.1.0
   flutter_localizations:
     sdk: flutter
   get_it: ^7.7.0
@@ -41,3 +42,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Environment variables
+  assets:
+    - .env
