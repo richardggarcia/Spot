@@ -247,6 +247,8 @@ class _JournalPageState extends State<JournalPage> {
           onPressed: state.isSubmitting ? null : _openCreateModal,
           icon: const Icon(Icons.add),
           label: const Text('Nueva operación'),
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
         ),
       );
     },
@@ -847,20 +849,16 @@ class _ProfessionalTradeCard extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                '• ${_calculatePnL()}',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: _getPnLColor(),
-                                ),
-                              ),
-                              Text(
-                                ' (${_calculateROI().toStringAsFixed(1)}%)',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: _getPnLColor(),
+                              Flexible(
+                                child: Text(
+                                  '• ${_calculatePnL()} (${_calculateROI().toStringAsFixed(1)}%)',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: _getPnLColor(),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                               ),
                             ],

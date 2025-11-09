@@ -122,7 +122,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isEditing ? 'EDIT TRADE' : 'NEW TRADE',
+                          _isEditing ? 'EDITAR OPERACIÓN' : 'NUEVA OPERACIÓN',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -132,7 +132,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                           ),
                         ),
                         Text(
-                          'Enter your trade details',
+                          'Ingresa los detalles de tu operación',
                           style: TextStyle(
                             fontSize: 14,
                             color: isDark
@@ -172,13 +172,13 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                 // Symbol Input
                 _ExchangeInputField(
                   controller: _symbolController,
-                  labelText: 'TRADING PAIR',
+                  labelText: 'PAR DE TRADING',
                   placeholder: 'BTC',
                   prefixIcon: Icons.currency_bitcoin,
                   textCapitalization: TextCapitalization.characters,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Enter trading pair';
+                      return 'Ingresa el par de trading';
                     }
                     return null;
                   },
@@ -188,7 +188,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
 
                 // Entry Section
                 _SectionHeader(
-                  title: 'ENTRY DETAILS',
+                  title: 'DETALLES DE ENTRADA',
                   icon: Icons.login,
                   isDark: isDark,
                 ),
@@ -198,7 +198,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                     Expanded(
                       child: _ExchangeInputField(
                         controller: _entryPriceController,
-                        labelText: 'ENTRY PRICE',
+                        labelText: 'PRECIO DE ENTRADA',
                         placeholder: '0.00',
                         prefixIcon: Icons.price_check,
                         keyboardType: const TextInputType.numberWithOptions(
@@ -207,10 +207,10 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                         validator: (value) {
                           final trimmed = value?.trim() ?? '';
                           if (trimmed.isEmpty) {
-                            return 'Required field';
+                            return 'Campo requerido';
                           }
                           final parsed = double.tryParse(trimmed);
-                          if (parsed == null) return 'Invalid price';
+                          if (parsed == null) return 'Precio inválido';
                           return null;
                         },
                         isDark: isDark,
@@ -220,7 +220,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                     Expanded(
                       child: _ExchangeInputField(
                         controller: _sizeController,
-                        labelText: 'POSITION SIZE',
+                        labelText: 'TAMAÑO DE POSICIÓN',
                         placeholder: '0.0000',
                         prefixIcon: Icons.pie_chart_outline,
                         keyboardType: const TextInputType.numberWithOptions(
@@ -233,7 +233,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                 ),
                 const SizedBox(height: 16),
                 _ExchangeDateButton(
-                  label: 'ENTRY DATE & TIME',
+                  label: 'FECHA Y HORA DE ENTRADA',
                   value: _dateFormat.format(_entryAt.toLocal()),
                   onTap: () => _pickDate(isEntry: true),
                   isDark: isDark,
@@ -243,7 +243,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
 
                 // Exit Section
                 _SectionHeader(
-                  title: 'EXIT DETAILS (Optional)',
+                  title: 'DETALLES DE SALIDA (Opcional)',
                   icon: Icons.logout,
                   isDark: isDark,
                 ),
@@ -253,7 +253,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                     Expanded(
                       child: _ExchangeInputField(
                         controller: _exitPriceController,
-                        labelText: 'EXIT PRICE',
+                        labelText: 'PRECIO DE SALIDA',
                         placeholder: '0.00',
                         prefixIcon: Icons.trending_up,
                         keyboardType: const TextInputType.numberWithOptions(
@@ -265,10 +265,10 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: _ExchangeDateButton(
-                        label: 'EXIT DATE',
+                        label: 'FECHA DE SALIDA',
                         value: _exitAt != null
                             ? _dateFormat.format(_exitAt!.toLocal())
-                            : 'Select date',
+                            : 'Seleccionar fecha',
                         onTap: () => _pickDate(isEntry: false),
                         allowClear: true,
                         onClear: () => setState(() => _exitAt = null),
@@ -282,23 +282,23 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
 
                 // Notes Section
                 _SectionHeader(
-                  title: 'ADDITIONAL INFO',
+                  title: 'INFORMACIÓN ADICIONAL',
                   icon: Icons.info_outline,
                   isDark: isDark,
                 ),
                 const SizedBox(height: 16),
                 _ExchangeTextArea(
                   controller: _notesController,
-                  labelText: 'TRADE NOTES',
-                  placeholder: 'Describe your setup, market conditions, strategy...',
+                  labelText: 'NOTAS DE LA OPERACIÓN',
+                  placeholder: 'Describe tu setup, condiciones del mercado, estrategia...',
                   maxLines: 4,
                   isDark: isDark,
                 ),
                 const SizedBox(height: 16),
                 _ExchangeInputField(
                   controller: _tagsController,
-                  labelText: 'TAGS',
-                  placeholder: 'scalping, breakout, support',
+                  labelText: 'ETIQUETAS',
+                  placeholder: 'scalping, breakout, soporte',
                   prefixIcon: Icons.sell_outlined,
                   isDark: isDark,
                 ),
@@ -323,7 +323,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                           ),
                         ),
                         child: Text(
-                          'CANCEL',
+                          'CANCELAR',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -351,7 +351,7 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                           elevation: 0,
                         ),
                         child: Text(
-                          _isEditing ? 'UPDATE TRADE' : 'EXECUTE TRADE',
+                          _isEditing ? 'ACTUALIZAR OPERACIÓN' : 'GUARDAR OPERACIÓN',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -478,7 +478,7 @@ class _ProfessionalSideSelector extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'LONG',
+                      'BUY',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -488,7 +488,7 @@ class _ProfessionalSideSelector extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Buy Position',
+                      'Compra',
                       style: TextStyle(
                         fontSize: 11,
                         color: selectedSide == 'buy'
@@ -524,7 +524,7 @@ class _ProfessionalSideSelector extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'SHORT',
+                      'SELL',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -534,7 +534,7 @@ class _ProfessionalSideSelector extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Sell Position',
+                      'Venta',
                       style: TextStyle(
                         fontSize: 11,
                         color: selectedSide == 'sell'
