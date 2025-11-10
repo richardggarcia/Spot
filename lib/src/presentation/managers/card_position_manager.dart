@@ -3,9 +3,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../infrastructure/services/user_preferences_remote_service.dart';
+import '../../core/utils/logger.dart';
+
 /// Gestor de posiciones para tarjetas arrastrables
 class CardPositionManager {
   static const String _positionsKey = 'card_positions';
+  static UserPreferencesRemoteService? _remoteService;
+
+  /// Configura el servicio remoto para sincronización con backend
+  static void configureRemoteService(UserPreferencesRemoteService service) {
+    _remoteService = service;
+  }
 
   /// Guarda la posición de una tarjeta específica
   static Future<void> savePosition(String cardId, Offset position) async {
@@ -114,25 +123,66 @@ class CardPositionManager {
   }
 
   /// Guarda el orden de las tarjetas (para listas reordenables)
+  /// Guarda tanto localmente como en el backend
   Future<void> saveCardOrder(List<String> orderedSymbols) async {
     try {
+      // Guardar localmente primero (siempre funciona)
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('card_order', json.encode(orderedSymbols));
+      AppLogger.info('Orden de tarjetas guardado localmente');
+
+      // Intentar guardar en backend si está configurado
+      if (_remoteService != null) {
+        // Convertir lista a mapa con índices
+        final orderMap = <String, int>{};
+        for (var i = 0; i < orderedSymbols.length; i++) {
+          orderMap[orderedSymbols[i]] = i;
+        }
+        await _remoteService!.saveCardOrder(orderMap);
+        AppLogger.info('Orden de tarjetas sincronizado con backend');
+      }
     } catch (e) {
-      // Error saving card order handled silently
+      AppLogger.error('Error guardando orden de tarjetas: $e');
     }
   }
 
   /// Obtiene el orden guardado de las tarjetas
+  /// Intenta cargar del backend primero, si falla usa SharedPreferences
   Future<List<String>> getCardOrder() async {
     try {
+      // Intentar cargar del backend si está configurado
+      if (_remoteService != null) {
+        try {
+          final remoteOrder = await _remoteService!.loadCardOrder();
+          if (remoteOrder != null && remoteOrder.isNotEmpty) {
+            // Convertir el mapa de orden a lista ordenada
+            final sortedEntries = remoteOrder.entries.toList()
+              ..sort((a, b) => a.value.compareTo(b.value));
+            final orderedSymbols = sortedEntries.map((e) => e.key).toList();
+
+            // Guardar en SharedPreferences para cache local
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('card_order', json.encode(orderedSymbols));
+            AppLogger.info('Orden de tarjetas cargado desde backend: ${orderedSymbols.length}');
+            return orderedSymbols;
+          }
+        } catch (e) {
+          AppLogger.warning('Error cargando orden desde backend: $e');
+        }
+      }
+
+      // Si no se pudo cargar del backend, usar SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final orderJson = prefs.getString('card_order');
-      if (orderJson == null) return [];
+      if (orderJson == null) {
+        AppLogger.info('No hay orden de tarjetas guardado');
+        return [];
+      }
       final decoded = json.decode(orderJson) as List<dynamic>;
+      AppLogger.info('Orden de tarjetas cargado desde SharedPreferences');
       return decoded.cast<String>();
     } catch (e) {
-      // Error getting card order handled silently
+      AppLogger.error('Error obteniendo orden de tarjetas: $e');
       return [];
     }
   }

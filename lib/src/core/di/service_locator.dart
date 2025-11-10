@@ -27,6 +27,7 @@ import '../../infrastructure/services/user_preferences_remote_service.dart';
 import '../../infrastructure/streaming/binance_streaming_service.dart';
 import '../../presentation/bloc/crypto/crypto_bloc.dart';
 import '../../presentation/bloc/journal/journal_bloc.dart';
+import '../../presentation/managers/card_position_manager.dart';
 import '../utils/crypto_preferences.dart';
 
 /// Configuración de inyección de dependencias
@@ -63,6 +64,7 @@ class ServiceLocator {
       userId: userId,
     );
     CryptoPreferences.configureRemoteService(preferencesService);
+    CardPositionManager.configureRemoteService(preferencesService);
 
     // Obtener cryptos seleccionadas por el usuario (ahora puede cargar del backend)
     final selectedCryptos = await CryptoPreferences.getSelectedCryptos();
