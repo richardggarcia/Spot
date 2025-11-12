@@ -25,7 +25,7 @@ class CryptoComparePriceAdapter implements PriceDataPort {
 
   /// Mapa de símbolos a IDs de CryptoCompare (algunos tienen nombres diferentes)
   static const Map<String, String> _symbolMap = {
-    'MNT': 'MNT',
+    'MNT': 'MANTLE', // Mantle Network - usar nombre completo para evitar conflicto con tokens viejos
     'KCS': 'KCS',
     'BGB': 'BGB',
     'BBSOL': 'SOL', // BBSOL es wrapped SOL

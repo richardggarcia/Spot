@@ -334,21 +334,21 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Entry Price Marker
+        // Entry Price Marker (Green)
         _buildPriceMarker(
           'ENTRY',
           widget.note.entryPrice,
-          isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+          isDark ? AppColors.darkBullish : AppColors.lightBullish,
           isDark,
         ),
-        
+
         if (widget.note.exitPrice != null) ...[
           const SizedBox(height: 24),
-          // Exit Price Marker
+          // Exit Price Marker (Red)
           _buildPriceMarker(
             'EXIT',
             widget.note.exitPrice!,
-            isDark ? AppColors.darkWarning : AppColors.lightWarning,
+            isDark ? AppColors.darkBearish : AppColors.lightBearish,
             isDark,
           ),
         ],
@@ -358,7 +358,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
 
   Widget _buildPriceMarker(String label, double price, Color color, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(6),
@@ -377,7 +377,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 8,
+              fontSize: 7,
               fontWeight: FontWeight.bold,
               color: Colors.white,
               letterSpacing: 0.5,
@@ -387,7 +387,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
           Text(
             '\$${price.toStringAsFixed(2)}',
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),

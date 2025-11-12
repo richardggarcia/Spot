@@ -23,8 +23,8 @@ class AppColors {
   static const Color darkAccentSecondary = Color(0xFF8B5CF6); // Premium purple
   static const Color darkAccentTertiary = Color(0xFF10B981); // Premium green
 
-  // Dark Theme - Terracotta/Brick button color
-  static const Color darkTerracotta = Color(0xFFD4836F); // Terracotta/Brick
+  // Dark Theme - Primary button color (Red-Orange)
+  static const Color darkTerracotta = Color(0xFFF42A0B); // Red-Orange
   static const Color onDarkTerracotta = Color(0xFFFFFFFF); // White text
 
   // Dark Theme - State colors
@@ -52,8 +52,8 @@ class AppColors {
   static const Color lightAccentSecondary = Color(0xFF7C3AED); // Bright purple
   static const Color lightAccentTertiary = Color(0xFF059669); // Bright green
 
-  // Light Theme - Terracotta/Brick button color
-  static const Color lightTerracotta = Color(0xFFE07A5F); // Terracotta/Brick
+  // Light Theme - Primary button color (Red-Orange)
+  static const Color lightTerracotta = Color(0xFFF42A0B); // Red-Orange
   static const Color onLightTerracotta = Color(0xFFFFFFFF); // White text
 
   // Light Theme - State colors

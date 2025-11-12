@@ -181,12 +181,11 @@ class _JournalPageState extends State<JournalPage> {
       return Scaffold(
         backgroundColor: Colors.transparent,
         body: body,
-        floatingActionButton: FloatingActionButton.extended(
+        floatingActionButton: FloatingActionButton(
           onPressed: state.isSubmitting ? null : _openCreateModal,
-          icon: const Icon(Icons.add),
-          label: const Text('Nueva operación'),
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+          child: const Icon(Icons.add),
         ),
       );
     },
