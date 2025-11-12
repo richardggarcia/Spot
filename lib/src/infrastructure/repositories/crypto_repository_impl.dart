@@ -1,3 +1,4 @@
+import '../../core/utils/crypto_preferences.dart';
 import '../../core/utils/logger.dart';
 import '../../domain/entities/crypto.dart';
 import '../../domain/entities/daily_metrics.dart';
@@ -25,10 +26,24 @@ class CryptoRepositoryImpl implements CryptoRepository {
   final TradingCalculator _calculator;
   final List<String> _monitoredSymbols;
 
+  /// Obtiene los símbolos monitoreados actuales desde las preferencias
+  /// Esto permite que la lista se actualice dinámicamente sin reiniciar la app
+  Future<List<String>> _getMonitoredSymbols() async {
+    try {
+      final symbols = await CryptoPreferences.getSelectedCryptos();
+      AppLogger.info('Loaded ${symbols.length} monitored symbols from preferences');
+      return symbols;
+    } catch (e) {
+      AppLogger.warning('Failed to load preferences, using fallback: $e');
+      return _monitoredSymbols; // Fallback a la lista inicial
+    }
+  }
+
   @override
   Future<List<Crypto>> getAllCryptos() async {
-    AppLogger.info('Getting all cryptos for symbols: $_monitoredSymbols');
-    final cryptos = await _priceDataPort.getPricesForSymbols(_monitoredSymbols);
+    final symbols = await _getMonitoredSymbols();
+    AppLogger.info('Getting all cryptos for symbols: $symbols');
+    final cryptos = await _priceDataPort.getPricesForSymbols(symbols);
     return _logoEnrichmentAdapter.enrichLogos(cryptos);
   }
 
@@ -48,8 +63,9 @@ class CryptoRepositoryImpl implements CryptoRepository {
 
   @override
   Future<List<Crypto>> refreshAllCryptos() async {
-    AppLogger.info('Refreshing all cryptos');
-    return _priceDataPort.getPricesForSymbols(_monitoredSymbols);
+    final symbols = await _getMonitoredSymbols();
+    AppLogger.info('Refreshing all cryptos for symbols: $symbols');
+    return _priceDataPort.getPricesForSymbols(symbols);
   }
 
   @override

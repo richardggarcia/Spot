@@ -58,11 +58,17 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Guardado. Reinicia la app para ver los cambios.'),
-            duration: Duration(seconds: 3),
+            content: Text('✅ Guardado! Actualizando lista...'),
+            duration: Duration(seconds: 2),
             backgroundColor: Colors.green,
           ),
         );
+
+        // Esperar un momento para que se vea el mensaje
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // Volver atrás con señal de que se guardó
+        Navigator.of(context).pop(true); // true = cambios guardados
       }
     } catch (e) {
       if (mounted) {
