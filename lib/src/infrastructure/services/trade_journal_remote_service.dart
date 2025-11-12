@@ -71,7 +71,26 @@ class TradeJournalRemoteService implements TradeJournalPort {
 
       final data = response.data?['entries'];
       if (data is List) {
-        return data.whereType<Map<String, dynamic>>().toList(growable: false);
+        final entries = data.whereType<Map<String, dynamic>>().toList(growable: false);
+
+        // Filtrar preferencias de usuario (no son trades reales)
+        return entries.where((entry) {
+          final entrySymbol = entry['symbol']?.toString() ?? '';
+          final entryTags = entry['tags'] as List<dynamic>?;
+
+          // Excluir si:
+          // 1. El símbolo empieza con USER_PREFERENCES_ (preferencias del sistema)
+          // 2. Los tags contienen 'preferences' (marcado como preferencia)
+          if (entrySymbol.startsWith('USER_PREFERENCES_')) {
+            return false;
+          }
+
+          if (entryTags != null && entryTags.any((tag) => tag.toString() == 'preferences')) {
+            return false;
+          }
+
+          return true;
+        }).toList(growable: false);
       }
 
       return const [];
