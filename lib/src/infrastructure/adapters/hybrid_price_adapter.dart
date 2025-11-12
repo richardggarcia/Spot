@@ -32,6 +32,48 @@ class HybridPriceAdapter implements PriceDataPort {
 
   @override
   Future<List<Crypto>> getPricesForSymbols(List<String> symbols) async {
+    AppLogger.info('Fetching prices for ${symbols.length} symbols: $symbols');
+    final results = <Crypto>[];
+
+    // Procesar cada símbolo individualmente para evitar que un fallo rompa todo
+    final futures = symbols.map((symbol) async {
+      try {
+        final crypto = await getPriceForSymbol(symbol);
+        if (crypto != null) {
+          return crypto;
+        } else {
+          AppLogger.warning('No data found for symbol: $symbol');
+          return null;
+        }
+      } catch (e) {
+        AppLogger.error('Failed to fetch price for $symbol, skipping', e);
+        return null; // Continuar con los demás aunque uno falle
+      }
+    });
+
+    // Esperar a que todos terminen (incluso los que fallen)
+    final fetchedCryptos = await Future.wait(futures);
+
+    // Filtrar los null (los que fallaron)
+    for (final crypto in fetchedCryptos) {
+      if (crypto != null) {
+        results.add(crypto);
+      }
+    }
+
+    AppLogger.info('Successfully fetched ${results.length}/${symbols.length} cryptos');
+
+    // Si NO se pudo cargar ninguna, lanzar error
+    if (results.isEmpty && symbols.isNotEmpty) {
+      throw Exception('Failed to fetch data for all ${symbols.length} symbols');
+    }
+
+    return results;
+  }
+
+  /// MÉTODO DEPRECADO - Mantener por compatibilidad pero ya no se usa
+  @Deprecated('Use getPriceForSymbol for individual symbols')
+  Future<List<Crypto>> _getPricesForSymbolsBatch(List<String> symbols) async {
     final results = <Crypto>[];
 
     // Separar símbolos por fuente
