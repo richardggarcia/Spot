@@ -58,8 +58,9 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Configuración guardada. Reinicia la app para aplicar cambios.'),
+            content: Text('✅ Guardado. Reinicia la app para ver los cambios.'),
             duration: Duration(seconds: 3),
+            backgroundColor: Colors.green,
           ),
         );
       }
@@ -174,15 +175,25 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Seleccionadas: ${_selectedCryptos.length}',
-                      style: AppTextStyles.h4.copyWith(
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                      ),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 20,
+                          color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Criptomonedas Activas: ${_selectedCryptos.length}',
+                          style: AppTextStyles.h4.copyWith(
+                            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Busca y agrega cualquier criptomoneda disponible en Binance, CryptoCompare o CoinGecko.',
+                      'Agrega monedas escribiendo su símbolo abajo. Las que aparecen en la lista ya están activas.',
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                       ),
@@ -249,15 +260,56 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
                 ),
               ),
 
+              // Título de la lista
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.list,
+                      size: 18,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Monedas Activas (toca 🗑️ para eliminar)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               // Lista de cryptos seleccionadas
               Expanded(
                 child: _selectedCryptos.isEmpty
                   ? Center(
-                      child: Text(
-                        'No hay criptomonedas seleccionadas',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.sentiment_dissatisfied,
+                            size: 64,
+                            color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No hay criptomonedas activas',
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Agrega una usando el campo de arriba',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+                            ),
+                          ),
+                        ],
                       ),
                     )
                   : ListView.builder(
@@ -302,9 +354,13 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
                   child: ElevatedButton.icon(
                     onPressed: _saveSelectedCryptos,
                     icon: const Icon(Icons.save),
-                    label: const Text('Guardar y Aplicar Cambios'),
+                    label: const Text('Guardar'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: isDark
+                        ? AppColors.darkBullish
+                        : AppColors.lightBullish,
+                      foregroundColor: Colors.white,
                     ),
                   ),
                 ),
