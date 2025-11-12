@@ -357,10 +357,8 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
                     label: const Text('Guardar'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: isDark
-                        ? AppColors.darkBullish
-                        : AppColors.lightBullish,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
                   ),
                 ),

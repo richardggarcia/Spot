@@ -180,9 +180,8 @@ class _HistoricalViewPageState extends State<HistoricalViewPage>
                     icon: const Icon(Icons.arrow_back),
                     label: const Text('Volver'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark
-                          ? Colors.grey.shade700
-                          : Colors.grey.shade300,
+                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -190,6 +189,10 @@ class _HistoricalViewPageState extends State<HistoricalViewPage>
                     onPressed: _loadHistoricalData,
                     icon: const Icon(Icons.refresh),
                     label: const Text('Reintentar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
                   ),
                 ],
               ),

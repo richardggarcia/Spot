@@ -129,10 +129,8 @@ class _JournalPageState extends State<JournalPage> {
                           horizontal: 24,
                           vertical: 12,
                         ),
-                        backgroundColor: isDark
-                          ? AppColors.darkAccentPrimary
-                          : AppColors.lightAccentPrimary,
-                        foregroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ],

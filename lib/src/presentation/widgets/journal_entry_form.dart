@@ -340,10 +340,8 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                       child: ElevatedButton(
                         onPressed: _submit,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _side == 'buy'
-                            ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
-                            : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
-                          foregroundColor: Colors.white,
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
