@@ -4,27 +4,30 @@ import '../../domain/entities/daily_candle.dart';
 import '../../domain/ports/price_data_port.dart';
 
 /// Adapter híbrido con fallback automático
-/// Prioridad: Binance (gratis) → CoinGecko (backup) → Mock (último recurso)
+/// Prioridad: Binance (gratis) → CryptoCompare (gratis 100k calls/mes) → CoinGecko (backup con límites)
 /// Maneja automáticamente cryptos no disponibles en cada API
 class HybridPriceAdapter implements PriceDataPort {
 
   HybridPriceAdapter({
     required PriceDataPort primaryAdapter,
+    required PriceDataPort secondaryAdapter,
     required PriceDataPort backupAdapter,
     PriceDataPort? mockAdapter,
   }) : _primaryAdapter = primaryAdapter,
+       _secondaryAdapter = secondaryAdapter,
        _backupAdapter = backupAdapter,
        _mockAdapter = mockAdapter;
   final PriceDataPort _primaryAdapter; // Binance
+  final PriceDataPort _secondaryAdapter; // CryptoCompare
   final PriceDataPort _backupAdapter; // CoinGecko
   final PriceDataPort? _mockAdapter; // Mock fallback
 
-  /// Cryptos que NO están en Binance (usar CoinGecko directamente)
+  /// Cryptos que NO están en Binance (usar CryptoCompare primero)
   final Set<String> _nonBinanceSymbols = {
-    'MNT', // Mantle
-    'RON', // Ronin
+    'MNT', // Mantle - en Bybit
     'KCS', // KuCoin Token - no tiene par USDT en Binance
     'BGB', // Bitget Token - no está en Binance
+    'BBSOL', // Wrapped SOL en Bybit
   };
 
   @override
@@ -35,7 +38,7 @@ class HybridPriceAdapter implements PriceDataPort {
     final binanceSymbols = symbols
         .where((s) => !_nonBinanceSymbols.contains(s))
         .toList();
-    final coinGeckoSymbols = symbols
+    final nonBinanceSymbols = symbols
         .where(_nonBinanceSymbols.contains)
         .toList();
 
@@ -49,24 +52,68 @@ class HybridPriceAdapter implements PriceDataPort {
         results.addAll(binanceResults);
       } catch (e) {
         AppLogger.warning(
-          'Binance failed, using CoinGecko fallback for: $binanceSymbols',
+          'Binance failed, using CryptoCompare fallback for: $binanceSymbols',
         );
-        // Fallback a CoinGecko
+        // Fallback a CryptoCompare
         try {
-          final fallbackResults = await _backupAdapter.getPricesForSymbols(
+          final fallbackResults = await _secondaryAdapter.getPricesForSymbols(
             binanceSymbols,
           );
           results.addAll(fallbackResults);
+        } catch (secondaryError) {
+          AppLogger.warning('CryptoCompare failed, trying CoinGecko for: $binanceSymbols');
+          // Último recurso: CoinGecko
+          try {
+            final backupResults = await _backupAdapter.getPricesForSymbols(
+              binanceSymbols,
+            );
+            results.addAll(backupResults);
+          } catch (backupError) {
+            AppLogger.error('All APIs failed for: $binanceSymbols', backupError);
+            // Mock adapter como último recurso
+            if (_mockAdapter != null) {
+              AppLogger.warning('Using mock adapter as last resort for: $binanceSymbols');
+              try {
+                final mockResults = await _mockAdapter.getPricesForSymbols(binanceSymbols);
+                results.addAll(mockResults);
+              } catch (mockError) {
+                AppLogger.error('Even mock adapter failed for: $binanceSymbols', mockError);
+                rethrow;
+              }
+            } else {
+              rethrow;
+            }
+          }
+        }
+      }
+    }
+
+    // Obtener de CryptoCompare primero para cryptos no-Binance
+    if (nonBinanceSymbols.isNotEmpty) {
+      try {
+        AppLogger.info('Fetching from CryptoCompare: $nonBinanceSymbols');
+        final cryptoCompareResults = await _secondaryAdapter.getPricesForSymbols(
+          nonBinanceSymbols,
+        );
+        results.addAll(cryptoCompareResults);
+      } catch (e) {
+        AppLogger.warning('CryptoCompare failed, trying CoinGecko for: $nonBinanceSymbols');
+        // Fallback a CoinGecko
+        try {
+          final coinGeckoResults = await _backupAdapter.getPricesForSymbols(
+            nonBinanceSymbols,
+          );
+          results.addAll(coinGeckoResults);
         } catch (backupError) {
-          AppLogger.error('Both APIs failed for: $binanceSymbols', backupError);
-          // Último recurso: usar mock adapter si está disponible
+          AppLogger.error('Both APIs failed for: $nonBinanceSymbols', backupError);
+          // Mock adapter como último recurso
           if (_mockAdapter != null) {
-            AppLogger.warning('Using mock adapter as last resort for: $binanceSymbols');
+            AppLogger.warning('Using mock adapter as last resort for: $nonBinanceSymbols');
             try {
-              final mockResults = await _mockAdapter.getPricesForSymbols(binanceSymbols);
+              final mockResults = await _mockAdapter.getPricesForSymbols(nonBinanceSymbols);
               results.addAll(mockResults);
             } catch (mockError) {
-              AppLogger.error('Even mock adapter failed for: $binanceSymbols', mockError);
+              AppLogger.error('Even mock adapter failed for: $nonBinanceSymbols', mockError);
               rethrow;
             }
           } else {
@@ -76,58 +123,32 @@ class HybridPriceAdapter implements PriceDataPort {
       }
     }
 
-    // Obtener de CoinGecko (cryptos no-Binance)
-    if (coinGeckoSymbols.isNotEmpty) {
-      try {
-        AppLogger.info('Fetching from CoinGecko: $coinGeckoSymbols');
-        final coinGeckoResults = await _backupAdapter.getPricesForSymbols(
-          coinGeckoSymbols,
-        );
-        results.addAll(coinGeckoResults);
-      } catch (e) {
-        AppLogger.error('CoinGecko failed for: $coinGeckoSymbols', e);
-        // Último recurso: usar mock adapter si está disponible
-        if (_mockAdapter != null) {
-          AppLogger.warning('Using mock adapter as last resort for: $coinGeckoSymbols');
-          try {
-            final mockResults = await _mockAdapter.getPricesForSymbols(coinGeckoSymbols);
-            results.addAll(mockResults);
-          } catch (mockError) {
-            AppLogger.error('Even mock adapter failed for: $coinGeckoSymbols', mockError);
-            rethrow;
-          }
-        } else {
-          rethrow;
-        }
-      }
-    }
-
     return results;
   }
 
   @override
   Future<Crypto?> getPriceForSymbol(String symbol) async {
-    // Determinar qué adapter usar
+    // Determinar qué adapter usar primero
     final adapter = _nonBinanceSymbols.contains(symbol)
-        ? _backupAdapter
-        : _primaryAdapter;
+        ? _secondaryAdapter // CryptoCompare para non-Binance
+        : _primaryAdapter; // Binance para el resto
 
     try {
-      AppLogger.info(
-        'Fetching $symbol from ${adapter == _primaryAdapter ? "Binance" : "CoinGecko"}',
-      );
+      final adapterName = adapter == _primaryAdapter ? "Binance" : "CryptoCompare";
+      AppLogger.info('Fetching $symbol from $adapterName');
       return await adapter.getPriceForSymbol(symbol);
     } catch (e) {
-      // Intentar con el otro adapter
+      // Intentar con CryptoCompare si Binance falla, o CoinGecko si CryptoCompare falla
       final fallbackAdapter = adapter == _primaryAdapter
-          ? _backupAdapter
-          : _primaryAdapter;
-      AppLogger.warning('Primary adapter failed for $symbol, trying fallback');
+          ? _secondaryAdapter
+          : _backupAdapter;
+      final fallbackName = adapter == _primaryAdapter ? "CryptoCompare" : "CoinGecko";
+      AppLogger.warning('Primary adapter failed for $symbol, trying $fallbackName');
 
       try {
         return await fallbackAdapter.getPriceForSymbol(symbol);
       } catch (fallbackError) {
-        AppLogger.error('Both adapters failed for $symbol', fallbackError);
+        AppLogger.error('All adapters failed for $symbol', fallbackError);
         rethrow;
       }
     }
@@ -137,28 +158,30 @@ class HybridPriceAdapter implements PriceDataPort {
   Future<double> getPreviousClose(String symbol) async {
     // Determinar qué adapter usar
     final adapter = _nonBinanceSymbols.contains(symbol)
-        ? _backupAdapter
+        ? _secondaryAdapter
         : _primaryAdapter;
 
     try {
+      final adapterName = adapter == _primaryAdapter ? "Binance" : "CryptoCompare";
       AppLogger.info(
-        'Fetching previous close for $symbol from ${adapter == _primaryAdapter ? "Binance" : "CoinGecko"}',
+        'Fetching previous close for $symbol from $adapterName',
       );
       return await adapter.getPreviousClose(symbol);
     } catch (e) {
-      // Intentar con el otro adapter
+      // Intentar con el siguiente adapter
       final fallbackAdapter = adapter == _primaryAdapter
-          ? _backupAdapter
-          : _primaryAdapter;
+          ? _secondaryAdapter
+          : _backupAdapter;
+      final fallbackName = adapter == _primaryAdapter ? "CryptoCompare" : "CoinGecko";
       AppLogger.warning(
-        'Primary adapter failed for $symbol previous close, trying fallback',
+        'Primary adapter failed for $symbol previous close, trying $fallbackName',
       );
 
       try {
         return await fallbackAdapter.getPreviousClose(symbol);
       } catch (fallbackError) {
         AppLogger.error(
-          'Both adapters failed for $symbol previous close',
+          'All adapters failed for $symbol previous close',
           fallbackError,
         );
         rethrow;
@@ -171,20 +194,23 @@ class HybridPriceAdapter implements PriceDataPort {
     String symbol, {
     int days = 30,
   }) async {
+    // Para cryptos no-Binance, usar CryptoCompare primero (mejor que CoinGecko sin API key)
     final adapter = _nonBinanceSymbols.contains(symbol)
-        ? _backupAdapter
+        ? _secondaryAdapter
         : _primaryAdapter;
-    final adapterName = adapter == _primaryAdapter ? 'Binance' : 'CoinGecko';
+    final adapterName = adapter == _primaryAdapter ? 'Binance' : 'CryptoCompare';
 
     try {
       AppLogger.info('Fetching historical data for $symbol from $adapterName');
       return await adapter.getHistoricalData(symbol, days: days);
     } catch (e) {
+      // Si CryptoCompare falla, intentar con CoinGecko
+      // Si Binance falla, intentar con CryptoCompare primero
       final fallbackAdapter = adapter == _primaryAdapter
-          ? _backupAdapter
-          : _primaryAdapter;
-      final fallbackName = fallbackAdapter == _primaryAdapter
-          ? 'Binance'
+          ? _secondaryAdapter
+          : _backupAdapter;
+      final fallbackName = adapter == _primaryAdapter
+          ? 'CryptoCompare'
           : 'CoinGecko';
       AppLogger.warning(
         'Primary adapter ($adapterName) failed for $symbol historical data, trying fallback ($fallbackName)',
@@ -193,8 +219,24 @@ class HybridPriceAdapter implements PriceDataPort {
       try {
         return await fallbackAdapter.getHistoricalData(symbol, days: days);
       } catch (fallbackError) {
+        // Último intento: si era Binance→CryptoCompare, probar CoinGecko
+        if (adapter == _primaryAdapter) {
+          AppLogger.warning(
+            'CryptoCompare also failed for $symbol historical data, trying CoinGecko as last resort',
+          );
+          try {
+            return await _backupAdapter.getHistoricalData(symbol, days: days);
+          } catch (lastError) {
+            AppLogger.error(
+              'All adapters failed for $symbol historical data',
+              lastError,
+            );
+            rethrow;
+          }
+        }
+
         AppLogger.error(
-          'Both adapters failed for $symbol historical data',
+          'All adapters failed for $symbol historical data',
           fallbackError,
         );
         rethrow;
