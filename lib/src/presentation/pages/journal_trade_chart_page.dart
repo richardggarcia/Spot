@@ -36,10 +36,33 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
     return symbol;
   }
 
+  /// Detecta qué exchange usar para cada símbolo en TradingView
+  String _getExchangeForSymbol(String symbol) {
+    final normalized = _normalizeSymbol(symbol);
+
+    // Mapa de símbolos a exchanges
+    const exchangeMap = {
+      // Bybit
+      'MNT': 'BYBIT',
+      'BBSOL': 'BYBIT',
+
+      // Kucoin
+      'KCS': 'KUCOIN',
+
+      // Bitget
+      'BGB': 'BITGET',
+
+      // Default: Binance (tiene la mayoría)
+    };
+
+    return exchangeMap[normalized] ?? 'BINANCE';
+  }
+
   String _buildTradingViewUrl() {
     final symbol = _normalizeSymbol(widget.note.symbol);
+    final exchange = _getExchangeForSymbol(widget.note.symbol);
     return 'https://s.tradingview.com/widgetembed/?'
-        'symbol=BINANCE:${symbol}USDT&'
+        'symbol=$exchange:${symbol}USDT&'
         'interval=$_selectedInterval&'
         'hideideas=1&'
         'theme=${Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light'}&'
@@ -335,10 +358,10 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
 
   Widget _buildPriceMarker(String label, double price, Color color, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.3),
@@ -354,7 +377,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 10,
+              fontSize: 8,
               fontWeight: FontWeight.bold,
               color: Colors.white,
               letterSpacing: 0.5,
@@ -364,7 +387,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
           Text(
             '\$${price.toStringAsFixed(2)}',
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
