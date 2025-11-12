@@ -255,8 +255,10 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
                   child: ElevatedButton.icon(
                     onPressed: _saveSelectedCryptos,
                     icon: const Icon(Icons.save),
-                    label: const Text('Guardar y Aplicar Cambios'),
+                    label: const Text('Guardar'),
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark ? AppColors.darkAlert : AppColors.lightAlert,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                   ),

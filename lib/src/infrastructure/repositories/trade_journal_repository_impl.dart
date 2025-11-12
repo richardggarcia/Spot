@@ -42,7 +42,10 @@ class TradeJournalRepositoryImpl implements TradeJournalRepository {
       limit: limit,
     );
 
-    return rawEntries.map(TradeNote.fromJson).toList(growable: false);
+    return rawEntries
+        .map(TradeNote.fromJson)
+        .where((note) => !_isPreferenceEntry(note))
+        .toList(growable: false);
   }
 
   @override
@@ -57,4 +60,11 @@ class TradeJournalRepositoryImpl implements TradeJournalRepository {
     if (raw == null) return null;
     return TradeNote.fromJson(raw);
   }
+}
+
+bool _isPreferenceEntry(TradeNote note) {
+  final symbol = note.symbol.toUpperCase();
+  if (note.side == 'preference') return true;
+  return symbol == 'USER_PREFERENCES_CRYPTOS' ||
+      symbol == 'USER_PREFERENCES_CARD_ORDER';
 }

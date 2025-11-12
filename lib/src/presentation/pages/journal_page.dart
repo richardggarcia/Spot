@@ -241,8 +241,8 @@ class _JournalPageState extends State<JournalPage> {
       }
 
       final fabColor = isDark
-        ? AppColors.darkAccentEarth
-        : AppColors.lightAccentEarth;
+        ? AppColors.darkAlert
+        : AppColors.lightAlert;
 
       return Scaffold(
         backgroundColor: Colors.transparent,
@@ -250,7 +250,7 @@ class _JournalPageState extends State<JournalPage> {
         floatingActionButton: FloatingActionButton(
           onPressed: state.isSubmitting ? null : _openCreateModal,
           backgroundColor: fabColor,
-          foregroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+          foregroundColor: Colors.white,
           shape: const CircleBorder(),
           elevation: 4,
           child: const Icon(Icons.add),
@@ -481,7 +481,7 @@ class _FilterSection extends StatelessWidget {
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: TradeFilter.values.map((filter) {
+                children: const [TradeFilter.all, TradeFilter.long].map((filter) {
                   final isSelected = selectedFilter == filter;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -557,7 +557,8 @@ class _ProfessionalTradeCard extends StatelessWidget {
   final bool isDark;
 
   static final DateFormat _dateFormat = DateFormat('dd MMM, HH:mm');
-  static const double _sizeEpsilon = 0.0001;
+  static final NumberFormat _currencyFormatter = NumberFormat('#,##0.00');
+  static final NumberFormat _sizeFormatter = NumberFormat('#,##0.##');
 
   Color _getSideColor() {
     if (note.side == 'buy') {
@@ -582,48 +583,69 @@ class _ProfessionalTradeCard extends StatelessWidget {
   String _calculatePnL() {
     final pnlValue = _resolvePnLValue();
     if (pnlValue == null) return '-';
-    final prefix = pnlValue >= 0 ? '+' : '';
-
-    // Format large numbers more compactly
-    final absDiff = pnlValue.abs();
-    if (absDiff >= 1000000) {
-      return '$prefix\$${(pnlValue / 1000000).toStringAsFixed(2)}M';
-    } else if (absDiff >= 1000) {
-      return '$prefix\$${(pnlValue / 1000).toStringAsFixed(2)}k';
-    }
-    return '$prefix\$${pnlValue.toStringAsFixed(2)}';
+    final prefix = pnlValue >= 0 ? '+' : '-';
+    final formatted = _currencyFormatter.format(pnlValue.abs());
+    return '$prefix\$$formatted';
   }
 
   double _calculateROI() {
     final pnlValue = _resolvePnLValue();
     if (note.exitPrice == null || pnlValue == null) return 0;
-    final positionSize = _positionSizeForRoi();
-    if (positionSize <= 0) return 0;
-    final invested = note.entryPrice * positionSize;
-    if (invested == 0) return 0;
-    final profit = pnlValue;
-    return (profit / invested) * 100;
+
+    final invested = _investedAmount();
+    if (invested <= 0) return 0;
+
+    return (pnlValue / invested) * 100;
   }
 
   double? _resolvePnLValue() {
     if (note.exitPrice == null) return null;
+    final quantity = _positionQuantity();
     final priceDiff = note.exitPrice! - note.entryPrice;
-    if (_hasCustomSize()) {
-      return priceDiff * note.size!;
-    }
-    return priceDiff;
+    return priceDiff * quantity;
   }
 
-  bool _hasCustomSize() {
-    final size = note.size;
-    if (size == null || size <= 0) return false;
-    return (size - 1).abs() > _sizeEpsilon;
-  }
-
-  double _positionSizeForRoi() {
+  double _positionQuantity() {
     final size = note.size;
     if (size == null || size <= 0) return 1;
-    return size;
+    if (note.entryPrice <= 0) {
+      return size;
+    }
+    return size / note.entryPrice;
+  }
+
+  double _investedAmount() {
+    final size = note.size;
+    if (size != null && size > 0) {
+      return size;
+    }
+    return note.entryPrice > 0 ? note.entryPrice : 0;
+  }
+
+  String _buildDurationLabel() {
+    final end = note.exitAt ?? DateTime.now().toUtc();
+    final duration = end.difference(note.entryAt);
+    final days = duration.inDays;
+    final hours = duration.inHours % 24;
+    final minutes = duration.inMinutes % 60;
+
+    if (days > 0) {
+      if (hours > 0) return '$days d $hours h';
+      return '$days d';
+    }
+    if (duration.inHours > 0) {
+      if (minutes > 0) return '${duration.inHours} h $minutes min';
+      return '${duration.inHours} h';
+    }
+    return '${duration.inMinutes} min';
+  }
+
+  String _formatPositionSize(double value) {
+    if (value.abs() >= 1) {
+      return _sizeFormatter.format(value);
+    }
+    final fixed = value.toStringAsFixed(4);
+    return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
   }
 
   bool _isProfitableTrade() {
@@ -819,7 +841,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
                             ),
                             if (note.size != null) ...[
                               Text(
-                                ' • ${note.size!.toStringAsFixed(4)}',
+                                ' • ${_formatPositionSize(note.size!)}',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: isDark
@@ -913,6 +935,31 @@ class _ProfessionalTradeCard extends StatelessWidget {
                   ],
                 ),
               ],
+
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.schedule,
+                    size: 14,
+                    color: isDark
+                      ? AppColors.darkTextTertiary
+                      : AppColors.lightTextTertiary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    note.exitAt == null
+                      ? 'Abierta hace ${_buildDurationLabel()}'
+                      : 'Duración ${_buildDurationLabel()}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
+                    ),
+                  ),
+                ],
+              ),
 
               // Tags y notas
               if (note.tags.isNotEmpty || note.notes.isNotEmpty) ...[

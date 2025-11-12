@@ -22,7 +22,6 @@ class AppColors {
   static const Color darkAccentPrimary = Color(0xFF5B8FF9); // Premium blue
   static const Color darkAccentSecondary = Color(0xFF8B5CF6); // Premium purple
   static const Color darkAccentTertiary = Color(0xFF10B981); // Premium green
-  static const Color darkAccentEarth = Color(0xFFB07C4A); // Warm light-brown CTA
 
   // Dark Theme - State colors
   static const Color darkHover = Color(0xFF252525);
@@ -48,7 +47,6 @@ class AppColors {
   static const Color lightAccentPrimary = Color(0xFF3B82F6); // Bright blue
   static const Color lightAccentSecondary = Color(0xFF7C3AED); // Bright purple
   static const Color lightAccentTertiary = Color(0xFF059669); // Bright green
-  static const Color lightAccentEarth = Color(0xFFD7B892); // Warm light-brown CTA
 
   // Light Theme - State colors
   static const Color lightHover = Color(0xFFF1F5F9);
@@ -62,7 +60,7 @@ class AppColors {
   static const Color darkBearish = Color(0xFFEF4444); // Premium red
   static const Color darkNeutral = Color(0xFF5B8FF9); // Premium blue
   static const Color darkOpportunity = Color(0xFFFBBF24); // Golden yellow
-  static const Color darkAlert = Color(0xFFF59E0B); // Orange
+  static const Color darkAlert = Color(0xFFEA580C); // Warm orange (matches light theme CTA)
   static const Color darkWarning = Color(0xFFF97316); // Deep orange
 
   // Trading colors - Light theme

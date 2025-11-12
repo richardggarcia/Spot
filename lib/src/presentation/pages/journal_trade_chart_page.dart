@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../domain/entities/trade_note.dart';
 import '../theme/app_colors.dart';
@@ -20,7 +21,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
     'MNT': 'BYBIT',
     'BGB': 'BITGET',
   };
-  static const double _sizeEpsilon = 0.0001;
+  final NumberFormat _currencyFormatter = NumberFormat('#,##0.00');
 
   @override
   void initState() {
@@ -305,8 +306,9 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
   String _calculatePnL() {
     final pnlValue = _resolvePnLValue();
     if (pnlValue == null) return '-';
-    final prefix = pnlValue >= 0 ? '+' : '';
-    return '$prefix\$${pnlValue.abs().toStringAsFixed(2)}';
+    final prefix = pnlValue >= 0 ? '+' : '-';
+    final formatted = _currencyFormatter.format(pnlValue.abs());
+    return '$prefix\$$formatted';
   }
 
   bool _isProfitable() {
@@ -319,54 +321,54 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
 
   double? _resolvePnLValue() {
     if (widget.note.exitPrice == null) return null;
+    final quantity = _positionQuantity();
     final priceDiff = widget.note.exitPrice! - widget.note.entryPrice;
-    if (_hasCustomPositionSize()) {
-      return priceDiff * widget.note.size!;
-    }
-    return priceDiff;
+    return priceDiff * quantity;
   }
 
-  bool _hasCustomPositionSize() {
+  double _positionQuantity() {
     final size = widget.note.size;
-    if (size == null || size <= 0) return false;
-    return (size - 1).abs() > _sizeEpsilon;
+    if (size == null || size <= 0) return 1;
+    if (widget.note.entryPrice <= 0) {
+      return size;
+    }
+    return size / widget.note.entryPrice;
   }
 
-  Widget _buildPriceMarkers(bool isDark) => Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // Entry Price Marker
+  Widget _buildPriceMarkers(bool isDark) {
+    final entryColor = isDark ? AppColors.darkBullish : AppColors.lightBullish;
+    final exitColor = isDark ? AppColors.darkBearish : AppColors.lightBearish;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _buildPriceMarker(
+          'ENTRY',
+          widget.note.entryPrice,
+          entryColor,
+        ),
+        if (widget.note.exitPrice != null) ...[
+          const SizedBox(height: 12),
           _buildPriceMarker(
-            'ENTRY',
-            widget.note.entryPrice,
-            isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
-            isDark,
+            'EXIT',
+            widget.note.exitPrice!,
+            exitColor,
           ),
-          
-          if (widget.note.exitPrice != null) ...[
-            const SizedBox(height: 24),
-            // Exit Price Marker
-            _buildPriceMarker(
-              'EXIT',
-              widget.note.exitPrice!,
-              isDark ? AppColors.darkWarning : AppColors.lightWarning,
-              isDark,
-            ),
-          ],
         ],
-      );
+      ],
+    );
+  }
 
-  Widget _buildPriceMarker(String label, double price, Color color, bool isDark) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  Widget _buildPriceMarker(String label, double price, Color color) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(8),
+          color: color.withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(4),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.3),
-              blurRadius: 8,
-              spreadRadius: 1,
+              color: color.withValues(alpha: 0.35),
+              blurRadius: 3,
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -377,18 +379,17 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
             Text(
               label,
               style: const TextStyle(
-                fontSize: 10,
+                fontSize: 8,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
-                letterSpacing: 0.5,
+                letterSpacing: 0.3,
               ),
             ),
-            const SizedBox(height: 2),
             Text(
               '\$${price.toStringAsFixed(2)}',
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
             ),

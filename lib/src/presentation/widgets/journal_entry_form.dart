@@ -344,11 +344,9 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                         onPressed: _submit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isDark
-                            ? AppColors.darkAccentEarth
-                            : AppColors.lightAccentEarth,
-                          foregroundColor: isDark
-                            ? AppColors.darkSurface
-                            : AppColors.lightSurface,
+                            ? AppColors.darkAlert
+                            : AppColors.lightAlert,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           minimumSize: const Size.fromHeight(_kFieldHeight),
                           shape: RoundedRectangleBorder(
