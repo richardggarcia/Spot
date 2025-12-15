@@ -18,7 +18,6 @@ class JournalPage extends StatefulWidget {
 }
 
 class _JournalPageState extends State<JournalPage> {
-  TradeFilter _selectedFilter = TradeFilter.all;
   static const String _userId = 'richard'; // Usuario configurado para el backend
 
   Future<void> _onRefresh() async {
@@ -51,17 +50,6 @@ class _JournalPageState extends State<JournalPage> {
     );
   }
 
-  List<TradeNote> _getFilteredNotes(List<TradeNote> notes) {
-    switch (_selectedFilter) {
-      case TradeFilter.long:
-        return notes.where((note) => note.side == 'buy').toList();
-      case TradeFilter.short:
-        return notes.where((note) => note.side == 'sell').toList();
-      case TradeFilter.all:
-        return notes;
-    }
-  }
-
   @override
   Widget build(BuildContext context) => BlocConsumer<JournalBloc, JournalState>(
     listenWhen: (previous, current) =>
@@ -77,13 +65,13 @@ class _JournalPageState extends State<JournalPage> {
     },
     builder: (context, state) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
-      final filteredNotes = _getFilteredNotes(state.notes);
+      final notes = state.notes;
 
       Widget body;
 
-      if (state.isLoading && state.notes.isEmpty) {
+      if (state.isLoading && notes.isEmpty) {
         body = const Center(child: CircularProgressIndicator());
-      } else if (state.notes.isEmpty) {
+      } else if (notes.isEmpty) {
         body = RefreshIndicator(
           onRefresh: _onRefresh,
           child: ListView(
@@ -141,10 +129,8 @@ class _JournalPageState extends State<JournalPage> {
                           horizontal: 24,
                           vertical: 12,
                         ),
-                        backgroundColor: isDark
-                          ? AppColors.darkAccentPrimary
-                          : AppColors.lightAccentPrimary,
-                        foregroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                        foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ],
@@ -163,75 +149,27 @@ class _JournalPageState extends State<JournalPage> {
                   children: [
                     const SizedBox(height: 16),
                     _JournalHeader(
-                      notes: filteredNotes,
-                      isDark: isDark,
-                    ),
-                    const SizedBox(height: 16),
-                    _FilterSection(
-                      selectedFilter: _selectedFilter,
-                      onFilterChanged: (filter) {
-                        setState(() => _selectedFilter = filter);
-                      },
+                      notes: notes,
                       isDark: isDark,
                     ),
                     const SizedBox(height: 16),
                   ],
                 ),
               ),
-              if (filteredNotes.isEmpty)
-                SliverFillRemaining(
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      margin: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.filter_list_off,
-                            size: 48,
-                            color: isDark
-                              ? AppColors.darkTextTertiary
-                              : AppColors.lightTextTertiary,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No hay operaciones ${_getFilterLabel()}',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                ? AppColors.darkTextPrimary
-                                : AppColors.lightTextPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList.separated(
-                    itemCount: filteredNotes.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) => _ProfessionalTradeCard(
-                      note: filteredNotes[index],
-                      onOpenDetail: () => _openDetail(filteredNotes[index]),
-                      onEdit: () => _openEdit(filteredNotes[index]),
-                      onDelete: () => _confirmDelete(filteredNotes[index]),
-                      isDark: isDark,
-                    ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverList.separated(
+                  itemCount: notes.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) => _ProfessionalTradeCard(
+                    note: notes[index],
+                    onOpenDetail: () => _openDetail(notes[index]),
+                    onEdit: () => _openEdit(notes[index]),
+                    onDelete: () => _confirmDelete(notes[index]),
+                    isDark: isDark,
                   ),
                 ),
+              ),
               const SliverToBoxAdapter(
                 child: SizedBox(height: 100),
               ),
@@ -258,17 +196,6 @@ class _JournalPageState extends State<JournalPage> {
       );
     },
   );
-
-  String _getFilterLabel() {
-    switch (_selectedFilter) {
-      case TradeFilter.long:
-        return 'BUY';
-      case TradeFilter.short:
-        return 'SELL';
-      case TradeFilter.all:
-        return '';
-    }
-  }
 
   void _openDetail(TradeNote note) {
     Navigator.of(context).push(
@@ -335,8 +262,6 @@ class _JournalPageState extends State<JournalPage> {
     );
   }
 }
-
-enum TradeFilter { all, long, short }
 
 class _JournalHeader extends StatelessWidget {
   const _JournalHeader({

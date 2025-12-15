@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
 import '../../domain/entities/trade_note.dart';
 import '../theme/app_colors.dart';
 
@@ -16,11 +17,6 @@ class JournalTradeChartPage extends StatefulWidget {
 class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
   late final WebViewController _controller;
   String _selectedInterval = '60'; // 1 hour in minutes
-  static const Map<String, String> _exchangeOverrides = {
-    'KCS': 'KUCOIN',
-    'MNT': 'BYBIT',
-    'BGB': 'BITGET',
-  };
   final NumberFormat _currencyFormatter = NumberFormat('#,##0.00');
 
   @override
@@ -43,15 +39,33 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
     return symbol;
   }
 
+  String _getExchangeForSymbol(String symbol) {
+    const exchangeMap = {
+      // Bybit
+      'MNT': 'BYBIT',
+      'BBSOL': 'BYBIT',
+
+      // Kucoin
+      'KCS': 'KUCOIN',
+
+      // Bitget
+      'BGB': 'BITGET',
+    };
+
+    return exchangeMap[_normalizeSymbol(symbol)] ?? 'BINANCE';
+  }
+
   String _buildTradingViewUrl() {
-    final symbol = _normalizeSymbol(widget.note.symbol);
-    final exchange = _resolveExchange(symbol);
+    final normalized = _normalizeSymbol(widget.note.symbol);
+    final exchange = _getExchangeForSymbol(normalized);
+    final theme = Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light';
+
     return 'https://s.tradingview.com/widgetembed/?'
-        'symbol=$exchange:${symbol}USDT&'
+        'symbol=$exchange:${normalized}USDT&'
         'interval=$_selectedInterval&'
         'hideideas=1&'
-        'theme=${Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light'}&'
-        'style=1&' // Candlestick style
+        'theme=$theme&'
+        'style=1&'
         'locale=en&'
         'toolbar_bg=rgba(255,255,255,0)&'
         'allow_symbol_change=0&'
@@ -65,9 +79,6 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
         'withdateranges=1&'
         'hide_side_toolbar=0';
   }
-
-  String _resolveExchange(String normalizedSymbol) =>
-      _exchangeOverrides[normalizedSymbol] ?? 'BINANCE';
 
   void _changeInterval(String interval) {
     setState(() {
@@ -99,9 +110,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
-                widget.note.side == 'buy'
-                    ? Icons.trending_up
-                    : Icons.trending_down,
+                widget.note.side == 'buy' ? Icons.trending_up : Icons.trending_down,
                 color: widget.note.side == 'buy'
                     ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
                     : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
@@ -119,9 +128,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -143,7 +150,6 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
       ),
       body: Column(
         children: [
-          // Trade Summary Card
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
@@ -154,40 +160,34 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
                 color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
               ),
             ),
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildMetric(
-                      'Entry',
-                      '\$${widget.note.entryPrice.toStringAsFixed(2)}',
-                      isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
-                      isDark,
-                    ),
-                    if (widget.note.exitPrice != null)
-                      _buildMetric(
-                        'Exit',
-                        '\$${widget.note.exitPrice!.toStringAsFixed(2)}',
-                        isDark ? AppColors.darkWarning : AppColors.lightWarning,
-                        isDark,
-                      ),
-                    if (widget.note.exitPrice != null)
-                      _buildMetric(
-                        'P&L',
-                        _calculatePnL(),
-                        _isProfitable()
-                            ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
-                            : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
-                        isDark,
-                      ),
-                  ],
+                _buildMetric(
+                  'Entry',
+                  '\$${widget.note.entryPrice.toStringAsFixed(2)}',
+                  isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                  isDark,
                 ),
+                if (widget.note.exitPrice != null)
+                  _buildMetric(
+                    'Exit',
+                    '\$${widget.note.exitPrice!.toStringAsFixed(2)}',
+                    isDark ? AppColors.darkAlert : AppColors.lightAlert,
+                    isDark,
+                  ),
+                if (widget.note.exitPrice != null)
+                  _buildMetric(
+                    'P&L',
+                    _calculatePnL(),
+                    _isProfitable()
+                        ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+                        : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
+                    isDark,
+                  ),
               ],
             ),
           ),
-          
-          // Timeframe Selector
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             height: 44,
@@ -206,10 +206,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
               ],
             ),
           ),
-          
           const SizedBox(height: 16),
-          
-          // TradingView Chart with Price Markers
           Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -224,10 +221,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
                 borderRadius: BorderRadius.circular(12),
                 child: Stack(
                   children: [
-                    // TradingView WebView
                     WebViewWidget(controller: _controller),
-                    
-                    // Price Markers Overlay
                     Positioned(
                       right: 16,
                       top: 60,
@@ -239,7 +233,6 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
               ),
             ),
           ),
-          
           const SizedBox(height: 16),
         ],
       ),
@@ -252,9 +245,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
             ),
           ),
           const SizedBox(height: 4),
@@ -278,9 +269,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
           margin: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: isSelected
-                ? (isDark
-                    ? AppColors.darkAccentPrimary
-                    : AppColors.lightAccentPrimary)
+                ? (isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
@@ -292,9 +281,7 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
                 fontWeight: FontWeight.w600,
                 color: isSelected
                     ? Colors.white
-                    : (isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary),
+                    : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
               ),
             ),
           ),
@@ -329,31 +316,22 @@ class _JournalTradeChartPageState extends State<JournalTradeChartPage> {
   double _positionQuantity() {
     final size = widget.note.size;
     if (size == null || size <= 0) return 1;
-    if (widget.note.entryPrice <= 0) {
-      return size;
-    }
+    if (widget.note.entryPrice <= 0) return size;
     return size / widget.note.entryPrice;
   }
 
   Widget _buildPriceMarkers(bool isDark) {
     final entryColor = isDark ? AppColors.darkBullish : AppColors.lightBullish;
     final exitColor = isDark ? AppColors.darkBearish : AppColors.lightBearish;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _buildPriceMarker(
-          'ENTRY',
-          widget.note.entryPrice,
-          entryColor,
-        ),
+        _buildPriceMarker('ENTRY', widget.note.entryPrice, entryColor),
         if (widget.note.exitPrice != null) ...[
           const SizedBox(height: 12),
-          _buildPriceMarker(
-            'EXIT',
-            widget.note.exitPrice!,
-            exitColor,
-          ),
+          _buildPriceMarker('EXIT', widget.note.exitPrice!, exitColor),
         ],
       ],
     );

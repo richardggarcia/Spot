@@ -17,6 +17,7 @@ import '../../domain/use_cases/get_trade_notes_usecase.dart';
 import '../../domain/use_cases/update_trade_note_usecase.dart';
 import '../../infrastructure/adapters/binance_price_adapter.dart';
 import '../../infrastructure/adapters/coingecko_price_adapter.dart';
+import '../../infrastructure/adapters/cryptocompare_price_adapter.dart';
 import '../../infrastructure/adapters/hybrid_price_adapter.dart';
 import '../../infrastructure/adapters/logo_enrichment_adapter.dart';
 import '../../infrastructure/adapters/mock_price_adapter.dart';
@@ -27,6 +28,7 @@ import '../../infrastructure/services/user_preferences_remote_service.dart';
 import '../../infrastructure/streaming/binance_streaming_service.dart';
 import '../../presentation/bloc/crypto/crypto_bloc.dart';
 import '../../presentation/bloc/journal/journal_bloc.dart';
+import '../../presentation/managers/card_position_manager.dart';
 import '../utils/crypto_preferences.dart';
 
 /// Configuración de inyección de dependencias
@@ -63,6 +65,7 @@ class ServiceLocator {
       userId: userId,
     );
     CryptoPreferences.configureRemoteService(preferencesService);
+    CardPositionManager.configureRemoteService(preferencesService);
 
     // Obtener cryptos seleccionadas por el usuario (ahora puede cargar del backend)
     final selectedCryptos = await CryptoPreferences.getSelectedCryptos();
@@ -75,19 +78,25 @@ class ServiceLocator {
       // Domain Services
       ..registerLazySingleton<TradingCalculator>(TradingCalculator.new)
       // --- Adapters (Ports implementations) ---
-      // Adapter de CoinGecko (se usará para enriquecer logos)
+      // Adapter de CoinGecko (se usará para enriquecer logos y backup)
       ..registerLazySingleton<CoinGeckoPriceAdapter>(
         () => CoinGeckoPriceAdapter(apiKey: coinGeckoApiKey),
+      )
+      // Adapter de CryptoCompare (GRATIS - 100k calls/mes, sin API key)
+      ..registerLazySingleton<CryptoComparePriceAdapter>(
+        CryptoComparePriceAdapter.new,
       )
       // Adapter para enriquecer con logos
       ..registerLazySingleton<LogoEnrichmentAdapter>(
         () => LogoEnrichmentAdapter(_getIt<CoinGeckoPriceAdapter>()),
       )
-      // 1. Price Data Port (Hybrid Adapter)
+      // 1. Price Data Port (Hybrid Adapter con 3 fuentes)
+      // Prioridad: Binance → CryptoCompare → CoinGecko
       ..registerLazySingleton<PriceDataPort>(
         () => HybridPriceAdapter(
-          primaryAdapter: BinancePriceAdapter(),
-          backupAdapter: _getIt<CoinGeckoPriceAdapter>(),
+          primaryAdapter: BinancePriceAdapter(), // Para la mayoría
+          secondaryAdapter: _getIt<CryptoComparePriceAdapter>(), // Para non-Binance (MNT, KCS, etc)
+          backupAdapter: _getIt<CoinGeckoPriceAdapter>(), // Último recurso
           mockAdapter: MockPriceAdapter(), // Fallback para CORS issues
         ),
       )

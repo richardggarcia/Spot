@@ -14,6 +14,8 @@ class AppTheme {
       // Color scheme - Premium dark
       colorScheme: const ColorScheme.dark(
         primary: AppColors.darkAccentPrimary,
+        primaryContainer: AppColors.darkTerracotta,
+        onPrimaryContainer: AppColors.onDarkTerracotta,
         secondary: AppColors.darkAccentSecondary,
         tertiary: AppColors.darkAccentTertiary,
         surface: AppColors.darkSurface,
@@ -293,6 +295,8 @@ class AppTheme {
       // Color scheme - Premium light
       colorScheme: const ColorScheme.light(
         primary: AppColors.lightAccentPrimary,
+        primaryContainer: AppColors.lightTerracotta,
+        onPrimaryContainer: AppColors.onLightTerracotta,
         secondary: AppColors.lightAccentSecondary,
         tertiary: AppColors.lightAccentTertiary,
         error: AppColors.lightBearish,

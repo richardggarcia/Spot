@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_constants.dart';
+import '../../core/di/service_locator.dart';
 import '../../core/utils/crypto_preferences.dart';
+import '../../domain/ports/price_data_port.dart';
 import '../theme/app_colors.dart';
 import '../theme/text_styles.dart';
 
 /// Página para gestionar qué criptomonedas monitorear
+/// Permite agregar cualquier moneda mediante búsqueda dinámica
 class CryptoManagementPage extends StatefulWidget {
   const CryptoManagementPage({super.key});
 
@@ -14,39 +16,13 @@ class CryptoManagementPage extends StatefulWidget {
 }
 
 class _CryptoManagementPageState extends State<CryptoManagementPage> {
-  
-  // Todas las cryptos disponibles con sus nombres completos (~20 cryptos)
-  static const Map<String, String> _availableCryptos = {
-    // Cryptos principales con historial completo
-    'BTC': 'Bitcoin',
-    'ETH': 'Ethereum', 
-    'BNB': 'BNB',
-    'SOL': 'Solana',
-    'XRP': 'XRP',
-    'LINK': 'Chainlink',
-    'BCH': 'Bitcoin Cash',
-    'LTC': 'Litecoin',
-    'TON': 'Toncoin',
-    'SUI': 'Sui',
-    'DOGE': 'Dogecoin',
-    'ADA': 'Cardano',
-    'AVAX': 'Avalanche',
-    'DOT': 'Polkadot',
-    'MATIC': 'Polygon',
-    'UNI': 'Uniswap',
-    'ATOM': 'Cosmos',
-    'FIL': 'Filecoin',
-    'TRX': 'TRON',
-    'ETC': 'Ethereum Classic',
-    // Cryptos con datos históricos limitados
-    'MNT': 'Mantle (Sin historial)',
-    'KCS': 'KuCoin Token (Sin historial)',
-    'RON': 'Ronin (Sin historial)',
-    'BGB': 'Bitget Token (Sin historial)',
-  };
+  final TextEditingController _searchController = TextEditingController();
+  final _priceAdapter = ServiceLocator.get<PriceDataPort>();
 
   Set<String> _selectedCryptos = {};
   bool _isLoading = true;
+  bool _isValidating = false;
+  String? _validationError;
 
   @override
   void initState() {
@@ -54,17 +30,22 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
     _loadSelectedCryptos();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadSelectedCryptos() async {
     try {
       final savedCryptos = await CryptoPreferences.getSelectedCryptos();
-      
+
       setState(() {
         _selectedCryptos = savedCryptos.toSet();
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _selectedCryptos = AppConstants.defaultMonitoredSymbols.toSet();
         _isLoading = false;
       });
     }
@@ -73,14 +54,21 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
   Future<void> _saveSelectedCryptos() async {
     try {
       await CryptoPreferences.saveSelectedCryptos(_selectedCryptos.toList());
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Configuración guardada. Reinicia la app para aplicar cambios.'),
-            duration: Duration(seconds: 3),
+            content: Text('✅ Guardado! Actualizando lista...'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
           ),
         );
+
+        // Esperar un momento para que se vea el mensaje
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // Volver atrás con señal de que se guardó
+        Navigator.of(context).pop(true); // true = cambios guardados
       }
     } catch (e) {
       if (mounted) {
@@ -94,45 +82,83 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
     }
   }
 
-  void _toggleCrypto(String symbol) {
+  Future<void> _addCrypto() async {
+    final symbol = _searchController.text.trim().toUpperCase();
+
+    if (symbol.isEmpty) {
+      setState(() {
+        _validationError = 'Ingresa un símbolo';
+      });
+      return;
+    }
+
+    if (_selectedCryptos.contains(symbol)) {
+      setState(() {
+        _validationError = 'Ya está agregada';
+      });
+      return;
+    }
+
+    // Validar que el símbolo existe en las APIs
     setState(() {
-      if (_selectedCryptos.contains(symbol)) {
-        // No permitir desseleccionar todas
-        if (_selectedCryptos.length > 1) {
-          _selectedCryptos.remove(symbol);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('⚠️ Debe mantener al menos una criptomoneda seleccionada'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-      } else {
-        _selectedCryptos.add(symbol);
+      _isValidating = true;
+      _validationError = null;
+    });
+
+    try {
+      final crypto = await _priceAdapter.getPriceForSymbol(symbol);
+
+      if (crypto == null) {
+        setState(() {
+          _isValidating = false;
+          _validationError = 'Símbolo no encontrado en APIs';
+        });
+        return;
       }
-    });
+
+      setState(() {
+        _selectedCryptos.add(symbol);
+        _isValidating = false;
+        _validationError = null;
+        _searchController.clear();
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ $symbol agregada correctamente'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isValidating = false;
+        _validationError = 'Error validando símbolo: ${e.toString()}';
+      });
+    }
   }
 
-  void _selectAll() {
+  void _removeCrypto(String symbol) {
     setState(() {
-      _selectedCryptos = _availableCryptos.keys.toSet();
-    });
-  }
-
-  void _selectRecommended() {
-    setState(() {
-      // Cryptos recomendadas con buen historial
-      _selectedCryptos = {
-        'BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'LINK', 'BCH', 'LTC'
-      };
+      if (_selectedCryptos.length > 1) {
+        _selectedCryptos.remove(symbol);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ Debe mantener al menos una criptomoneda seleccionada'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestionar Criptomonedas'),
@@ -144,43 +170,36 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
           ),
         ],
       ),
-      body: _isLoading 
+      body: _isLoading
         ? const Center(child: CircularProgressIndicator())
         : Column(
             children: [
-              // Header con stats y acciones rápidas
+              // Header con información
               Container(
                 padding: const EdgeInsets.all(16),
                 color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 20,
+                          color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                        ),
+                        const SizedBox(width: 8),
                         Text(
-                          'Seleccionadas: ${_selectedCryptos.length}/${_availableCryptos.length}',
+                          'Criptomonedas Activas: ${_selectedCryptos.length}',
                           style: AppTextStyles.h4.copyWith(
                             color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                           ),
-                        ),
-                        Row(
-                          children: [
-                            TextButton(
-                              onPressed: _selectRecommended,
-                              child: const Text('Recomendadas'),
-                            ),
-                            const SizedBox(width: 8),
-                            TextButton(
-                              onPressed: _selectAll,
-                              child: const Text('Todas'),
-                            ),
-                          ],
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Configura qué criptomonedas quieres monitorear. Las marcadas con "Sin historial" tienen datos limitados.',
+                      'Agrega monedas escribiendo su símbolo abajo. Las que aparecen en la lista ya están activas.',
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                       ),
@@ -188,64 +207,150 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
                   ],
                 ),
               ),
-              
-              // Lista de cryptos
+
+              // Campo de búsqueda
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            textCapitalization: TextCapitalization.characters,
+                            decoration: InputDecoration(
+                              labelText: 'Agregar Criptomoneda',
+                              hintText: 'Ej: BTC, ETH, DOGE...',
+                              prefixIcon: const Icon(Icons.search),
+                              suffixIcon: _isValidating
+                                ? const Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  )
+                                : null,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              errorText: _validationError,
+                            ),
+                            onSubmitted: (_) => _addCrypto(),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: _isValidating ? null : _addCrypto,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.all(16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Icon(Icons.add),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Ingresa el símbolo (sin USDT). Ej: BTC, ETH, SOL, MNT, etc.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Título de la lista
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.list,
+                      size: 18,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Monedas Activas (toca 🗑️ para eliminar)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Lista de cryptos seleccionadas
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _availableCryptos.length,
-                  itemBuilder: (context, index) {
-                    final symbol = _availableCryptos.keys.elementAt(index);
-                    final name = _availableCryptos[symbol]!;
-                    final isSelected = _selectedCryptos.contains(symbol);
-                    final hasLimitedData = name.contains('Sin historial');
-                    
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: CheckboxListTile(
-                        value: isSelected,
-                        onChanged: (_) => _toggleCrypto(symbol),
-                        title: Row(
-                          children: [
-                            Text(
+                child: _selectedCryptos.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.sentiment_dissatisfied,
+                            size: 64,
+                            color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No hay criptomonedas activas',
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Agrega una usando el campo de arriba',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _selectedCryptos.length,
+                      itemBuilder: (context, index) {
+                        final symbol = _selectedCryptos.elementAt(index);
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.currency_bitcoin,
+                              color: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
+                            ),
+                            title: Text(
                               symbol,
                               style: AppTextStyles.labelLarge.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                               ),
                             ),
-                            if (hasLimitedData) ...[
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.warning_amber,
-                                size: 16,
-                                color: isDark ? AppColors.darkAlert : AppColors.lightAlert,
+                            trailing: IconButton(
+                              icon: Icon(
+                                Icons.delete_outline,
+                                color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
                               ),
-                            ],
-                          ],
-                        ),
-                        subtitle: Text(
-                          name.replaceAll(' (Sin historial)', ''),
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                          ),
-                        ),
-                        secondary: hasLimitedData 
-                          ? Icon(
-                              Icons.info_outline,
-                              color: isDark ? AppColors.darkAlert : AppColors.lightAlert,
-                            )
-                          : Icon(
-                              Icons.currency_bitcoin,
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                              onPressed: () => _removeCrypto(symbol),
                             ),
-                        activeColor: isDark ? AppColors.darkAccentPrimary : AppColors.lightAccentPrimary,
-                      ),
-                    );
-                  },
-                ),
+                          ),
+                        );
+                      },
+                    ),
               ),
-              
+
               // Footer con botón guardar
               Container(
                 padding: const EdgeInsets.all(16),
@@ -268,5 +373,4 @@ class _CryptoManagementPageState extends State<CryptoManagementPage> {
           ),
     );
   }
-
 }

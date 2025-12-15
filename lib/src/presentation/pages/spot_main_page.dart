@@ -33,13 +33,18 @@ class SpotMainPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.tune),
             tooltip: 'Gestionar Criptomonedas',
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final result = await Navigator.push<bool>(
                 context,
-                MaterialPageRoute<void>(
+                MaterialPageRoute(
                   builder: (context) => const CryptoManagementPage(),
                 ),
               );
+
+              // Si se guardaron cambios, recargar las cryptos
+              if (result == true && context.mounted) {
+                context.read<CryptoBloc>().add(const GetAllCryptosWithMetrics());
+              }
             },
           ),
         ],
