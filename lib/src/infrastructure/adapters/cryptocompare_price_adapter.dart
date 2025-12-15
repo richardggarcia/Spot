@@ -241,16 +241,27 @@ class CryptoComparePriceAdapter implements PriceDataPort {
         (data['CHANGEPCT24HOUR'] as num?)?.toDouble() ?? 0.0;
     final high24h = (data['HIGH24HOUR'] as num?)?.toDouble() ?? currentPrice;
     final low24h = (data['LOW24HOUR'] as num?)?.toDouble() ?? currentPrice;
+    final open24h = (data['OPEN24HOUR'] as num?)?.toDouble() ?? currentPrice;
+    final volume24h = (data['VOLUME24HOUR'] as num?)?.toDouble() ?? 0.0;
+    final lastUpdate = data['LASTUPDATE'];
+    final lastUpdated = lastUpdate is num
+        ? DateTime.fromMillisecondsSinceEpoch(
+            (lastUpdate.toInt()) * 1000,
+            isUtc: true,
+          )
+        : DateTime.now().toUtc();
 
     return Crypto(
       symbol: originalSymbol,
       name: data['FROMSYMBOL'] as String? ?? originalSymbol,
       currentPrice: currentPrice,
       priceChange24h: change24h,
-      priceChangePercentage24h: changePercent24h,
+      priceChangePercent24h: changePercent24h,
       high24h: high24h,
       low24h: low24h,
-      marketCap: (data['MKTCAP'] as num?)?.toDouble(),
+      open24h: open24h,
+      volume24h: volume24h,
+      lastUpdated: lastUpdated,
       imageUrl: data['IMAGEURL'] != null
           ? 'https://www.cryptocompare.com${data['IMAGEURL']}'
           : null,
