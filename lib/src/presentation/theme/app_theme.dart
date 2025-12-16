@@ -32,7 +32,7 @@ class AppTheme {
 
       // AppBar theme - Premium dark with better contrast
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.darkSurface,
+        backgroundColor: Colors.transparent, // Handled by PremiumAppBar
         foregroundColor: AppColors.darkTextPrimary,
         elevation: 0,
         centerTitle: true,
@@ -56,15 +56,16 @@ class AppTheme {
         dividerColor: AppColors.darkBorder,
       ),
 
-      // Card theme - Premium dark cards with subtle elevation
+    // Card theme - Premium dark cards with subtle elevation
       cardTheme: CardThemeData(
         color: AppColors.darkCard,
-        shadowColor: AppColors.darkShadow,
-        elevation: 4,
+        elevation: 0, // Flatter, modern look
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: AppColors.darkBorder.withValues(alpha: 0.5),
+            color: AppColors.darkBorder,
+            width: 1,
+            strokeAlign: BorderSide.strokeAlignInside,
           ),
         ),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

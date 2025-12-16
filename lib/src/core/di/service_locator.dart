@@ -20,7 +20,7 @@ import '../../infrastructure/adapters/coingecko_price_adapter.dart';
 import '../../infrastructure/adapters/cryptocompare_price_adapter.dart';
 import '../../infrastructure/adapters/hybrid_price_adapter.dart';
 import '../../infrastructure/adapters/logo_enrichment_adapter.dart';
-import '../../infrastructure/adapters/mock_price_adapter.dart';
+
 import '../../infrastructure/repositories/crypto_repository_impl.dart';
 import '../../infrastructure/repositories/trade_journal_repository_impl.dart';
 import '../../infrastructure/services/trade_journal_remote_service.dart';
@@ -97,7 +97,6 @@ class ServiceLocator {
           primaryAdapter: BinancePriceAdapter(), // Para la mayoría
           secondaryAdapter: _getIt<CryptoComparePriceAdapter>(), // Para non-Binance (MNT, KCS, etc)
           backupAdapter: _getIt<CoinGeckoPriceAdapter>(), // Último recurso
-          mockAdapter: MockPriceAdapter(), // Fallback para CORS issues
         ),
       )
       // 2. Streaming Data Port (WebSocket)

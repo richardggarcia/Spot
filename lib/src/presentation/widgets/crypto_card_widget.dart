@@ -22,13 +22,34 @@ class CryptoCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ThemeAwareWidget(
-      builder: (context, isDark, themeManager) => Card(
-          key: ValueKey('crypto_${crypto.symbol}_${crypto.currentPrice}'),
-          clipBehavior: Clip.antiAlias,
-          elevation: 2,
+      builder: (context, isDark, themeManager) => Container(
+        key: ValueKey('crypto_${crypto.symbol}_${crypto.currentPrice}'),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? AppColors.darkGradientCard
+                : AppColors.lightGradientCard,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
           child: InkWell(
+            borderRadius: BorderRadius.circular(16),
             onTap: onTap,
-            // CORREGIDO: usar isDark directo del ThemeAwareWidget
             hoverColor: isDark
                 ? Colors.white.withValues(alpha: 0.05)
                 : Colors.black.withValues(alpha: 0.03),
@@ -46,7 +67,7 @@ class CryptoCardWidget extends StatelessWidget {
                   if (metrics != null) ...[
                     Divider(
                       height: 24,
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
                     ),
                     _buildAnalysisData(context, isDark),
                   ],
@@ -55,6 +76,7 @@ class CryptoCardWidget extends StatelessWidget {
             ),
           ),
         ),
+      ),
     );
 
   /// Construye la sección de datos de mercado (logo, precio, cambio).
@@ -117,8 +139,7 @@ class CryptoCardWidget extends StatelessWidget {
             // Precio
             Text(
               '\$${crypto.formattedPrice}',
-              style: AppTextStyles.h4.copyWith(
-                fontWeight: FontWeight.bold,
+              style: AppTextStyles.priceLarge.copyWith(
                 color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
               ),
             ),
@@ -137,11 +158,10 @@ class CryptoCardWidget extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              '${crypto.priceChange24h.toStringAsFixed(2)} (${crypto.formattedChangePercent})',
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: changeColor,
-                fontWeight: FontWeight.bold,
-              ),
+              '${crypto.formattedChangePercent}', // Solo mostramos porcentaje para ser mas limpios
+              style: crypto.isPositive 
+                  ? AppTextStyles.bullish(context)
+                  : AppTextStyles.bearish(context),
             ),
             const SizedBox(width: 8),
             Text(

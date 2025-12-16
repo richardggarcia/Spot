@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -27,29 +28,32 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) => ThemeAwareWidget(
-      builder: (context, isDark, themeManager) => Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  AppColors.darkSurface,
-                  AppColors.darkBackground,
-                ]
-              : [
-                  AppColors.lightSurface,
-                  AppColors.lightBackground.withValues(alpha: 0.95),
-                ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      builder: (context, isDark, themeManager) => ClipRRect(
+        child: BackdropFilter(
+          filter:ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                        AppColors.darkSurface.withValues(alpha: 0.8),
+                        AppColors.darkBackground.withValues(alpha: 0.8),
+                      ]
+                    : [
+                        AppColors.lightSurface.withValues(alpha: 0.8),
+                        AppColors.lightBackground.withValues(alpha: 0.8),
+                      ],
+              ),
+              border: Border(
+                bottom: BorderSide(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.05),
+                ),
+              ),
+            ),
       child: AppBar(
         title: Text(
           title,
@@ -86,8 +90,9 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
         bottom: bottom,
       ),
-        ),
-    );
+    ),
+  ),
+));
 }
 
 /// Theme toggle button with animated icon transition

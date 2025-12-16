@@ -7,6 +7,7 @@ import '../bloc/journal/journal_bloc.dart';
 import '../bloc/journal/journal_event.dart';
 import '../bloc/journal/journal_state.dart';
 import '../theme/app_colors.dart';
+import '../theme/text_styles.dart';
 import '../widgets/journal_entry_form.dart';
 import 'journal_trade_chart_page.dart';
 
@@ -19,6 +20,7 @@ class JournalPage extends StatefulWidget {
 
 class _JournalPageState extends State<JournalPage> {
   static const String _userId = 'richard'; // Usuario configurado para el backend
+  DateTime _selectedMonth = DateTime.now();
 
   Future<void> _onRefresh() async {
     context.read<JournalBloc>().add(const LoadJournalNotes(userId: _userId));
@@ -49,6 +51,48 @@ class _JournalPageState extends State<JournalPage> {
       ),
     );
   }
+  
+  void _changeMonth(int offset) {
+    setState(() {
+      _selectedMonth = DateTime(
+        _selectedMonth.year, 
+        _selectedMonth.month + offset,
+      );
+    });
+  }
+
+  List<TradeNote> _filterNotesByMonth(List<TradeNote> allNotes) {
+    final start = DateTime(_selectedMonth.year, _selectedMonth.month);
+    final end = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
+    
+    // Sort by exit date if closed, or entry date if open, but prioritizing relevance to selected month
+    return allNotes.where((note) {
+      // If we are looking at past history, we primarily care about trades CLOSED in that month
+      // logic: "ese historial tiene que tomar es profit, y ese dia que se cierre es que tome el profit"
+      // So detailed list should show trades that affect PnL of that month (Exit Date in Month)
+      // OR active trades if we are in current month? 
+      // Simplified: Show trades that have Exit Date in this month.
+      // If 'Current Month', also show open trades (Entry Date <= Today && Exit Date == null or Exit Date > Today)?
+      // To simulate "History", usually we list Closed Trades for that period.
+      // But user might want to see Open trades in "Current Month".
+      
+      final isCurrentMonth = start.month == DateTime.now().month && start.year == DateTime.now().year;
+      
+      if (note.exitAt != null) {
+         // Closed trade: does it belong to this month's PnL?
+         return note.exitAt!.isAfter(start) && note.exitAt!.isBefore(end);
+      } else {
+         // Open trade: only show if selecting Current Month 
+         return isCurrentMonth;
+      }
+    }).toList()
+      ..sort((a, b) {
+        // Sort closed trades by exit date, open trades by entry date
+        final dateA = a.exitAt ?? a.entryAt;
+        final dateB = b.exitAt ?? b.entryAt;
+        return dateB.compareTo(dateA);
+      });
+  }
 
   @override
   Widget build(BuildContext context) => BlocConsumer<JournalBloc, JournalState>(
@@ -65,20 +109,31 @@ class _JournalPageState extends State<JournalPage> {
     },
     builder: (context, state) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
-      final notes = state.notes;
+      final allNotes = state.notes;
+      final filteredNotes = _filterNotesByMonth(allNotes);
 
       Widget body;
 
-      if (state.isLoading && notes.isEmpty) {
+      if (state.isLoading && allNotes.isEmpty) {
         body = const Center(child: CircularProgressIndicator());
-      } else if (notes.isEmpty) {
-        body = RefreshIndicator(
+      } else if (allNotes.isEmpty) { // Keep empty state logic simple but maybe check filtered? No, if global empty, allow create.
+         // ... (existing empty state logic same as before, truncated for brevity, I will reuse existing if possible or re-declare)
+         // Actually, I need to replace the entire build method or chunks. Let's rewrite the body logic.
+         // Re-using existing empty state for 'global' emptiness.
+         
+         if (filteredNotes.isEmpty && state.notes.isNotEmpty) {
+            // Special empty state for filter?
+         }
+         
+         // Reuse existing Empty State from lines 76-140 if no notes globally
+         body = RefreshIndicator(
           onRefresh: _onRefresh,
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-              Container(
+               SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+               // ... same empty container ...
+                Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkCard : AppColors.lightCard,
@@ -148,24 +203,63 @@ class _JournalPageState extends State<JournalPage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 16),
+                    // Month Selector Row
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left),
+                            onPressed: () => _changeMonth(-1),
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          ),
+                          Text(
+                            DateFormat('MMMM yyyy', 'es').format(_selectedMonth).toUpperCase(),
+                            style: AppTextStyles.h4.copyWith(
+                               color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.chevron_right),
+                            onPressed: () => _changeMonth(1),
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     _JournalHeader(
-                      notes: notes,
+                      notes: filteredNotes, // Pass filtered notes for stats
                       isDark: isDark,
+                      selectedDate: _selectedMonth,
                     ),
                     const SizedBox(height: 16),
                   ],
                 ),
               ),
-              SliverPadding(
+              if (filteredNotes.isEmpty)
+                SliverFillRemaining(
+                   child: Center(
+                     child: Text(
+                       'No hay operaciones en este mes',
+                       style: AppTextStyles.bodyLarge.copyWith(
+                         color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                       ),
+                     ),
+                   ),
+                )
+              else 
+                SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList.separated(
-                  itemCount: notes.length,
+                  itemCount: filteredNotes.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) => _ProfessionalTradeCard(
-                    note: notes[index],
-                    onOpenDetail: () => _openDetail(notes[index]),
-                    onEdit: () => _openEdit(notes[index]),
-                    onDelete: () => _confirmDelete(notes[index]),
+                    note: filteredNotes[index],
+                    onOpenDetail: () => _openDetail(filteredNotes[index]),
+                    onEdit: () => _openEdit(filteredNotes[index]),
+                    onDelete: () => _confirmDelete(filteredNotes[index]),
                     isDark: isDark,
                   ),
                 ),
@@ -267,15 +361,28 @@ class _JournalHeader extends StatelessWidget {
   const _JournalHeader({
     required this.notes,
     required this.isDark,
+    required this.selectedDate,
   });
 
   final List<TradeNote> notes;
   final bool isDark;
+  final DateTime selectedDate;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) {
+    // Parent already filtered 'notes' to be specific to this month's view
+    // Calculate PnL from these filtered notes
+    final monthlyPnL = _calculateMonthlyPnL();
+    final pnlColor = monthlyPnL >= 0 
+        ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
+        : (isDark ? AppColors.darkBearish : AppColors.lightBearish);
+
+    final isCurrentMonth = selectedDate.month == DateTime.now().month && selectedDate.year == DateTime.now().year;
+    final label = isCurrentMonth ? 'Profit (Mes)' : 'Profit';
+
+    return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? AppColors.darkCard : AppColors.lightCard,
           borderRadius: BorderRadius.circular(16),
@@ -286,19 +393,68 @@ class _JournalHeader extends StatelessWidget {
             BoxShadow(
               color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
               blurRadius: 8,
-              offset: const Offset(0, 2),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: _StatCard(
-          label: 'Total Trades',
-          value: notes.length.toString(),
-          icon: Icons.swap_horiz,
-          color: isDark ? AppColors.darkNeutral : AppColors.lightNeutral,
-          isDark: isDark,
-          isLarge: true,
+        child: Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                label: 'Total Trades',
+                value: notes.length.toString(),
+                icon: Icons.swap_horiz,
+                color: isDark ? AppColors.darkNeutral : AppColors.lightNeutral,
+                isDark: isDark,
+              ),
+            ),
+             // Separator vertical line
+             Container(
+               height: 40,
+               width: 1,
+               margin: const EdgeInsets.symmetric(horizontal: 16),
+               color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+             ),
+             Expanded(
+              child: _StatCard(
+                label: label,
+                value: '\$${NumberFormat('#,##0.00').format(monthlyPnL)}',
+                icon: Icons.attach_money,
+                color: pnlColor,
+                isDark: isDark,
+              ),
+            ),
+          ],
         ),
       );
+  }
+
+  double _calculateMonthlyPnL() {
+    double totalPnL = 0;
+    
+    // Notes are already filtered by parent for this month/period
+    for (final note in notes) {
+      if (note.exitPrice != null && note.exitAt != null) {
+        final size = note.size ?? 0;
+        final entryPrice = note.entryPrice;
+        final exitPrice = note.exitPrice!;
+        
+        if (entryPrice <= 0) continue;
+
+        final quantity = size / entryPrice;
+        
+        double tradePnL = 0;
+        if (note.side.toLowerCase() == 'sell') {
+           tradePnL = (entryPrice - exitPrice) * quantity;
+        } else {
+           tradePnL = (exitPrice - entryPrice) * quantity;
+        }
+
+        totalPnL += tradePnL;
+      }
+    }
+    return totalPnL;
+  }
 }
 
 class _StatCard extends StatelessWidget {
@@ -308,7 +464,6 @@ class _StatCard extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.isDark,
-    this.isLarge = false,
   });
 
   final String label;
@@ -316,16 +471,15 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final bool isDark;
-  final bool isLarge;
 
   @override
   Widget build(BuildContext context) => Container(
-      padding: EdgeInsets.all(isLarge ? 16 : 12),
+      padding: const EdgeInsets.all(8), // Fixed compact padding
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withValues(alpha: 0.3),
+          color: color.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -333,13 +487,13 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(6),
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
               color: color,
-              size: isLarge ? 20 : 16,
+              size: 14, // Fixed compact icon size
             ),
           ),
           const SizedBox(width: 10),
@@ -350,22 +504,22 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: isLarge ? 12 : 10,
+                  style: AppTextStyles.labelSmall.copyWith(
+                    fontSize: 10,
                     color: isDark
                       ? AppColors.darkTextSecondary
                       : AppColors.lightTextSecondary,
-                    fontWeight: FontWeight.w500,
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   value,
-                  style: TextStyle(
-                    fontSize: isLarge ? 18 : 16,
-                    fontWeight: FontWeight.bold,
+                  style: AppTextStyles.h4.copyWith(
+                    fontSize: 16, // Fixed compact value size
                     color: color,
+                    height: 1.1,
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
@@ -503,12 +657,13 @@ class _ProfessionalTradeCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            width: 1,
           ),
           boxShadow: [
             BoxShadow(
               color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
               blurRadius: 8,
-              offset: const Offset(0, 2),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -525,9 +680,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
                       children: [
                         Text(
                           note.symbol,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                          style: AppTextStyles.h4.copyWith(
                             color: isDark
                               ? AppColors.darkTextPrimary
                               : AppColors.lightTextPrimary,
@@ -548,11 +701,9 @@ class _ProfessionalTradeCard extends StatelessWidget {
                           ),
                           child: Text(
                             note.side == 'buy' ? 'BUY' : 'SELL',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
+                            style: AppTextStyles.labelSmall.copyWith(
                               color: _getSideColor(),
-                              letterSpacing: 0.5,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -590,7 +741,14 @@ class _ProfessionalTradeCard extends StatelessWidget {
                                 : AppColors.lightTextPrimary,
                             ),
                             const SizedBox(width: 12),
-                            const Text('Editar'),
+                            Text(
+                              'Editar',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -606,7 +764,14 @@ class _ProfessionalTradeCard extends StatelessWidget {
                                 : AppColors.lightBearish,
                             ),
                             const SizedBox(width: 12),
-                            const Text('Eliminar'),
+                            Text(
+                              'Eliminar',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: isDark
+                                    ? AppColors.darkBearish
+                                    : AppColors.lightBearish,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -646,12 +811,10 @@ class _ProfessionalTradeCard extends StatelessWidget {
                       children: [
                         Text(
                           _dateFormat.format(note.entryAt.toLocal()),
-                          style: TextStyle(
-                            fontSize: 12,
+                          style: AppTextStyles.labelSmall.copyWith(
                             color: isDark
                               ? AppColors.darkTextTertiary
                               : AppColors.lightTextTertiary,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -659,8 +822,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
                           children: [
                             Text(
                               'Entry: ',
-                              style: TextStyle(
-                                fontSize: 14,
+                              style: AppTextStyles.bodyMedium.copyWith(
                                 color: isDark
                                   ? AppColors.darkTextSecondary
                                   : AppColors.lightTextSecondary,
@@ -668,9 +830,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
                             ),
                             Text(
                               '\$${note.entryPrice.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                              style: AppTextStyles.priceMedium.copyWith(
                                 color: isDark
                                   ? AppColors.darkTextPrimary
                                   : AppColors.lightTextPrimary,
@@ -679,8 +839,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
                             if (note.size != null) ...[
                               Text(
                                 ' • ${_formatPositionSize(note.size!)}',
-                                style: TextStyle(
-                                  fontSize: 13,
+                                style: AppTextStyles.bodySmall.copyWith(
                                   color: isDark
                                     ? AppColors.darkTextSecondary
                                     : AppColors.lightTextSecondary,
@@ -721,12 +880,10 @@ class _ProfessionalTradeCard extends StatelessWidget {
                             note.exitAt != null
                               ? _dateFormat.format(note.exitAt!.toLocal())
                               : 'Salida',
-                            style: TextStyle(
-                              fontSize: 12,
+                            style: AppTextStyles.labelSmall.copyWith(
                               color: isDark
                                 ? AppColors.darkTextTertiary
                                 : AppColors.lightTextTertiary,
-                              fontWeight: FontWeight.w500,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -734,8 +891,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
                             children: [
                               Text(
                                 'Exit: ',
-                                style: TextStyle(
-                                  fontSize: 14,
+                                style: AppTextStyles.bodyMedium.copyWith(
                                   color: isDark
                                     ? AppColors.darkTextSecondary
                                     : AppColors.lightTextSecondary,
@@ -743,9 +899,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
                               ),
                               Text(
                                 '\$${note.exitPrice!.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                style: AppTextStyles.priceMedium.copyWith(
                                   color: isDark
                                     ? AppColors.darkTextPrimary
                                     : AppColors.lightTextPrimary,
@@ -755,8 +909,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
                               Flexible(
                                 child: Text(
                                   '• ${_calculatePnL()} (${_calculateROI().toStringAsFixed(1)}%)',
-                                  style: TextStyle(
-                                    fontSize: 14,
+                                  style: AppTextStyles.bodyMedium.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: _getPnLColor(),
                                   ),
@@ -788,8 +941,7 @@ class _ProfessionalTradeCard extends StatelessWidget {
                     note.exitAt == null
                       ? 'Abierta hace ${_buildDurationLabel()}'
                       : 'Duración ${_buildDurationLabel()}',
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: AppTextStyles.bodySmall.copyWith(
                       color: isDark
                         ? AppColors.darkTextSecondary
                         : AppColors.lightTextSecondary,

@@ -1,31 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// Estilos de texto personalizados para la aplicación de trading
+/// Utiliza:
+/// - Outfit: Encabezados (Moderno, Geométrico)
+/// - Inter: Cuerpo (Legible, Limpio)
+/// - JetBrains Mono: Datos numéricos/técnicos
 class AppTextStyles {
   // Textos de encabezado
-  static const TextStyle h1 = TextStyle(
+  static TextStyle h1 = GoogleFonts.outfit(
     fontSize: 32,
     fontWeight: FontWeight.bold,
     color: AppColors.darkTextPrimary,
     height: 1.2,
   );
 
-  static const TextStyle h2 = TextStyle(
+  static TextStyle h2 = GoogleFonts.outfit(
     fontSize: 28,
     fontWeight: FontWeight.bold,
     color: AppColors.darkTextPrimary,
     height: 1.2,
   );
 
-  static const TextStyle h3 = TextStyle(
+  static TextStyle h3 = GoogleFonts.outfit(
     fontSize: 24,
     fontWeight: FontWeight.w600,
     color: AppColors.darkTextPrimary,
     height: 1.3,
   );
 
-  static const TextStyle h4 = TextStyle(
+  static TextStyle h4 = GoogleFonts.outfit(
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppColors.darkTextPrimary,
@@ -33,21 +38,21 @@ class AppTextStyles {
   );
 
   // Textos de cuerpo
-  static const TextStyle bodyLarge = TextStyle(
+  static TextStyle bodyLarge = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.normal,
     color: AppColors.darkTextPrimary,
     height: 1.5,
   );
 
-  static const TextStyle bodyMedium = TextStyle(
+  static TextStyle bodyMedium = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: AppColors.darkTextSecondary,
     height: 1.4,
   );
 
-  static const TextStyle bodySmall = TextStyle(
+  static TextStyle bodySmall = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.normal,
     color: AppColors.darkTextTertiary,
@@ -55,98 +60,105 @@ class AppTextStyles {
   );
 
   // Textos para etiquetas y títulos de tarjetas
-  static const TextStyle labelLarge = TextStyle(
+  static TextStyle labelLarge = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.darkTextPrimary,
   );
 
-  static const TextStyle labelMedium = TextStyle(
+  static TextStyle labelMedium = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.darkTextSecondary,
   );
 
-  static const TextStyle labelSmall = TextStyle(
+  static TextStyle labelSmall = GoogleFonts.inter(
     fontSize: 10,
     fontWeight: FontWeight.w500,
     color: AppColors.darkTextTertiary,
   );
 
-  // Textos para precios y valores numéricos
-  static const TextStyle priceLarge = TextStyle(
+  // Textos para precios y valores numéricos - Monospace
+  static TextStyle priceLarge = GoogleFonts.jetBrainsMono(
     fontSize: 18,
     fontWeight: FontWeight.bold,
     color: AppColors.darkTextPrimary,
+    letterSpacing: -0.5,
   );
 
-  static const TextStyle priceMedium = TextStyle(
+  static TextStyle priceMedium = GoogleFonts.jetBrainsMono(
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.darkTextPrimary,
+    letterSpacing: -0.5,
   );
 
-  static const TextStyle priceSmall = TextStyle(
+  static TextStyle priceSmall = GoogleFonts.jetBrainsMono(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.darkTextPrimary,
+    letterSpacing: -0.5,
   );
 
   // Textos para cambios porcentuales
-  static TextStyle bullish(BuildContext context) => const TextStyle(
+  static TextStyle bullish(BuildContext context) => GoogleFonts.jetBrainsMono(
     fontSize: 14,
     fontWeight: FontWeight.bold,
     color: AppColors.darkBullish,
+    letterSpacing: -0.5,
   );
 
-  static TextStyle bearish(BuildContext context) => const TextStyle(
+  static TextStyle bearish(BuildContext context) => GoogleFonts.jetBrainsMono(
     fontSize: 14,
     fontWeight: FontWeight.bold,
     color: AppColors.darkBearish,
+    letterSpacing: -0.5,
   );
 
-  static TextStyle neutral(BuildContext context) => const TextStyle(
+  static TextStyle neutral(BuildContext context) => GoogleFonts.jetBrainsMono(
     fontSize: 14,
     fontWeight: FontWeight.bold,
     color: AppColors.darkNeutral,
+    letterSpacing: -0.5,
   );
 
   // Textos para botones
-  static const TextStyle button = TextStyle(
+  static TextStyle button = GoogleFonts.outfit(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: Colors.white,
+    letterSpacing: 0.5,
   );
 
-  static const TextStyle buttonSecondary = TextStyle(
+  static TextStyle buttonSecondary = GoogleFonts.outfit(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.darkAccentPrimary,
+    letterSpacing: 0.5,
   );
 
   // Textos para alertas y notificaciones
-  static const TextStyle alert = TextStyle(
+  static TextStyle alert = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w600,
     color: AppColors.darkAlert,
   );
 
-  static const TextStyle warning = TextStyle(
+  static TextStyle warning = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w600,
     color: AppColors.darkWarning,
   );
 
   // Textos para códigos y símbolos
-  static const TextStyle code = TextStyle(
+  static TextStyle code = GoogleFonts.jetBrainsMono(
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.darkAccentPrimary,
-    fontFamily: 'monospace',
   );
 
   // Textos para estados deshabilitados
-  static const TextStyle disabled = TextStyle(
+  static TextStyle disabled = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: AppColors.darkTextDisabled,
@@ -182,5 +194,10 @@ extension TextStylesExtension on BuildContext {
   /// Obtiene el texto de cuerpo pequeño con el tema actual
   TextStyle get bodySmall => AppTextStyles.bodySmall.copyWith(
     color: Theme.of(this).textTheme.bodySmall?.color,
+  );
+  
+  /// Obtiene estilo de precio grande con color del tema
+  TextStyle get priceLarge => AppTextStyles.priceLarge.copyWith(
+    color: Theme.of(this).textTheme.bodyLarge?.color,
   );
 }

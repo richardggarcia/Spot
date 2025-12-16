@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
 /// Premium color system for professional crypto trading application
-/// Supports both dark and light themes with sophisticated palettes
+/// Supports both dark and light themes with detailed palettes
 class AppColors {
   // ============ DARK THEME COLORS ============
 
   // Dark Theme - Premium ultra-dark backgrounds
-  static const Color darkBackground = Color(0xFF0A0A0A); // Almost pure black
-  static const Color darkSurface = Color(0xFF141414); // Subtle elevation
-  static const Color darkCard = Color(0xFF1C1C1C); // Card background
-  static const Color darkBorder = Color(0xFF2A2A2A); // Subtle borders
-  static const Color darkDivider = Color(0xFF1A1A1A); // Dividers
+  static const Color darkBackground = Color(0xFF0A0A0A); // Original Black
+  static const Color darkSurface = Color(0xFF141414); // Original Dark Grey
+  static const Color darkCard = Color(0xFF1C1C1C); // Original Card Grey
+  static const Color darkBorder = Color(0xFF2A2A2A); // Original Border
+  static const Color darkDivider = Color(0xFF1A1A1A); // Original Divider
 
   // Dark Theme - Text colors
   static const Color darkTextPrimary = Color(0xFFF0F4FF); // Bright white-blue
@@ -19,12 +19,12 @@ class AppColors {
   static const Color darkTextDisabled = Color(0xFF4A5370); // Disabled state
 
   // Dark Theme - Accent colors
-  static const Color darkAccentPrimary = Color(0xFF5B8FF9); // Premium blue
+  static const Color darkAccentPrimary = Color(0xFF5B8FF9); // Original Premium Blue
   static const Color darkAccentSecondary = Color(0xFF8B5CF6); // Premium purple
   static const Color darkAccentTertiary = Color(0xFF10B981); // Premium green
 
-  // Dark Theme - Primary button color (Red-Orange)
-  static const Color darkTerracotta = Color(0xFFF42A0B); // Red-Orange
+  // Dark Theme - Primary button color
+  static const Color darkTerracotta = Color(0xFFF42A0B); // Original Red-Orange
   static const Color onDarkTerracotta = Color(0xFFFFFFFF); // White text
 
   // Dark Theme - State colors
@@ -52,7 +52,7 @@ class AppColors {
   static const Color lightAccentSecondary = Color(0xFF7C3AED); // Bright purple
   static const Color lightAccentTertiary = Color(0xFF059669); // Bright green
 
-  // Light Theme - Primary button color (Red-Orange)
+  // Light Theme - Primary button color
   static const Color lightTerracotta = Color(0xFFF42A0B); // Red-Orange
   static const Color onLightTerracotta = Color(0xFFFFFFFF); // White text
 
@@ -68,7 +68,7 @@ class AppColors {
   static const Color darkBearish = Color(0xFFEF4444); // Premium red
   static const Color darkNeutral = Color(0xFF5B8FF9); // Premium blue
   static const Color darkOpportunity = Color(0xFFFBBF24); // Golden yellow
-  static const Color darkAlert = Color(0xFFEA580C); // Warm orange (matches light theme CTA)
+  static const Color darkAlert = Color(0xFFEA580C); // Warm orange
   static const Color darkWarning = Color(0xFFF97316); // Deep orange
 
   // Trading colors - Light theme
@@ -81,7 +81,7 @@ class AppColors {
 
   // ============ GRADIENT COLORS ============
 
-  // Dark theme gradients
+  // Dark theme gradients (Originals restyled if needed, keeping simple for now to match 'original' request but supporting new UI)
   static const List<Color> darkGradientPrimary = [
     Color(0xFF141414),
     Color(0xFF0A0A0A),
@@ -118,92 +118,4 @@ class AppColors {
   static Color darkShadow = Colors.black.withValues(alpha: 0.4);
   static Color lightShadow = Colors.black.withValues(alpha: 0.1);
 
-  // ============ LEGACY COMPATIBILITY (deprecated) ============
-
-  @Deprecated('Use darkBackground instead')
-  static const Color cardBackground = darkCard;
-
-  @Deprecated('Use darkSurface instead')
-  static const Color surfaceColor = darkSurface;
-
-  @Deprecated('Use darkBorder instead')
-  static const Color borderColor = darkBorder;
-
-  @Deprecated('Use darkDivider instead')
-  static const Color dividerColor = darkDivider;
-
-  @Deprecated('Use darkTextPrimary instead')
-  static const Color primaryText = darkTextPrimary;
-
-  @Deprecated('Use darkTextSecondary instead')
-  static const Color secondaryText = darkTextSecondary;
-
-  @Deprecated('Use darkTextTertiary instead')
-  static const Color tertiaryText = darkTextTertiary;
-
-  @Deprecated('Use darkTextDisabled instead')
-  static const Color disabledText = darkTextDisabled;
-
-  @Deprecated('Use darkBullish instead')
-  static const Color bullish = darkBullish;
-
-  @Deprecated('Use darkBearish instead')
-  static const Color bearish = darkBearish;
-
-  @Deprecated('Use darkNeutral instead')
-  static const Color neutral = darkNeutral;
-
-  @Deprecated('Use darkOpportunity instead')
-  static const Color opportunity = darkOpportunity;
-
-  @Deprecated('Use darkAlert instead')
-  static const Color alert = darkAlert;
-
-  @Deprecated('Use darkWarning instead')
-  static const Color warning = darkWarning;
-
-  @Deprecated('Use darkAccentPrimary instead')
-  static const Color primaryAccent = darkAccentPrimary;
-
-  @Deprecated('Use darkAccentSecondary instead')
-  static const Color secondaryAccent = darkAccentSecondary;
-
-  @Deprecated('Use darkAccentTertiary instead')
-  static const Color successColor = darkAccentTertiary;
-
-  @Deprecated('Use darkAccentPrimary instead')
-  static const Color infoColor = darkAccentPrimary;
-
-  @Deprecated('Use darkGradientPrimary instead')
-  static const Color gradientStart = Color(0xFF141414);
-
-  @Deprecated('Use darkGradientPrimary instead')
-  static const Color gradientEnd = Color(0xFF0A0A0A);
-
-  @Deprecated('Use darkHover instead')
-  static const Color hoverColor = darkHover;
-
-  @Deprecated('Use darkSelected instead')
-  static const Color selectedColor = darkSelected;
-
-  @Deprecated('Use darkDisabled instead')
-  static const Color disabledColor = darkDisabled;
-
-  @Deprecated('Use darkBullish instead')
-  static const Color bullishLight = darkBullish;
-
-  @Deprecated('Use darkBearish instead')
-  static const Color bearishLight = darkBearish;
-
-  @Deprecated('Use darkAlert instead')
-  static const Color alertLight = darkAlert;
-
-  @Deprecated('Use darkTextPrimary instead')
-  static const Color iconPrimary = darkTextPrimary;
-
-  @Deprecated('Use darkTextSecondary instead')
-  static const Color iconSecondary = darkTextSecondary;
-
-  @Deprecated('Use darkTextTertiary instead')
-  static const Color iconTertiary = darkTextTertiary;
 }

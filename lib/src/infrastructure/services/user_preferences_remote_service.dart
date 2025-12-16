@@ -1,5 +1,5 @@
-import 'package:dio/dio.dart';
 import 'dart:convert';
+import 'package:dio/dio.dart';
 
 import '../../core/utils/logger.dart';
 

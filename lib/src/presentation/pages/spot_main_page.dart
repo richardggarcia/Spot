@@ -9,6 +9,8 @@ import '../bloc/crypto/crypto_bloc.dart';
 import '../bloc/crypto/crypto_event.dart';
 import '../bloc/crypto/crypto_state.dart';
 import '../managers/card_position_manager.dart';
+import '../theme/app_colors.dart';
+import '../theme/text_styles.dart';
 
 import '../widgets/alerts_widget.dart';
 import '../widgets/crypto_card_widget.dart';
@@ -333,29 +335,30 @@ class _NoAlertsWidget extends StatelessWidget {
   const _NoAlertsWidget();
 
   @override
-  Widget build(BuildContext context) => const Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.notifications_off, size: 64, color: Colors.grey),
-        SizedBox(height: 16),
-        Text(
-          'Sin alertas activas',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey,
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.notifications_off, size: 64, color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary),
+          const SizedBox(height: 16),
+          Text(
+            'Sin alertas activas',
+            style: AppTextStyles.h3.copyWith(
+               color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+            ),
           ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          'No hay caídas significativas en el mercado:\n• Esperando caída ≥ -3%',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Colors.grey),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: 8),
+          Text(
+            'No hay caídas significativas en el mercado:\n• Esperando caída ≥ -3%',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodyMedium.copyWith(color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Widget para cuando no hay oportunidades
@@ -363,27 +366,28 @@ class _NoOpportunitiesWidget extends StatelessWidget {
   const _NoOpportunitiesWidget();
 
   @override
-  Widget build(BuildContext context) => const Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.search_off, size: 64, color: Colors.grey),
-        SizedBox(height: 16),
-        Text(
-          'Sin oportunidades de alta calidad',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey,
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 64, color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary),
+          const SizedBox(height: 16),
+          Text(
+            'Sin oportunidades de alta calidad',
+            style: AppTextStyles.h3.copyWith(
+               color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+            ),
           ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          'No se encontraron oportunidades de compra\nque cumplan con los criterios estrictos',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Colors.grey),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: 8),
+          Text(
+            'No se encontraron oportunidades de compra\nque cumplan con los criterios estrictos',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodyMedium.copyWith(color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../domain/entities/trade_note.dart';
 import '../theme/app_colors.dart';
+import '../theme/text_styles.dart';
 
 const double _kFieldHeight = 56;
 
@@ -125,18 +126,16 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                       children: [
                         Text(
                           _isEditing ? 'EDITAR OPERACIÓN' : 'NUEVA OPERACIÓN',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                          style: AppTextStyles.h3.copyWith(
                             color: isDark
                               ? AppColors.darkTextPrimary
                               : AppColors.lightTextPrimary,
                           ),
                         ),
+                        const SizedBox(height: 4),
                         Text(
                           'Ingresa los detalles de tu operación',
-                          style: TextStyle(
-                            fontSize: 14,
+                          style: AppTextStyles.bodySmall.copyWith(
                             color: isDark
                               ? AppColors.darkTextSecondary
                               : AppColors.lightTextSecondary,
@@ -146,8 +145,15 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                     ),
                     Container(
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                        color: isDark 
+                            ? AppColors.darkTextPrimary.withValues(alpha: 0.1) 
+                            : AppColors.lightTextPrimary.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark 
+                              ? AppColors.darkTextPrimary.withValues(alpha: 0.1) 
+                              : AppColors.lightTextPrimary.withValues(alpha: 0.1),
+                        ),
                       ),
                       child: IconButton(
                         icon: Icon(
@@ -308,63 +314,79 @@ class _TradeNoteFormSheetState extends State<TradeNoteFormSheet> {
                 const SizedBox(height: 32),
 
                 // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          minimumSize: const Size.fromHeight(_kFieldHeight),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(
-                              color: isDark
-                                ? AppColors.darkBorder
-                                : AppColors.lightBorder,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          'Cancelar',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
+              Row(
+                children: [
+                   Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary).withValues(alpha: 0.2),
+                            width: 1.5,
                           ),
                         ),
                       ),
+                      child: Text(
+                        'Cancelar',
+                        style: AppTextStyles.labelLarge.copyWith(
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(
+                          colors: [
+                            if (isDark) ...[
+                              AppColors.darkAlert,
+                              AppColors.darkAlert.withValues(alpha: 0.8),
+                            ] else ...[
+                              AppColors.lightAlert,
+                              AppColors.lightAlert.withValues(alpha: 0.8),
+                            ],
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isDark ? AppColors.darkAlert : AppColors.lightAlert).withValues(alpha: 0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
                       child: ElevatedButton(
                         onPressed: _submit,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark
-                            ? AppColors.darkAlert
-                            : AppColors.lightAlert,
-                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          minimumSize: const Size.fromHeight(_kFieldHeight),
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          elevation: 0,
                         ),
                         child: Text(
-                          _isEditing ? 'Actualizar' : 'Guardar',
-                          style: const TextStyle(
-                            fontSize: 16,
+                          widget.initialNote == null ? 'Guardar' : 'Actualizar',
+                          style: AppTextStyles.labelLarge.copyWith(
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
                 const SizedBox(height: 20),
               ],
             ),
@@ -448,112 +470,94 @@ class _ProfessionalSideSelector extends StatelessWidget {
   final bool isDark;
 
   @override
-  Widget build(BuildContext context) => Container(
-      height: 80,
+  Widget build(BuildContext context) {
+    final isBuy = selectedSide == 'buy';
+    
+    return Container(
+      height: 60, // Reduced height for better aesthetics
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(16),
+        color: isDark ? AppColors.darkCard : AppColors.lightCard,
+        borderRadius: BorderRadius.circular(30), // Pill shape
         border: Border.all(
           color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
         ),
       ),
       child: Row(
         children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onSideChanged('buy'),
-              child: Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: selectedSide == 'buy'
-                    ? (isDark ? AppColors.darkBullish : AppColors.lightBullish)
-                    : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.trending_up,
-                      color: selectedSide == 'buy'
-                        ? Colors.white
-                        : (isDark ? AppColors.darkBullish : AppColors.lightBullish),
-                      size: 28,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'BUY',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: selectedSide == 'buy'
-                          ? Colors.white
-                          : (isDark ? AppColors.darkBullish : AppColors.lightBullish),
-                      ),
-                    ),
-                    Text(
-                      'Compra',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: selectedSide == 'buy'
-                          ? Colors.white70
-                          : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          _buildSelectorButton(
+            context,
+            label: 'BUY',
+            isSelected: isBuy,
+            color: isDark ? AppColors.darkBullish : AppColors.lightBullish,
+            icon: Icons.trending_up,
+            onTap: () => onSideChanged('buy'),
           ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onSideChanged('sell'),
-              child: Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: selectedSide == 'sell'
-                    ? (isDark ? AppColors.darkBearish : AppColors.lightBearish)
-                    : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.trending_down,
-                      color: selectedSide == 'sell'
-                        ? Colors.white
-                        : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
-                      size: 28,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'SELL',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: selectedSide == 'sell'
-                          ? Colors.white
-                          : (isDark ? AppColors.darkBearish : AppColors.lightBearish),
-                      ),
-                    ),
-                    Text(
-                      'Venta',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: selectedSide == 'sell'
-                          ? Colors.white70
-                          : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          const SizedBox(width: 8),
+          _buildSelectorButton(
+            context,
+            label: 'SELL',
+            isSelected: !isBuy,
+            color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
+            icon: Icons.trending_down,
+            onTap: () => onSideChanged('sell'),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildSelectorButton(
+    BuildContext context, {
+    required String label,
+    required bool isSelected,
+    required Color color,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) =>
+      Expanded(
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: isSelected ? color : Colors.transparent,
+              borderRadius: BorderRadius.circular(26),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: isSelected
+                        ? Colors.white
+                        : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -591,10 +595,9 @@ class _SectionHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                style: AppTextStyles.labelLarge.copyWith(
                   color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -650,11 +653,8 @@ class _ExchangeInputField extends StatelessWidget {
       children: [
         Text(
           labelText,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+          style: AppTextStyles.labelMedium.copyWith(
             color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
-            letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 8),
@@ -667,10 +667,8 @@ class _ExchangeInputField extends StatelessWidget {
             inputFormatters: _buildInputFormatters(),
             textCapitalization: textCapitalization ?? TextCapitalization.none,
             validator: validator,
-            style: TextStyle(
-              fontSize: 16,
+            style: AppTextStyles.bodyLarge.copyWith(
               color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-              fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
               hintText: placeholder,
@@ -752,21 +750,16 @@ class _ExchangeTextArea extends StatelessWidget {
       children: [
         Text(
           labelText,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+          style: AppTextStyles.labelMedium.copyWith(
             color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
-            letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           maxLines: maxLines,
-          style: TextStyle(
-            fontSize: 16,
+          style: AppTextStyles.bodyLarge.copyWith(
             color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-            fontWeight: FontWeight.w500,
           ),
           decoration: InputDecoration(
             hintText: placeholder,
@@ -825,11 +818,8 @@ class _ExchangeDateButton extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+          style: AppTextStyles.labelMedium.copyWith(
             color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
-            letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 8),
@@ -858,9 +848,7 @@ class _ExchangeDateButton extends StatelessWidget {
                 Expanded(
                   child: Text(
                     value,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                    style: AppTextStyles.bodyLarge.copyWith(
                       color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                     ),
                   ),

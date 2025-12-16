@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/daily_metrics.dart';
 import '../theme/app_colors.dart';
+import '../theme/text_styles.dart';
 
 /// Widget para mostrar lista de alertas
 class AlertsWidget extends StatelessWidget {
@@ -47,19 +48,37 @@ class AlertTileWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: _getAlertColor(context, isDark).withValues(alpha: 0.1),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.lightCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? AppColors.darkShadow : AppColors.lightShadow,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         isThreeLine: true,
         leading: Stack(
           children: [
-            CircleAvatar(
-              backgroundColor: _getAlertColor(context, isDark),
-              child: const Icon(
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _getAlertColor(context, isDark).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
                 Icons.notifications_active,
-                color: Colors.white,
+                color: _getAlertColor(context, isDark),
               ),
             ),
             if (showOpportunityBadge)
@@ -69,11 +88,17 @@ class AlertTileWidget extends StatelessWidget {
                 child: Container(
                   width: 16,
                   height: 16,
-                  decoration: const BoxDecoration(
-                    color: Colors.orange,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkOpportunity : AppColors.lightOpportunity,
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                      width: 2,
+                    ),
                   ),
-                  child: const Icon(Icons.star, color: Colors.white, size: 12),
+                  child: const Center(
+                    child: Icon(Icons.star, color: Colors.white, size: 10),
+                  ),
                 ),
               ),
           ],
@@ -84,7 +109,9 @@ class AlertTileWidget extends StatelessWidget {
             Expanded(
               child: Text(
                 alert.crypto.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: AppTextStyles.h4.copyWith(
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                ),
                 overflow: TextOverflow.fade,
                 softWrap: true,
               ),
@@ -95,20 +122,19 @@ class AlertTileWidget extends StatelessWidget {
                   alignment: Alignment.topRight,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
+                      horizontal: 8,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.red[400],
+                      color: isDark ? AppColors.darkBearish : AppColors.lightBearish,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const FittedBox(
+                    child: FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
                         'ALERTA',
-                        style: TextStyle(
+                        style: AppTextStyles.labelSmall.copyWith(
                           color: Colors.white,
-                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -121,16 +147,14 @@ class AlertTileWidget extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               alert.crypto.symbol.replaceAll('USDT', ''),
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -148,32 +172,36 @@ class AlertTileWidget extends StatelessWidget {
               ],
             ),
             if (alert.verdict != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color:
-                      (isDark
-                              ? AppColors.darkAccentPrimary
-                              : AppColors.lightAccentPrimary)
-                          .withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: (isDark
+                          ? AppColors.darkAccentPrimary
+                          : AppColors.lightAccentPrimary)
+                      .withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: (isDark
+                            ? AppColors.darkAccentPrimary
+                            : AppColors.lightAccentPrimary)
+                        .withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      Icons.lightbulb,
+                      Icons.lightbulb_outline,
                       size: 16,
                       color: isDark
                           ? AppColors.darkAccentPrimary
                           : AppColors.lightAccentPrimary,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Análisis: ${alert.verdict}',
-                        style: TextStyle(
-                          fontSize: 12,
+                        '${alert.verdict}',
+                        style: AppTextStyles.bodySmall.copyWith(
                           color: isDark
                               ? AppColors.darkTextPrimary
                               : AppColors.lightTextPrimary,
@@ -198,9 +226,8 @@ class AlertTileWidget extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   alert.crypto.formattedPrice,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                  style: AppTextStyles.priceMedium.copyWith(
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                   ),
                 ),
               ),
@@ -209,17 +236,9 @@ class AlertTileWidget extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   alert.crypto.formattedChangePercent,
-                  style: TextStyle(
-                    color: alert.crypto.isPositive
-                        ? (isDark
-                              ? AppColors.darkBullish
-                              : AppColors.lightBullish)
-                        : (isDark
-                              ? AppColors.darkBearish
-                              : AppColors.lightBearish),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: alert.crypto.isPositive
+                      ? AppTextStyles.bullish(context)
+                      : AppTextStyles.bearish(context),
                 ),
               ),
             ],
